@@ -69,6 +69,8 @@ dependencies:
   flutter_dotenv: ^6.0.0
   get_it: ^8.2.0
   flutter_launcher_icons: ^0.14.4
+  result_dart: ^2.1.1
+  universal_platform: ^1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -1128,6 +1128,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
+  result_dart:
+    dependency: "direct main"
+    description:
+      name: result_dart
+      sha256: "0666b21fbdf697b3bdd9986348a380aa204b3ebe7c146d8e4cdaa7ce735e6054"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
   riverpod:
     dependency: transitive
     description:
@@ -1437,6 +1445,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  universal_platform:
+    dependency: "direct main"
+    description:
+      name: universal_platform
+      sha256: "64e16458a0ea9b99260ceb5467a214c1f298d647c659af1bff6d3bf82536b1ec"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   uuid:
     dependency: "direct main"
     description:
