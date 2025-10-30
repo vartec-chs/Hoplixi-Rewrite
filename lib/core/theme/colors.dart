@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   /// Светлая цветовая схема
   static const FlexSchemeColor lightColors = FlexSchemeColor(
-    primary: Color(0xFF2C43EF),
-    primaryContainer: Color(0xFF2C43EF),
+    primary: Color(0xFF3A51FC),
+    primaryContainer: Color(0xFF3A51FC),
     secondary: Color(0xFFEDEDED),
     secondaryContainer: Color(0xFFEDEDED),
     tertiary: Color(0xFFEDEDED),
@@ -18,9 +18,9 @@ abstract final class AppColors {
 
   /// Тёмная цветовая схема
   static const FlexSchemeColor darkColors = FlexSchemeColor(
-    primary: Color(0xFF2C43EF),
-    primaryContainer: Color(0xFF2C43EF),
-    primaryLightRef: Color(0xFF2C43EF), // The color of light mode primary
+    primary: Color(0xFF3A51FC),
+    primaryContainer: Color(0xFF3A51FC),
+    primaryLightRef: Color(0xFF3A51FC), // The color of light mode primary
     secondary: Color(0xFF2C2C2C),
     secondaryContainer: Color(0xFF2C2C2C),
     secondaryLightRef: Color(0xFFEDEDED), // The color of light mode secondary
@@ -33,9 +33,9 @@ abstract final class AppColors {
   );
 
   /// Цвет поверхности для тёмной темы
-  static const Color darkSurfaceTint = Color(0xFF2C43EF);
+  static const Color darkSurfaceTint = Color(0xFF3A51FC);
 
   //primary: Color(0xFF005BFF),
 
-  static const Color primary = Color(0xFF2C43EF);
+  static const Color primary = Color(0xFF3A51FC);
 }
