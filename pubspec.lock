@@ -737,7 +737,7 @@ packages:
     source: hosted
     version: "0.2.2"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
@@ -856,6 +856,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  logger:
+    dependency: "direct main"
+    description:
+      name: logger
+      sha256: a7967e31b703831a893bbc3c3dd11db08126fe5f369b5c648a36f821979f5be3
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.2"
   logging:
     dependency: transitive
     description:
@@ -1137,7 +1145,7 @@ packages:
     source: hosted
     version: "2.1.1"
   riverpod:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: riverpod
       sha256: c406de02bff19d920b832bddfb8283548bfa05ce41c59afba57ce643e116aa59
