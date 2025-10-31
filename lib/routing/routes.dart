@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
@@ -10,7 +11,7 @@ final List<GoRoute> appRoutes = [
   ),
   GoRoute(
     path: AppRoutesPaths.home,
-    builder: (context, state) => const BaseScreen(title: 'Home'),
+    builder: (context, state) => const HomeScreen(),
   ),
   GoRoute(
     path: AppRoutesPaths.logs,

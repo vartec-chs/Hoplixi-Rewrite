@@ -25,6 +25,7 @@ class _AppState extends ConsumerState<App> {
       darkTheme: AppTheme.dark(context),
       routerConfig: router,
       themeMode: themeMode,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

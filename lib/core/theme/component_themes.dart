@@ -38,6 +38,7 @@ abstract final class ComponentThemes {
     searchViewRadius: defaultBorderRadius,
     navigationRailUseIndicator: true,
     adaptiveAppBarScrollUnderOff: FlexAdaptive.all(),
+    scaffoldBackgroundBaseColor: FlexScaffoldBaseColor.surface,
   );
 
   /// Базовые подтемы для тёмной темы
@@ -67,6 +68,7 @@ abstract final class ComponentThemes {
     navigationRailUseIndicator: true,
 
     adaptiveAppBarScrollUnderOff: FlexAdaptive.all(),
+    scaffoldBackgroundBaseColor: FlexScaffoldBaseColor.surface,
   );
 }
 

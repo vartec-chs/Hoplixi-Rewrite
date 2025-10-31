@@ -74,6 +74,8 @@ dependencies:
   universal_platform: ^1.1.0
   logger: ^2.6.2
   intl: ^0.20.1
+  window_manager: ^0.5.1
+  animated_text_kit: ^4.3.0
 
 dev_dependencies:
   flutter_test:
