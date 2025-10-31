@@ -130,9 +130,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                     constraints: constraints,
                     icon: Icon(Icons.close, size: 20),
                     onPressed: () async => {
-                      if (UniversalPlatform.isDesktop)
-                        await windowManager.hide(),
-
+                      await windowManager.hide(),
                       // await windowManager.close(),
                     },
                   ),

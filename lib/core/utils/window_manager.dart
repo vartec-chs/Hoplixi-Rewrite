@@ -27,6 +27,25 @@ class WindowManager {
       windowManager.addListener(_AppWindowListener());
     }
   }
+
+  static Future<void> show() async {
+    if (UniversalPlatform.isWindows) {
+      await windowManager.show();
+      await windowManager.focus();
+    }
+  }
+
+  static Future<void> hide() async {
+    if (UniversalPlatform.isWindows) {
+      await windowManager.hide();
+    }
+  }
+
+  static Future<void> close() async {
+    if (UniversalPlatform.isWindows) {
+      await windowManager.close();
+    }
+  }
 }
 
 class _AppWindowListener extends WindowListener {

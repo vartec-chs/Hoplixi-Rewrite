@@ -8,6 +8,7 @@ import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/core/utils/window_manager.dart';
+import 'package:hoplixi/setup_tray.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'di_init.dart';
@@ -68,8 +69,8 @@ void main() async {
       };
 
       await WindowManager.initialize();
-
       await setupDI();
+      await setupTray();
 
       final app = ProviderScope(child: setupToastificationWrapper(const App()));
 
