@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'preferences_service.dart';
 import 'secure_storage_service.dart';
 import 'app_preference_keys.dart';
@@ -13,7 +14,18 @@ void exampleUsage() async {
   final prefsService = await PreferencesService.init();
 
   // Инициализация FlutterSecureStorage
-  final secureStorage = SecureStorageService.init();
+  final secureStorage = SecureStorageService.init(
+    FlutterSecureStorage(
+      aOptions: const AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: const IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock,
+      ),
+      lOptions: const LinuxOptions(),
+      wOptions: const WindowsOptions(),
+      mOptions: const MacOsOptions(),
+      webOptions: const WebOptions(),
+    ),
+  );
 
   // ==================== Работа с SharedPreferences ====================
 

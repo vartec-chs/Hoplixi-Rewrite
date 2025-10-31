@@ -9,4 +9,6 @@ class MainConstants {
   static const Size minWindowSize = Size(400, 500);
   static const Size maxWindowSize = Size(1000, 1000);
   static const bool isCenter = true;
+
+  static const int databaseSchemaVersion = 1;
 }

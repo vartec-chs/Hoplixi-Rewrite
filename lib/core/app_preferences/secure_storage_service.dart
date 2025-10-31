@@ -10,32 +10,9 @@ class SecureStorageService {
   SecureStorageService(this._storage);
 
   /// Инициализация сервиса с настройками по умолчанию
-  static SecureStorageService init({
-    AndroidOptions? androidOptions,
-    IOSOptions? iosOptions,
-    LinuxOptions? linuxOptions,
-    WindowsOptions? windowsOptions,
-    MacOsOptions? macOsOptions,
-    WebOptions? webOptions,
-  }) {
-    final storage = FlutterSecureStorage(
-      aOptions: androidOptions ?? _defaultAndroidOptions(),
-      iOptions: iosOptions ?? _defaultIOSOptions(),
-      lOptions: linuxOptions ?? const LinuxOptions(),
-      wOptions: windowsOptions ?? const WindowsOptions(),
-      mOptions: macOsOptions ?? const MacOsOptions(),
-      webOptions: webOptions ?? const WebOptions(),
-    );
+  static SecureStorageService init(FlutterSecureStorage storage) {
     return SecureStorageService(storage);
   }
-
-  /// Настройки по умолчанию для Android
-  static AndroidOptions _defaultAndroidOptions() =>
-      const AndroidOptions(encryptedSharedPreferences: true);
-
-  /// Настройки по умолчанию для iOS
-  static IOSOptions _defaultIOSOptions() =>
-      const IOSOptions(accessibility: KeychainAccessibility.first_unlock);
 
   // ==================== Получение значений ====================
 

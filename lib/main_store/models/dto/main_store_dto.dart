@@ -1,0 +1,43 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'main_store_dto.freezed.dart';
+part 'main_store_dto.g.dart';
+
+/// DTO для создания нового хранилища
+@freezed
+sealed class CreateStoreDto with _$CreateStoreDto {
+  const factory CreateStoreDto({
+    required String name,
+    required String password,
+    required String path,
+    String? description,
+    @Default(false) bool saveMasterPassword,
+  }) = _CreateStoreDto;
+
+  factory CreateStoreDto.fromJson(Map<String, dynamic> json) =>
+      _$CreateStoreDtoFromJson(json);
+}
+
+/// DTO для открытия существующего хранилища
+@freezed
+sealed class OpenStoreDto with _$OpenStoreDto {
+  const factory OpenStoreDto({required String password, required String path}) =
+      _OpenStoreDto;
+
+  factory OpenStoreDto.fromJson(Map<String, dynamic> json) =>
+      _$OpenStoreDtoFromJson(json);
+}
+
+/// DTO для изменения хранилища
+@freezed
+sealed class UpdateStoreDto with _$UpdateStoreDto {
+  const factory UpdateStoreDto({
+    String? name,
+    String? description,
+    String? password,
+    bool? saveMasterPassword,
+  }) = _UpdateStoreDto;
+
+  factory UpdateStoreDto.fromJson(Map<String, dynamic> json) =>
+      _$UpdateStoreDtoFromJson(json);
+}

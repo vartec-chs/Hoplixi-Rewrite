@@ -142,9 +142,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   padding: EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: UniversalPlatform.isMobile && _offset < 160
-                        ? 24
-                        : MediaQuery.of(context).padding.top + 12,
+                    vertical: (UniversalPlatform.isMobile && _offset < 160)
+                        ? MediaQuery.of(context).padding.top + 12
+                        : 16,
                   ),
                   child: _buildContentSection(),
                 ),
@@ -295,6 +295,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
           repeatForever: true,
+
           pause: const Duration(milliseconds: 1000),
           displayFullTextOnTap: true,
           stopPauseOnTap: false,
