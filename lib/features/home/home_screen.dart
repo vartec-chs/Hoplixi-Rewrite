@@ -2,6 +2,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:universal_platform/universal_platform.dart';
 import 'widgets/action_button.dart';
 import 'package:hoplixi/shared/ui/titlebar.dart';
 
@@ -98,7 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 Positioned(
                   left: -30,
-                  bottom: 480,
+                  bottom: MediaQuery.of(context).size.height * 0.7,
                   child: Container(
                     width: 150,
                     height: 150,
@@ -139,9 +140,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                     ],
                   ),
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 20,
+                    vertical: UniversalPlatform.isMobile && _offset < 160
+                        ? 24
+                        : MediaQuery.of(context).padding.top + 12,
                   ),
                   child: _buildContentSection(),
                 ),
@@ -159,85 +162,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final isSmallScreen = constraints.maxWidth < 500;
 
         if (isSmallScreen) {
-          return Column(
-            children: [
-              ActionButton(
-                icon: CupertinoIcons.folder_open,
-                label: 'Открыть',
-                description: 'Открыть существующий проект',
-                isPrimary: true,
-                onTap: () {
-                  // TODO: Открыть бд
-                },
-              ),
-              const SizedBox(height: 12),
-              ActionButton(
-                icon: CupertinoIcons.add_circled,
-                label: 'Создать',
-                description: 'Создать новый проект',
-                onTap: () {
-                  // TODO: Создать бд
-                },
-              ),
-              const SizedBox(height: 12),
-              ActionButton(
-                icon: CupertinoIcons.arrow_up_right_square,
-                label: 'Импорт/Экспорт',
-                description: 'Импортировать или экспортировать проект',
-                disabled: true,
-                onTap: () {
-                  // TODO: Импорт/Экспорт
-                },
-              ),
-            ],
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                ActionButton(
+                  icon: CupertinoIcons.folder_open,
+                  label: 'Открыть',
+                  description: 'Открыть существующий проект',
+                  isPrimary: true,
+                  onTap: () {
+                    // TODO: Открыть бд
+                  },
+                ),
+                const SizedBox(height: 12),
+                ActionButton(
+                  icon: CupertinoIcons.add_circled,
+                  label: 'Создать',
+                  description: 'Создать новый проект',
+                  onTap: () {
+                    // TODO: Создать бд
+                  },
+                ),
+                const SizedBox(height: 12),
+                ActionButton(
+                  icon: CupertinoIcons.arrow_up_right_square,
+                  label: 'Импорт/Экспорт',
+                  description: 'Импортировать или экспортировать проект',
+                  disabled: true,
+                  onTap: () {
+                    // TODO: Импорт/Экспорт
+                  },
+                ),
+              ],
+            ),
           );
         }
 
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ActionButton(
-                    icon: CupertinoIcons.folder_open,
-                    label: 'Открыть',
-                    description: 'Открыть существующий проект',
-                    isPrimary: true,
-                    onTap: () {
-                      // TODO: Открыть бд
-                    },
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: ActionButton(
+                      icon: CupertinoIcons.folder_open,
+                      label: 'Открыть',
+                      description: 'Открыть существующий проект',
+                      isPrimary: true,
+                      onTap: () {
+                        // TODO: Открыть бд
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ActionButton(
-                    icon: CupertinoIcons.add_circled,
-                    label: 'Создать',
-                    description: 'Создать новый проект',
-                    onTap: () {
-                      // TODO: Создать бд
-                    },
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ActionButton(
+                      icon: CupertinoIcons.add_circled,
+                      label: 'Создать',
+                      description: 'Создать новый проект',
+                      onTap: () {
+                        // TODO: Создать бд
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ActionButton(
-                    icon: CupertinoIcons.arrow_up_right_square,
-                    label: 'Импорт/Экспорт',
-                    description: 'Импортировать или экспортировать проект',
-                    disabled: true,
-                    onTap: () {
-                      // TODO: Импорт/Экспорт
-                    },
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ActionButton(
+                      icon: CupertinoIcons.arrow_up_right_square,
+                      label: 'Импорт/Экспорт',
+                      description: 'Импортировать или экспортировать проект',
+                      disabled: true,
+                      onTap: () {
+                        // TODO: Импорт/Экспорт
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -268,17 +275,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               speed: const Duration(milliseconds: 150),
             ),
-            FadeAnimatedText(
+            ScrambleAnimatedText(
               'Добро пожаловать',
               textStyle: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onPrimary,
               ),
-              duration: const Duration(milliseconds: 2000),
+              speed: const Duration(milliseconds: 300),
             ),
-            ScaleAnimatedText(
-              'Home',
+            BounceAnimatedText(
+              'Главный экран',
               textStyle: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
