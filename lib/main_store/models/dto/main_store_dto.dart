@@ -41,3 +41,21 @@ sealed class UpdateStoreDto with _$UpdateStoreDto {
   factory UpdateStoreDto.fromJson(Map<String, dynamic> json) =>
       _$UpdateStoreDtoFromJson(json);
 }
+
+
+/// DTO для просмотра базовой информации о хранилище
+@freezed
+sealed class StoreInfoDto with _$StoreInfoDto {
+  const factory StoreInfoDto({
+    required String id,
+    required String name,
+    String? description,
+    required DateTime createdAt,
+    required DateTime modifiedAt,
+    required DateTime lastOpenedAt,
+    required String version,
+  }) = _StoreInfoDto;
+
+  factory StoreInfoDto.fromJson(Map<String, dynamic> json) =>
+      _$StoreInfoDtoFromJson(json);
+}

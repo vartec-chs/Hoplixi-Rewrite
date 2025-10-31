@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hoplixi/core/app_preferences/app_preferences.dart';
 import 'package:hoplixi/core/services/hive_box_manager.dart';
+import 'package:hoplixi/main_store/services/db_history_services.dart';
 
 final getIt = GetIt.instance;
 
@@ -17,6 +18,11 @@ Future<void> setupDI() async {
   final hiveBoxManager = HiveBoxManager(getIt<FlutterSecureStorage>());
   await hiveBoxManager.initialize();
   getIt.registerSingleton<HiveBoxManager>(hiveBoxManager);
+
+  // Инициализация DatabaseHistoryService
+  final databaseHistoryService = DatabaseHistoryService();
+  await databaseHistoryService.initialize();
+  getIt.registerSingleton<DatabaseHistoryService>(databaseHistoryService);
 }
 
 FlutterSecureStorage setupSecureStorage() {

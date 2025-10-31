@@ -257,6 +257,7 @@ class HiveBoxManager {
     try {
       if (Hive.isBoxOpen(boxName)) {
         final box = Hive.box(boxName);
+        await box.compact();
         await box.close();
         logInfo('Closed box: $boxName', tag: _logTag);
       } else {
