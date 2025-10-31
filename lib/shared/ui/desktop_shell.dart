@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'titlebar.dart';
 
 class DesktopShell extends StatelessWidget {
@@ -12,7 +13,15 @@ class DesktopShell extends StatelessWidget {
       children: [
         Column(
           children: [
-            // TitleBar(),
+            Consumer(
+              builder: (context, ref, _) {
+                final titlebarState = ref.watch(titlebarStateProvider);
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  height: titlebarState.backgroundTransparent ? 0 : 40,
+                );
+              },
+            ),
             Expanded(child: child),
           ],
         ),

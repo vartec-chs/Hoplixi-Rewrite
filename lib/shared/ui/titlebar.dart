@@ -28,15 +28,18 @@ class _TitleBarState extends ConsumerState<TitleBar> {
   Widget build(BuildContext context) {
     // final isDatabaseOpen = ref.watch(isDatabaseOpenProvider);
     // final closeDbTimer = ref.watch(appInactivityTimeoutProvider);
-    final labelState = ref.watch(labelStateProvider);
+    final titlebarState = ref.watch(titlebarStateProvider);
     return DragToMoveArea(
-      child: Container(
+      child: AnimatedContainer(
         height: 40,
-        // color: Theme.of(context).colorScheme.surface,
+        duration: const Duration(milliseconds: 300),
+        color: titlebarState.backgroundTransparent
+            ? Colors.transparent
+            : Theme.of(context).appBarTheme.backgroundColor,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            labelState.hidden
+            titlebarState.hidden
                 ? SizedBox.shrink()
                 : Padding(
                     padding: const EdgeInsets.only(left: 8.0),
@@ -54,10 +57,10 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                           ),
                         ),
                         Text(
-                          labelState.label,
+                          titlebarState.label,
                           style: TextStyle(
                             color:
-                                labelState.color ??
+                                titlebarState.color ??
                                 (Theme.of(context).colorScheme.brightness ==
                                         Brightness.dark
                                     ? Colors.black
@@ -145,42 +148,47 @@ class _TitleBarState extends ConsumerState<TitleBar> {
 }
 
 @immutable
-class LabelState {
+class TitlebarState {
   final String label;
   final Color? color;
   final Widget? icon;
   final bool loading;
   final bool hidden;
+  final bool backgroundTransparent;
 
-  const LabelState({
+  const TitlebarState({
     required this.label,
     this.loading = false,
     this.hidden = false,
+    this.backgroundTransparent = false,
     this.color,
     this.icon,
   });
 
-  LabelState copyWith({
+  TitlebarState copyWith({
     String? label,
     Color? color,
     Widget? icon,
     bool? loading,
+    bool? backgroundTransparent,
     bool? hidden,
   }) {
-    return LabelState(
+    return TitlebarState(
       label: label ?? this.label,
       color: color ?? this.color,
       icon: icon ?? this.icon,
       loading: loading ?? this.loading,
       hidden: hidden ?? this.hidden,
+      backgroundTransparent:
+          backgroundTransparent ?? this.backgroundTransparent,
     );
   }
 }
 
-class LabelStateNotifier extends Notifier<LabelState> {
+class TitlebarStateNotifier extends Notifier<TitlebarState> {
   @override
-  LabelState build() {
-    return const LabelState(label: MainConstants.appName);
+  TitlebarState build() {
+    return const TitlebarState(label: MainConstants.appName);
   }
 
   void updateLabel(String newLabel) {
@@ -202,8 +210,13 @@ class LabelStateNotifier extends Notifier<LabelState> {
   void updateIcon(Widget? icon) {
     state = state.copyWith(icon: icon);
   }
+
+  void setBackgroundTransparent(bool transparent) {
+    state = state.copyWith(backgroundTransparent: transparent);
+  }
 }
 
-final labelStateProvider = NotifierProvider<LabelStateNotifier, LabelState>(
-  LabelStateNotifier.new,
-);
+final titlebarStateProvider =
+    NotifierProvider<TitlebarStateNotifier, TitlebarState>(
+      TitlebarStateNotifier.new,
+    );
