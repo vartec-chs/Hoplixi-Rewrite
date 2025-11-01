@@ -4,7 +4,7 @@ import 'package:hoplixi/features/logs_viewer/screens/crash_reports_screen.dart';
 
 /// Главный экран для навигации между просмотром логов и отчетами о падениях
 class LogsTabsScreen extends StatefulWidget {
-  const LogsTabsScreen({Key? key}) : super(key: key);
+  const LogsTabsScreen({super.key});
 
   @override
   State<LogsTabsScreen> createState() => _LogsTabsScreenState();

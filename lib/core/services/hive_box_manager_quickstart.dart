@@ -1,6 +1,7 @@
 /// Быстрый старт: HiveBoxManager
 ///
 /// Основные операции для работы с зашифрованными Hive боксами
+library;
 
 import 'package:hoplixi/core/services/hive_box_manager.dart';
 import 'package:hoplixi/di_init.dart';

@@ -4,7 +4,7 @@ import 'package:hoplixi/features/logs_viewer/providers/logs_provider.dart';
 
 /// Экран для просмотра отчетов о падениях
 class CrashReportsScreen extends ConsumerWidget {
-  const CrashReportsScreen({Key? key}) : super(key: key);
+  const CrashReportsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

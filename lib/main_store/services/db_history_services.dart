@@ -3,7 +3,6 @@ import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/core/services/hive_box_manager.dart';
 import 'package:hoplixi/di_init.dart';
 import 'package:hoplixi/main_store/models/db_history_model.dart';
-import 'package:uuid/uuid.dart';
 
 /// Сервис для работы с историей баз данных
 ///

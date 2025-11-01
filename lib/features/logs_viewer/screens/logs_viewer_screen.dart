@@ -6,7 +6,7 @@ import 'package:hoplixi/features/logs_viewer/widgets/logs_filter_bar.dart';
 
 /// Главный экран для просмотра логов
 class LogsViewerScreen extends ConsumerWidget {
-  const LogsViewerScreen({Key? key}) : super(key: key);
+  const LogsViewerScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

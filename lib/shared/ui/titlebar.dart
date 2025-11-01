@@ -8,7 +8,6 @@ import 'package:hoplixi/core/theme/index.dart';
 // import 'package:hoplixi/hoplixi_store/providers/hoplixi_store_providers.dart';
 // import 'package:hoplixi/hoplixi_store/providers/providers.dart';
 // import 'package:hoplixi/core/providers/app_lifecycle_provider.dart';
-import 'package:universal_platform/universal_platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 class TitleBar extends ConsumerStatefulWidget {

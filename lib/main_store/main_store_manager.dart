@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
@@ -29,7 +30,6 @@ class MainStoreManager {
 
   MainStore? _currentStore;
   String? _currentStorePath;
-  String? _currentStoreId;
 
   MainStoreManager(this._dbHistoryService);
 
@@ -53,14 +53,21 @@ class MainStoreManager {
       if (isStoreOpen) {
         return Failure(
           DatabaseError.alreadyInitialized(
-            message: 'Хранилище уже открыто. Закройте текущее перед созданием нового.',
+            message:
+                'Хранилище уже открыто. Закройте текущее перед созданием нового.',
             timestamp: DateTime.now(),
           ),
         );
       }
 
       // Нормализация имени папки
-      final normalizedName = _normalizeStorageName(dto.name);
+      late final String normalizedName;
+      try {
+        normalizedName = _normalizeStorageName(dto.name);
+      } on DatabaseError catch (e) {
+        return Failure(e);
+      }
+
       final storagePath = await AppPaths.appStoragePath;
       final storageDir = Directory(p.join(storagePath, normalizedName));
 
@@ -80,7 +87,9 @@ class MainStoreManager {
       logInfo('Created storage directory: ${storageDir.path}', tag: _logTag);
 
       // Создание подпапки attachments
-      final attachmentsDir = Directory(p.join(storageDir.path, _attachmentsFolder));
+      final attachmentsDir = Directory(
+        p.join(storageDir.path, _attachmentsFolder),
+      );
       await attachmentsDir.create(recursive: true);
       logInfo('Created attachments directory', tag: _logTag);
 
@@ -88,8 +97,8 @@ class MainStoreManager {
       final salt = _uuid.v4();
       final passwordHash = _hashPassword(dto.password, salt);
 
-      // Генерация ключа для вложений (для будущего использования)
-      final attachmentKey = _uuid.v4();
+      // Генерация криптографически безопасного случайного ключа для шифрования attachments
+      final attachmentKey = _generateSecureKey();
 
       // Путь к файлу БД
       final dbFilePath = _getDbFilePath(storageDir.path, normalizedName);
@@ -103,7 +112,19 @@ class MainStoreManager {
       if (dbResult.isError()) {
         // Удаляем созданную папку при ошибке
         await storageDir.delete(recursive: true);
-        return Failure(dbResult.exceptionOrNull()!);
+        return dbResult.fold(
+          (_) => Success(
+            StoreInfoDto(
+              id: '',
+              name: '',
+              createdAt: DateTime.now(),
+              modifiedAt: DateTime.now(),
+              lastOpenedAt: DateTime.now(),
+              version: '',
+            ),
+          ),
+          (error) => Failure(error),
+        );
       }
 
       final database = dbResult.getOrThrow();
@@ -112,7 +133,9 @@ class MainStoreManager {
 
       // Создание записи метаданных в БД
       final storeId = _uuid.v4();
-      await database.into(database.storeMetaTable).insert(
+      await database
+          .into(database.storeMetaTable)
+          .insert(
             StoreMetaTableCompanion.insert(
               id: Value(storeId),
               name: dto.name,
@@ -124,7 +147,6 @@ class MainStoreManager {
             ),
           );
 
-      _currentStoreId = storeId;
       logInfo('Created store metadata with id: $storeId', tag: _logTag);
 
       // Добавление в историю
@@ -161,7 +183,9 @@ class MainStoreManager {
   ///
   /// [dto] - данные для открытия хранилища
   /// Возвращает информацию о хранилище или ошибку
-  AsyncResultDart<StoreInfoDto, DatabaseError> openStore(OpenStoreDto dto) async {
+  AsyncResultDart<StoreInfoDto, DatabaseError> openStore(
+    OpenStoreDto dto,
+  ) async {
     try {
       logInfo('Opening store at: ${dto.path}', tag: _logTag);
 
@@ -169,7 +193,8 @@ class MainStoreManager {
       if (isStoreOpen) {
         return Failure(
           DatabaseError.alreadyInitialized(
-            message: 'Хранилище уже открыто. Закройте текущее перед открытием нового.',
+            message:
+                'Хранилище уже открыто. Закройте текущее перед открытием нового.',
             timestamp: DateTime.now(),
           ),
         );
@@ -208,7 +233,19 @@ class MainStoreManager {
       );
 
       if (dbResult.isError()) {
-        return Failure(dbResult.exceptionOrNull()!);
+        return dbResult.fold(
+          (_) => Success(
+            StoreInfoDto(
+              id: '',
+              name: '',
+              createdAt: DateTime.now(),
+              modifiedAt: DateTime.now(),
+              lastOpenedAt: DateTime.now(),
+              version: '',
+            ),
+          ),
+          (error) => Failure(error),
+        );
       }
 
       final database = dbResult.getOrThrow();
@@ -217,19 +254,30 @@ class MainStoreManager {
       final verifyResult = await _verifyPassword(database, dto.password);
       if (verifyResult.isError()) {
         await database.close();
-        return Failure(verifyResult.exceptionOrNull()!);
+        return verifyResult.fold(
+          (_) => Success(
+            StoreInfoDto(
+              id: '',
+              name: '',
+              createdAt: DateTime.now(),
+              modifiedAt: DateTime.now(),
+              lastOpenedAt: DateTime.now(),
+              version: '',
+            ),
+          ),
+          (error) => Failure(error),
+        );
       }
 
       final storeMeta = verifyResult.getOrThrow();
 
       _currentStore = database;
       _currentStorePath = dto.path;
-      _currentStoreId = storeMeta.id;
 
       // Обновление времени последнего доступа
-      await database.update(database.storeMetaTable).replace(
-            storeMeta.copyWith(lastOpenedAt: DateTime.now()),
-          );
+      await database
+          .update(database.storeMetaTable)
+          .replace(storeMeta.copyWith(lastOpenedAt: DateTime.now()));
 
       // Обновление в истории
       await _dbHistoryService.updateLastAccessed(dto.path);
@@ -270,7 +318,6 @@ class MainStoreManager {
       await _currentStore?.close();
       _currentStore = null;
       _currentStorePath = null;
-      _currentStoreId = null;
 
       logInfo('Store closed successfully', tag: _logTag);
 
@@ -393,21 +440,25 @@ class MainStoreManager {
       }
 
       // Сохранение изменений
-      await _currentStore!.update(_currentStore!.storeMetaTable).replace(updatedMeta);
+      await _currentStore!
+          .update(_currentStore!.storeMetaTable)
+          .replace(updatedMeta);
 
       // Обновление в истории
       if (_currentStorePath != null) {
-        final historyEntry = await _dbHistoryService.getByPath(_currentStorePath!);
+        final historyEntry = await _dbHistoryService.getByPath(
+          _currentStorePath!,
+        );
         if (historyEntry != null) {
           await _dbHistoryService.update(
             historyEntry.copyWith(
               name: dto.name ?? historyEntry.name,
-              description: dto.description != null ? Value(dto.description) : Value(historyEntry.description),
+              description: dto.description ?? historyEntry.description,
               password: dto.saveMasterPassword == true && dto.password != null
-                  ? Value(dto.password)
+                  ? dto.password
                   : dto.saveMasterPassword == false
-                      ? const Value(null)
-                      : Value(historyEntry.password),
+                  ? null
+                  : historyEntry.password,
               savePassword: dto.saveMasterPassword ?? historyEntry.savePassword,
             ),
           );
@@ -484,7 +535,9 @@ class MainStoreManager {
   ///
   /// [folderName] - имя подпапки
   /// Возвращает полный путь к созданной папке
-  AsyncResult<String, DatabaseError> createSubfolder(String folderName) async {
+  AsyncResultDart<String, DatabaseError> createSubfolder(
+    String folderName,
+  ) async {
     try {
       if (!isStoreOpen || _currentStorePath == null) {
         return Failure(
@@ -495,7 +548,13 @@ class MainStoreManager {
         );
       }
 
-      final normalizedName = _normalizeStorageName(folderName);
+      late final String normalizedName;
+      try {
+        normalizedName = _normalizeStorageName(folderName);
+      } on DatabaseError catch (e) {
+        return Failure(e);
+      }
+
       final subfolderPath = p.join(_currentStorePath!, normalizedName);
       final subfolder = Directory(subfolderPath);
 
@@ -530,7 +589,7 @@ class MainStoreManager {
   }
 
   /// Получить путь к папке вложений
-  AsyncResult<String, DatabaseError> getAttachmentsPath() async {
+  AsyncResultDart<String, DatabaseError> getAttachmentsPath() async {
     try {
       if (!isStoreOpen || _currentStorePath == null) {
         return Failure(
@@ -556,6 +615,8 @@ class MainStoreManager {
   // === Приватные методы ===
 
   /// Нормализовать имя папки хранилища
+  ///
+  /// Выбрасывает [DatabaseError.validationError] если имя пустое после нормализации
   String _normalizeStorageName(String name) {
     // Удаляем лишние пробелы по краям
     var normalized = name.trim();
@@ -566,9 +627,13 @@ class MainStoreManager {
     // Удаляем недопустимые символы для файловой системы
     normalized = normalized.replaceAll(RegExp(r'[<>:"/\\|?*]'), '');
 
-    // Если имя пустое после нормализации, используем UUID
+    // Если имя пустое после нормализации, выбрасываем ошибку
     if (normalized.isEmpty) {
-      normalized = _uuid.v4();
+      throw DatabaseError.validationError(
+        message: 'Имя хранилища содержит только недопустимые символы',
+        data: {'originalName': name},
+        timestamp: DateTime.now(),
+      );
     }
 
     return normalized;
@@ -599,7 +664,7 @@ class MainStoreManager {
   }
 
   /// Создать соединение с БД с шифрованием
-  AsyncResult<MainStore, DatabaseError> _createDatabaseConnection(
+  AsyncResultDart<MainStore, DatabaseError> _createDatabaseConnection(
     String dbFilePath,
     String password,
   ) async {
@@ -654,7 +719,7 @@ class MainStoreManager {
   }
 
   /// Проверить пароль и получить метаданные
-  AsyncResult<StoreMeta, DatabaseError> _verifyPassword(
+  AsyncResultDart<StoreMeta, DatabaseError> _verifyPassword(
     MainStore database,
     String password,
   ) async {
@@ -704,5 +769,17 @@ class MainStoreManager {
     final bytes = utf8.encode(password + salt);
     final digest = sha512.convert(bytes);
     return digest.toString();
+  }
+
+  /// Генерировать криптографически безопасный случайный ключ
+  ///
+  /// Создает 32-байтовый (256-бит) ключ используя криптографически
+  /// безопасный генератор случайных чисел для шифрования attachments
+  ///
+  /// Возвращает Base64-закодированный ключ
+  String _generateSecureKey() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(32, (index) => random.nextInt(256));
+    return base64Encode(bytes);
   }
 }

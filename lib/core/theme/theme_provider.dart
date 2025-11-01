@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/app_preferences/app_preferences.dart';
-import 'package:hoplixi/core/app_preferences/app_preference_keys.dart';
 import 'package:hoplixi/di_init.dart';
 
 final themeProvider = AsyncNotifierProvider<ThemeProvider, ThemeMode>(

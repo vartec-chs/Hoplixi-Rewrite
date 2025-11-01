@@ -1,4 +1,5 @@
 /// Пример использования Logs Viewer Feature
+library;
 
 import 'package:flutter/material.dart';
 import 'package:hoplixi/features/logs_viewer/logs_viewer.dart';
@@ -33,6 +34,8 @@ context.go('/logs');
 // ============================================================================
 
 class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

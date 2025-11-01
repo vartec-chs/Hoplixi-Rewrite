@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 class LogEntryTile extends StatefulWidget {
   final LogEntry entry;
 
-  const LogEntryTile({Key? key, required this.entry}) : super(key: key);
+  const LogEntryTile({super.key, required this.entry});
 
   @override
   State<LogEntryTile> createState() => _LogEntryTileState();

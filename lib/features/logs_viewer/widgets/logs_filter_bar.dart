@@ -5,7 +5,7 @@ import 'package:hoplixi/features/logs_viewer/providers/logs_provider.dart';
 
 /// Виджет для фильтрации и поиска логов
 class LogsFilterBar extends ConsumerWidget {
-  const LogsFilterBar({Key? key}) : super(key: key);
+  const LogsFilterBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

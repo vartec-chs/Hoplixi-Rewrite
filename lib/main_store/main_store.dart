@@ -10,7 +10,7 @@ part 'main_store.g.dart';
 class MainStore extends _$MainStore {
   static const String _logTag = 'MainStore';
 
-  MainStore(QueryExecutor e) : super(e);
+  MainStore(super.e);
 
   @override
   MigrationStrategy get migration {
