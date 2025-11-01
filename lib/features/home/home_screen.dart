@@ -172,9 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   label: 'Открыть',
                   description: 'Открыть существующий проект',
                   isPrimary: true,
-                  onTap: () {
-                    // TODO: Открыть бд
-                  },
+                  onTap: () => context.push(AppRoutesPaths.openStore),
                 ),
                 const SizedBox(height: 12),
                 ActionButton(
@@ -209,9 +207,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       label: 'Открыть',
                       description: 'Открыть существующий проект',
                       isPrimary: true,
-                      onTap: () {
-                        // TODO: Открыть бд
-                      },
+                      onTap: () => context.push(AppRoutesPaths.openStore),
                     ),
                   ),
                   const SizedBox(width: 16),

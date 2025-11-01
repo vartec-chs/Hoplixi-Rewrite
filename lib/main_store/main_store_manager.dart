@@ -200,12 +200,21 @@ class MainStoreManager {
         );
       }
 
-      // Проверка существования директории
+      // Проверка существования директории или файла БД
       final storageDir = Directory(dto.path);
-      if (!await storageDir.exists()) {
+      final dbFile = File(dto.path);
+
+      String actualStoragePath = dto.path;
+
+      if (await storageDir.exists()) {
+        actualStoragePath = dto.path;
+      } else if (await dbFile.exists() && dto.path.endsWith(_dbExtension)) {
+        // Если это файл БД, получить путь к директории
+        actualStoragePath = p.dirname(dto.path);
+      } else {
         return Failure(
           DatabaseError.recordNotFound(
-            message: 'Директория хранилища не найдена',
+            message: 'Директория хранилища или файл БД не найдены',
             data: {'path': dto.path},
             timestamp: DateTime.now(),
           ),
@@ -213,12 +222,12 @@ class MainStoreManager {
       }
 
       // Поиск файла БД
-      final dbFilePath = await _findDatabaseFile(dto.path);
+      final dbFilePath = await _findDatabaseFile(actualStoragePath);
       if (dbFilePath == null) {
         return Failure(
           DatabaseError.recordNotFound(
             message: 'Файл базы данных не найден в директории',
-            data: {'path': dto.path},
+            data: {'path': actualStoragePath},
             timestamp: DateTime.now(),
           ),
         );
@@ -272,7 +281,7 @@ class MainStoreManager {
       final storeMeta = verifyResult.getOrThrow();
 
       _currentStore = database;
-      _currentStorePath = dto.path;
+      _currentStorePath = actualStoragePath;
 
       // Обновление времени последнего доступа
       await database
