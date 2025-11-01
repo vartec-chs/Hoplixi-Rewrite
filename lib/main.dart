@@ -72,7 +72,10 @@ void main() async {
       await setupDI();
       await setupTray();
 
-      final app = ProviderScope(child: setupToastificationWrapper(const App()));
+      final app = ProviderScope(
+        observers: [LoggingProviderObserver()],
+        child: setupToastificationWrapper(const App()),
+      );
 
       runApp(app);
     },

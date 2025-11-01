@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/global_key.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/routing/router_refresh_provider.dart';
@@ -14,6 +15,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: AppRoutesPaths.home,
     navigatorKey: navigatorKey,
+    observers: [LoggingRouteObserver()],
     refreshListenable: refreshNotifier,
     routes: UniversalPlatform.isDesktop
         ? [
