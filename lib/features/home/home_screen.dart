@@ -191,6 +191,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // TODO: Импорт/Экспорт
                   },
                 ),
+                const SizedBox(height: 12),
+                ActionButton(
+                  icon: CupertinoIcons.chart_bar,
+                  label: 'Панель управления',
+                  description: 'Перейти к панели управления',
+                  onTap: () => context.push(AppRoutesPaths.dashboard),
+                ),
               ],
             ),
           );
@@ -232,6 +239,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       disabled: true,
                       onTap: () {
                         // TODO: Импорт/Экспорт
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ActionButton(
+                      icon: CupertinoIcons.chart_bar,
+                      label: 'Панель управления',
+                      description: 'Перейти к панели управления',
+                      onTap: () => {
+                        context.push(AppRoutesPaths.dashboard),
+                        ref
+                            .read(titlebarStateProvider.notifier)
+                            .setBackgroundTransparent(false),
                       },
                     ),
                   ),

@@ -33,7 +33,6 @@ class _OpenStoreScreenState extends ConsumerState<OpenStoreScreen> {
   void _showPasswordFormDialog(OpenStoreState state) {
     final notifier = ref.read(openStoreFormProvider.notifier);
     final screenWidth = MediaQuery.of(context).size.width;
-    final colorScheme = Theme.of(context).colorScheme;
     final isDesktop = screenWidth > 600;
 
     if (isDesktop) {
