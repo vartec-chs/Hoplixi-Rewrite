@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hoplixi/features/dashboard/open_store/models/open_store_state.dart';
+import 'package:hoplixi/features/password_manager/open_store/models/open_store_state.dart';
 
 /// Карточка хранилища в списке
 class StorageCard extends StatelessWidget {

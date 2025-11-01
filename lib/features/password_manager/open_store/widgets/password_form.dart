@@ -1,43 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/theme/constants.dart';
-import 'package:hoplixi/features/dashboard/open_store/models/open_store_state.dart';
+import 'package:hoplixi/features/password_manager/open_store/providers/open_store_form_provider.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 
 /// Форма для ввода пароля при открытии хранилища
-class PasswordForm extends StatefulWidget {
-  final StorageInfo storage;
-  final String password;
-  final String? passwordError;
-  final bool isOpening;
-  final void Function(String) onPasswordChanged;
-  final VoidCallback onSubmit;
+class PasswordForm extends ConsumerStatefulWidget {
+  final VoidCallback onSuccess;
   final VoidCallback onCancel;
 
   const PasswordForm({
     super.key,
-    required this.storage,
-    required this.password,
-    required this.passwordError,
-    required this.isOpening,
-    required this.onPasswordChanged,
-    required this.onSubmit,
+    required this.onSuccess,
     required this.onCancel,
   });
 
   @override
-  State<PasswordForm> createState() => _PasswordFormState();
+  ConsumerState<PasswordForm> createState() => _PasswordFormState();
 }
 
-class _PasswordFormState extends State<PasswordForm> {
+class _PasswordFormState extends ConsumerState<PasswordForm> {
   late final TextEditingController _passwordController;
   late final FocusNode _passwordFocusNode;
 
   @override
   void initState() {
     super.initState();
-    _passwordController = TextEditingController(text: widget.password);
+    _passwordController = TextEditingController();
     _passwordController.addListener(_onPasswordChanged);
     _passwordFocusNode = FocusNode();
     // Автофокус на поле пароля
@@ -47,7 +38,8 @@ class _PasswordFormState extends State<PasswordForm> {
   }
 
   void _onPasswordChanged() {
-    widget.onPasswordChanged(_passwordController.text);
+    final notifier = ref.read(openStoreFormProvider.notifier);
+    notifier.updatePassword(_passwordController.text);
   }
 
   @override
@@ -57,20 +49,41 @@ class _PasswordFormState extends State<PasswordForm> {
     super.dispose();
   }
 
+  Future<void> _handleSubmit() async {
+    final notifier = ref.read(openStoreFormProvider.notifier);
+    final success = await notifier.openStorage();
+
+    if (success && mounted) {
+      widget.onSuccess();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final asyncState = ref.watch(openStoreFormProvider);
+    final state = asyncState.value;
+
+    if (state == null || state.selectedStorage == null) {
+      return const SizedBox.shrink();
+    }
+
+    final storage = state.selectedStorage!;
+    final isOpening = state.isOpening;
+    final passwordError = state.passwordError;
+    final password = state.password;
+
     return Focus(
       onKey: (node, event) {
         if (event.isKeyPressed(LogicalKeyboardKey.enter)) {
-          if (!widget.isOpening && widget.password.isNotEmpty) {
-            widget.onSubmit();
+          if (!isOpening && password.isNotEmpty) {
+            _handleSubmit();
             return KeyEventResult.handled;
           }
         } else if (event.isKeyPressed(LogicalKeyboardKey.escape)) {
-          if (!widget.isOpening) {
+          if (!isOpening) {
             widget.onCancel();
             return KeyEventResult.handled;
           }
@@ -79,7 +92,7 @@ class _PasswordFormState extends State<PasswordForm> {
       },
       child: Card(
         elevation: 0,
-        // color: colorScheme.surfaceContainerHigh,
+        color: Colors.transparent,
         child: Padding(
           padding: screenPadding,
           child: Column(
@@ -107,7 +120,7 @@ class _PasswordFormState extends State<PasswordForm> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.storage.name,
+                          storage.name,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -141,14 +154,14 @@ class _PasswordFormState extends State<PasswordForm> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Последнее изменение: ${widget.storage.formattedModifiedDate}',
+                            'Последнее изменение: ${storage.formattedModifiedDate}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Размер: ${widget.storage.formattedSize}',
+                            'Размер: ${storage.formattedSize}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -163,10 +176,10 @@ class _PasswordFormState extends State<PasswordForm> {
 
               // Поле ввода пароля
               PasswordField(label: 'Пароль', controller: _passwordController),
-              if (widget.passwordError != null) ...[
+              if (passwordError != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  widget.passwordError!,
+                  passwordError,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.error,
                   ),
@@ -181,16 +194,16 @@ class _PasswordFormState extends State<PasswordForm> {
                   SmoothButton(
                     label: 'Отмена',
                     type: SmoothButtonType.text,
-                    onPressed: widget.isOpening ? null : widget.onCancel,
+                    onPressed: isOpening ? null : widget.onCancel,
                   ),
                   const SizedBox(width: 12),
                   SmoothButton(
                     label: 'Открыть',
                     type: SmoothButtonType.filled,
-                    loading: widget.isOpening,
-                    onPressed: widget.isOpening || widget.password.isEmpty
+                    loading: isOpening,
+                    onPressed: isOpening || password.isEmpty
                         ? null
-                        : widget.onSubmit,
+                        : _handleSubmit,
                   ),
                 ],
               ),

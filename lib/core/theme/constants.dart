@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Константы для темы приложения
 const double defaultPadding = 16.0;
-final EdgeInsetsGeometry screenPadding = EdgeInsets.all(12);
+final double screenPaddingValue = 16;
+final EdgeInsetsGeometry screenPadding = EdgeInsets.all(screenPaddingValue);
 const double defaultBorderRadius = 16.0;
 final BorderRadius defaultBorderRadiusValue = BorderRadius.circular(
   defaultBorderRadius,

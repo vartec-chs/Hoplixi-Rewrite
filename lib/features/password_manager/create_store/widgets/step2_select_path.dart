@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/app_paths.dart';
 import 'package:hoplixi/core/theme/constants.dart';
-import 'package:hoplixi/features/dashboard/create_store/models/create_store_state.dart';
-import 'package:hoplixi/features/dashboard/create_store/providers/create_store_form_provider.dart';
+import 'package:hoplixi/features/password_manager/create_store/models/create_store_state.dart';
+import 'package:hoplixi/features/password_manager/create_store/providers/create_store_form_provider.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 
 /// Шаг 2: Выбор пути для хранилища

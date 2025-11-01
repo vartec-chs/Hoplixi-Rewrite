@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/core/theme/index.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/dashboard/open_store/models/open_store_state.dart';
-import 'package:hoplixi/features/dashboard/open_store/providers/open_store_form_provider.dart';
-import 'package:hoplixi/features/dashboard/open_store/widgets/index.dart';
+import 'package:hoplixi/features/password_manager/open_store/models/open_store_state.dart';
+import 'package:hoplixi/features/password_manager/open_store/providers/open_store_form_provider.dart';
+import 'package:hoplixi/features/password_manager/open_store/widgets/index.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/shared/ui/titlebar.dart';
 
@@ -29,10 +30,78 @@ class _OpenStoreScreenState extends ConsumerState<OpenStoreScreen> {
     ref.read(titlebarStateProvider.notifier).setBackgroundTransparent(false);
   }
 
+  void _showPasswordFormDialog(OpenStoreState state) {
+    final notifier = ref.read(openStoreFormProvider.notifier);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDesktop = screenWidth > 600;
+
+    if (isDesktop) {
+      // Показать диалог на больших экранах
+      showDialog(
+        context: context,
+        barrierDismissible: !state.isOpening,
+        builder: (dialogContext) => Dialog(
+          insetPadding: EdgeInsets.all(screenPaddingValue),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            decoration: BoxDecoration(
+              // color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: PasswordForm(
+              onSuccess: () => _handleOpenSuccess(dialogContext),
+              onCancel: () {
+                Navigator.of(dialogContext).pop();
+                notifier.cancelSelection();
+              },
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Показать bottom sheet на мобильных
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: !state.isOpening,
+        enableDrag: !state.isOpening,
+        showDragHandle: true,
+        useSafeArea: true,
+        builder: (sheetContext) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: PasswordForm(
+            onSuccess: () => _handleOpenSuccess(sheetContext),
+            onCancel: () {
+              Navigator.of(sheetContext).pop();
+              notifier.cancelSelection();
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(openStoreFormProvider);
     final notifier = ref.read(openStoreFormProvider.notifier);
+
+    // Отслеживаем изменения состояния
+    ref.listen<AsyncValue<OpenStoreState>>(openStoreFormProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((state) {
+        // Если хранилище было выбрано
+        if (state.selectedStorage != null &&
+            previous?.value?.selectedStorage != state.selectedStorage) {
+          _showPasswordFormDialog(state);
+        }
+      });
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -40,16 +109,10 @@ class _OpenStoreScreenState extends ConsumerState<OpenStoreScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            final state = asyncState.value;
-            if (state != null && state.selectedStorage != null) {
-              notifier.cancelSelection();
-              return;
-            }
             ref
                 .read(titlebarStateProvider.notifier)
                 .setBackgroundTransparent(true);
             context.pop();
-            // context.pop()
           },
         ),
         actions: [
@@ -170,27 +233,6 @@ class _OpenStoreScreenState extends ConsumerState<OpenStoreScreen> {
       );
     }
 
-    // Если хранилище выбрано - показываем форму пароля
-    if (state.selectedStorage != null) {
-      return Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 500),
-
-          child: SingleChildScrollView(
-            child: PasswordForm(
-              storage: state.selectedStorage!,
-              password: state.password,
-              passwordError: state.passwordError,
-              isOpening: state.isOpening,
-              onPasswordChanged: notifier.updatePassword,
-              onSubmit: () => _handleOpenStorage(context, notifier, ref),
-              onCancel: notifier.cancelSelection,
-            ),
-          ),
-        ),
-      );
-    }
-
     // Показываем список хранилищ
     return Column(
       children: [
@@ -237,31 +279,18 @@ class _OpenStoreScreenState extends ConsumerState<OpenStoreScreen> {
     );
   }
 
-  Future<void> _handleOpenStorage(
-    BuildContext context,
-    OpenStoreFormNotifier notifier,
-    WidgetRef ref,
-  ) async {
-    final success = await notifier.openStorage();
+  void _handleOpenSuccess(BuildContext dialogContext) {
+    if (!mounted) return;
 
-    if (success && context.mounted) {
-      Toaster.success(
-        context: context,
-        title: 'Успешно',
-        description: 'Хранилище открыто',
-      );
-      context.go(AppRoutesPaths.home);
-      ref.read(titlebarStateProvider.notifier).setBackgroundTransparent(true);
-    } else if (!success && context.mounted) {
-      final asyncState = ref.read(openStoreFormProvider);
-      final state = asyncState.value;
-      if (state?.error != null) {
-        Toaster.error(
-          context: context,
-          title: 'Ошибка',
-          description: state!.error!,
-        );
-      }
-    }
+    // Закрыть модальное окно
+    Navigator.of(dialogContext).pop();
+
+    Toaster.success(
+      context: context,
+      title: 'Успешно',
+      description: 'Хранилище открыто',
+    );
+    context.go(AppRoutesPaths.home);
+    ref.read(titlebarStateProvider.notifier).setBackgroundTransparent(true);
   }
 }

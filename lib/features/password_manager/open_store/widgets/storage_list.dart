@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/core/theme/constants.dart';
-import 'package:hoplixi/features/dashboard/open_store/models/open_store_state.dart';
-import 'package:hoplixi/features/dashboard/open_store/widgets/storage_card.dart';
+import 'package:hoplixi/features/password_manager/open_store/models/open_store_state.dart';
+import 'package:hoplixi/features/password_manager/open_store/widgets/storage_card.dart';
 
 /// Список доступных хранилищ
 class StorageList extends StatelessWidget {

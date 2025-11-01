@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hoplixi/features/dashboard/create_store/create_store_screen.dart';
-import 'package:hoplixi/features/dashboard/open_store/open_store_screen.dart';
+import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
+import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
