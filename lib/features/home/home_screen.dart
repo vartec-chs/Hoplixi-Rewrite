@@ -2,6 +2,8 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hoplixi/routing/paths.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'widgets/action_button.dart';
 import 'package:hoplixi/shared/ui/titlebar.dart';
@@ -179,9 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: CupertinoIcons.add_circled,
                   label: 'Создать',
                   description: 'Создать новый проект',
-                  onTap: () {
-                    // TODO: Создать бд
-                  },
+                  onTap: () => context.push(AppRoutesPaths.createStore),
                 ),
                 const SizedBox(height: 12),
                 ActionButton(
@@ -220,9 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       icon: CupertinoIcons.add_circled,
                       label: 'Создать',
                       description: 'Создать новый проект',
-                      onTap: () {
-                        // TODO: Создать бд
-                      },
+                      onTap: () => context.push(AppRoutesPaths.createStore),
                     ),
                   ),
                 ],

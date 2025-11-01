@@ -4,4 +4,7 @@ class AppRoutesPaths {
   static const String home = '/home';
   static const String settings = '/settings';
   static const String logs = '/logs';
+
+  // Add other route paths as needed
+  static const String createStore = '/create-store';
 }

@@ -15,6 +15,8 @@ InputDecoration primaryInputDecoration(
   Widget? error,
   Widget? helper,
   String? helperText,
+  Widget? prefixIcon,
+  Widget? suffixIcon, 
   bool enabled = true,
   bool filled = true,
   Widget? icon,
@@ -29,6 +31,9 @@ InputDecoration primaryInputDecoration(
     helper: helper,
     helperText: helperText,
     icon: icon,
+    prefixIcon: prefixIcon,
+    suffixIcon: suffixIcon,
+    
 
     labelStyle: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16),
 

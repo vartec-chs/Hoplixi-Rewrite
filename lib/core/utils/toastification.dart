@@ -8,7 +8,7 @@ import 'package:toastification/toastification.dart';
 
 class Toaster {
   static const String _logTag = 'Toaster';
-  static const toastificationStyle = ToastificationStyle.flatColored;
+  static const toastificationStyle = ToastificationStyle.fillColored;
 
   static const EdgeInsets toastPadding = EdgeInsets.symmetric(
     horizontal: 12,

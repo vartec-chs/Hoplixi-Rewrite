@@ -25,6 +25,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]
         : appRoutes,
+
+    redirect: (context, state) {},
   );
 
   ref.onDispose(() {

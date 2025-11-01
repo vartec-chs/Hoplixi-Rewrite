@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
-import 'package:hoplixi/di_init.dart';
 import 'package:hoplixi/main_store/main_store_manager.dart';
 import 'package:hoplixi/main_store/models/db_errors.dart';
 import 'package:hoplixi/main_store/models/db_state.dart';
@@ -35,7 +34,17 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
   MainStoreManager? _manager;
   DatabaseHistoryService? _dbHistoryService;
 
-  MainStoreManager get _getManager {
+  Future<MainStoreManager> get _getManager async {
+    // Если сервис еще не инициализирован, ждем его
+    if (_dbHistoryService == null) {
+      _dbHistoryService = await ref.read(dbHistoryProvider.future);
+    }
+
+    // Если менеджер еще не создан, создаем его
+    if (_manager == null) {
+      _manager = MainStoreManager(_dbHistoryService!);
+    }
+
     return _manager!;
   }
 
@@ -54,7 +63,6 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
     // Инициализация с idle состоянием
 
     _dbHistoryService = await ref.watch(dbHistoryProvider.future);
-    _manager = MainStoreManager(_dbHistoryService!);
 
     logInfo('MainStoreAsyncNotifier initialized', tag: _logTag);
     return const DatabaseState(status: DatabaseStatus.idle);
@@ -74,14 +82,15 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем создание хранилища
-      final result = await _getManager.createStore(dto);
+      final manager = await _getManager;
+      final result = await manager.createStore(dto);
 
       return result.fold(
         (storeInfo) {
           // Успех - обновляем состояние
           _setState(
             DatabaseState(
-              path: _getManager.currentStorePath,
+              path: manager.currentStorePath,
               name: storeInfo.name,
               status: DatabaseStatus.open,
               modifiedAt: storeInfo.modifiedAt,
@@ -138,14 +147,15 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем открытие хранилища
-      final result = await _getManager.openStore(dto);
+      final manager = await _getManager;
+      final result = await manager.openStore(dto);
 
       return result.fold(
         (storeInfo) {
           // Успех - обновляем состояние
           _setState(
             DatabaseState(
-              path: _getManager.currentStorePath,
+              path: manager.currentStorePath,
               name: storeInfo.name,
               status: DatabaseStatus.open,
               modifiedAt: storeInfo.modifiedAt,
@@ -203,7 +213,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем закрытие хранилища
-      final result = await _getManager.closeStore();
+      final manager = await _getManager;
+      final result = await manager.closeStore();
 
       return result.fold(
         (_) {
@@ -298,10 +309,11 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       }
 
       // Закрываем текущее соединение
-      await _getManager.closeStore();
+      final manager = await _getManager;
+      await manager.closeStore();
 
       // Пытаемся открыть заново с паролем
-      final result = await _getManager.openStore(
+      final result = await manager.openStore(
         OpenStoreDto(path: currentPath, password: password),
       );
 
@@ -369,7 +381,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем обновление хранилища
-      final result = await _getManager.updateStore(dto);
+      final manager = await _getManager;
+      final result = await manager.updateStore(dto);
 
       return result.fold(
         (storeInfo) {
@@ -432,7 +445,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем удаление хранилища
-      final result = await _getManager.deleteStore(
+      final manager = await _getManager;
+      final result = await manager.deleteStore(
         path,
         deleteFromDisk: deleteFromDisk,
       );
@@ -488,7 +502,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         return null;
       }
 
-      final result = await _getManager.getAttachmentsPath();
+      final manager = await _getManager;
+      final result = await manager.getAttachmentsPath();
 
       return result.fold((path) => path, (error) {
         logError(
@@ -518,7 +533,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         return null;
       }
 
-      final result = await _getManager.createSubfolder(folderName);
+      final manager = await _getManager;
+      final result = await manager.createSubfolder(folderName);
 
       return result.fold(
         (path) {
