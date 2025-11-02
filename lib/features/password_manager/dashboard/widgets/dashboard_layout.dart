@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hoplixi/core/theme/constants.dart';
 
 /// Адаптивный layout для dashboard
 /// На больших экранах: NavigationRail слева + main content + sidebar справа
@@ -65,6 +64,29 @@ class _DashboardLayoutState extends State<DashboardLayout>
   void didUpdateWidget(DashboardLayout oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // На широком экране sidebar всегда открыт
+    if (widget.isDesktop) {
+      if (widget.sidebarContent != oldWidget.sidebarContent) {
+        // Просто обновляем контент без анимации скрытия/показа
+        if (_animationController.value < 1.0) {
+          _currentSidebarContent = widget.sidebarContent;
+          _animationController.forward();
+        } else {
+          // Fade out -> change content -> fade in
+          _animationController.reverse().then((_) {
+            if (mounted) {
+              setState(() {
+                _currentSidebarContent = widget.sidebarContent;
+              });
+              _animationController.forward();
+            }
+          });
+        }
+      }
+      return;
+    }
+
+    // На мобильном - стандартная логика открытия/закрытия
     // Открытие sidebar
     if (widget.sidebarContent != null && oldWidget.sidebarContent == null) {
       _currentSidebarContent = widget.sidebarContent;
@@ -108,96 +130,94 @@ class _DashboardLayoutState extends State<DashboardLayout>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isDesktop) {
-      // Десктопная версия с NavigationRail слева
-      return Row(
-        children: [
-          // NavigationRail слева
-          if (widget.navigationRail != null) widget.navigationRail!,
+    // if (widget.isDesktop) {
+    // Десктопная версия с NavigationRail слева
+    return Row(
+      children: [
+        // NavigationRail слева
+        if (widget.navigationRail != null) widget.navigationRail!,
 
-          // Main content в центре
-          Expanded(flex: 2, child: widget.mainContent),
+        // Main content в центре
+        Expanded(flex: 2, child: widget.mainContent),
 
-          // Анимированный Sidebar справа
-          if (_currentSidebarContent != null || _isClosing)
-            AnimatedBuilder(
-              animation: _sidebarAnimation,
-              builder: (context, child) {
-                return ClipRect(
-                  child: SizedBox(
-                    width:
-                        MediaQuery.of(context).size.width /
-                        2.2 *
-                        _sidebarAnimation.value,
-                    child: _sidebarAnimation.value > 0
-                        ? Opacity(
-                            opacity: _fadeAnimation.value,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerLow,
-                                border: Border(
-                                  left: BorderSide(
-                                    color: Theme.of(context).dividerColor,
-                                    width: 1,
-                                  ),
+        // Анимированный Sidebar справа
+        if (_currentSidebarContent != null || _isClosing)
+          AnimatedBuilder(
+            animation: _sidebarAnimation,
+            builder: (context, child) {
+              return ClipRect(
+                child: SizedBox(
+                  width: widget.isDesktop
+                      ? MediaQuery.of(context).size.width /
+                            2.25 *
+                            _sidebarAnimation.value
+                      : MediaQuery.of(context).size.width *
+                            _sidebarAnimation.value,
+                  child: _sidebarAnimation.value > 0
+                      ? Opacity(
+                          opacity: _fadeAnimation.value,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLow,
+                              border: Border(
+                                left: BorderSide(
+                                  color: Theme.of(context).dividerColor,
+                                  width: 1,
                                 ),
                               ),
-                              child: _sidebarAnimation.value > 0.3
-                                  ? Column(
-                                      children: [
-                                        // Заголовок sidebar с кнопкой закрытия
-                                        Container(
-                                          height: 56,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            border: Border(
-                                              bottom: BorderSide(
-                                                color: Theme.of(
-                                                  context,
-                                                ).dividerColor,
-                                                width: 1,
-                                              ),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(Icons.close),
-                                                onPressed:
-                                                    widget.onCloseSidebar,
-                                                tooltip: 'Закрыть',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        // Содержимое sidebar
-                                        if (_currentSidebarContent != null)
-                                          Expanded(
-                                            child: _currentSidebarContent!,
-                                          ),
-                                      ],
-                                    )
-                                  : const SizedBox.shrink(),
                             ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                );
-              },
-            ),
-        ],
-      );
-    }
+                            child: _sidebarAnimation.value > 0.3
+                                ? Column(
+                                    children: [
+                                      // Заголовок sidebar с кнопкой закрытия
+                                      // Container(
+                                      //   height: 56,
+                                      //   padding: const EdgeInsets.symmetric(
+                                      //     horizontal: 16,
+                                      //   ),
+                                      //   decoration: BoxDecoration(
+                                      //     border: Border(
+                                      //       bottom: BorderSide(
+                                      //         color: Theme.of(
+                                      //           context,
+                                      //         ).dividerColor,
+                                      //         width: 1,
+                                      //       ),
+                                      //     ),
+                                      //   ),
+                                      //   child: Row(
+                                      //     mainAxisAlignment:
+                                      //         MainAxisAlignment.end,
+                                      //     children: [
+                                      //       IconButton(
+                                      //         icon: const Icon(Icons.close),
+                                      //         onPressed: widget.onCloseSidebar,
+                                      //         tooltip: 'Закрыть',
+                                      //       ),
+                                      //     ],
+                                      //   ),
+                                      // ),
 
-    // Мобильная версия - только main content
-    return widget.mainContent;
+                                      // Содержимое sidebar
+                                      Expanded(
+                                        child:
+                                            _currentSidebarContent ??
+                                            const SizedBox.shrink(),
+                                      ),
+                                    ],
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              );
+            },
+          ),
+      ],
+    );
   }
 }
 

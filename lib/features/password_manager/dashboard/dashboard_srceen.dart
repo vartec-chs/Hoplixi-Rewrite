@@ -29,7 +29,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             isDesktop: isDesktop,
             navigationRail: isDesktop ? _buildNavigationRail(context) : null,
             mainContent: _buildMainContent(context, ref, isDesktop),
-            sidebarContent: sidebarState.content,
+            sidebarContent: isDesktop
+                ? (sidebarState.content ?? _buildSidebarPlaceholder(context))
+                : sidebarState.content,
             onCloseSidebar: sidebarNotifier.close,
           );
         },
@@ -38,14 +40,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       bottomNavigationBar: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 900;
-          if (isDesktop) return const SizedBox.shrink();
+          if (isDesktop || sidebarState.content != null) {
+            return const SizedBox.shrink();
+          }
           return _buildBottomAppBar(context);
         },
       ),
       floatingActionButton: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 900;
-          if (isDesktop) return const SizedBox.shrink();
+          if (isDesktop || sidebarState.content != null) {
+            return const SizedBox.shrink();
+          }
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -327,33 +333,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _openCreateForm(BuildContext context, WidgetRef ref) {
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
+    // final isDesktop = MediaQuery.of(context).size.width >= 900;
     final sidebarNotifier = ref.read(dashboardSidebarProvider.notifier);
 
-    if (isDesktop) {
-      // Открыть в sidebar на больших экранах
-      sidebarNotifier.open(
-        _buildFormContent(
-          context,
-          'Создать запись',
-          'Форма для создания новой записи',
-        ),
-      );
-    } else {
-      // Открыть на новой странице на маленьких экранах
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => Scaffold(
-            appBar: AppBar(title: const Text('Создать запись')),
-            body: _buildFormContent(
-              context,
-              'Создать запись',
-              'Форма для создания новой записи',
-            ),
-          ),
-        ),
-      );
-    }
+    // if (isDesktop) {
+    // Открыть в sidebar на больших экранах
+    sidebarNotifier.open(
+      _buildFormContent(
+        context,
+        'Создать запись',
+        'Форма для создания новой записи',
+      ),
+    );
+    // } else {
+    // Открыть на новой странице на маленьких экранах
+    // Navigator.of(context).push(
+    //   MaterialPageRoute(
+    //     builder: (context) => Scaffold(
+    //       appBar: AppBar(title: const Text('Создать запись')),
+    //       body: _buildFormContent(
+    //         context,
+    //         'Создать запись',
+    //         'Форма для создания новой записи',
+    //       ),
+    //     ),
+    //   ),
+    // );
+    // }
   }
 
   void _openCategoriesForm(BuildContext context, WidgetRef ref) {
@@ -409,53 +415,101 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       builder: (context, ref, child) {
         final theme = Theme.of(context);
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(4),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  // color: Theme.of(context).colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: theme.textTheme.headlineSmall),
-                      const SizedBox(height: 8),
-                      Text(
-                        description,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(title),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () =>
+                  ref.read(dashboardSidebarProvider.notifier).close(),
             ),
-
-            // Здесь будет содержимое формы
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(screenPaddingValue),
-                child: Center(
-                  child: Text(
-                    'Форма в разработке',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(4),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    // color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: theme.textTheme.headlineSmall),
+                        const SizedBox(height: 8),
+                        Text(
+                          description,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+
+              // Здесь будет содержимое формы
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(screenPaddingValue),
+                  child: Center(
+                    child: Text(
+                      'Форма в разработке',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  /// Placeholder для sidebar когда ничего не выбрано
+  Widget _buildSidebarPlaceholder(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.touch_app_outlined,
+              size: 64,
+              color: theme.colorScheme.primary.withOpacity(0.3),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Выберите действие',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Создайте новую запись или\nвыберите существующую',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
