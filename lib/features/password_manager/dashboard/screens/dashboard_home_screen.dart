@@ -7,7 +7,8 @@ class DashboardHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return CustomScrollView(
+    return Scaffold(
+      body: CustomScrollView(
       slivers: [
         // AppBar с поиском и вкладками
         DashboardSliverAppBar(
@@ -126,6 +127,7 @@ class DashboardHomeScreen extends ConsumerWidget {
         // Padding снизу
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
+      ),
     );
   }
 }

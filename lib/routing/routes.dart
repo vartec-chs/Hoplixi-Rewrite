@@ -11,6 +11,10 @@ import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
+/// Флаг для отключения/включения кастомных анимаций при переходах между экранами dashboard
+/// true = кастомные Scale+Fade анимации, false = стандартные MaterialPage анимации
+const bool _enableDashboardTransitions = false;
+
 final List<RouteBase> appRoutes = [
   GoRoute(
     path: AppRoutesPaths.splash,
@@ -39,43 +43,78 @@ final List<RouteBase> appRoutes = [
     routes: [
       GoRoute(
         path: AppRoutesPaths.dashboardHome,
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const DashboardHomeScreen(),
-          transitionDuration: const Duration(milliseconds: 200),
-          reverseTransitionDuration: const Duration(milliseconds: 150),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return ScaleTransition(
-              scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              ),
-              child: FadeTransition(opacity: animation, child: child),
+        pageBuilder: (context, state) {
+          if (!_enableDashboardTransitions) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const DashboardHomeScreen(),
             );
-          },
-        ),
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const DashboardHomeScreen(),
+            transitionDuration: const Duration(milliseconds: 200),
+            reverseTransitionDuration: const Duration(milliseconds: 150),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return ScaleTransition(
+                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+          );
+        },
       ),
       GoRoute(
         path: AppRoutesPaths.dashboardCategories,
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const CategoriesScreen(),
-          transitionDuration: const Duration(milliseconds: 250),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            if (secondaryAnimation.status == AnimationStatus.forward ||
-                secondaryAnimation.status == AnimationStatus.reverse) {
-              return ScaleTransition(
-                scale: Tween<double>(begin: 1.0, end: 0.9).animate(
-                  CurvedAnimation(
-                    parent: secondaryAnimation,
-                    curve: Curves.easeInCubic,
-                  ),
-                ),
-                child: FadeTransition(
-                  opacity: Tween<double>(
-                    begin: 1.0,
-                    end: 0.0,
-                  ).animate(secondaryAnimation),
-                  child: ScaleTransition(
+        pageBuilder: (context, state) {
+          if (!_enableDashboardTransitions) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const CategoriesScreen(),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const CategoriesScreen(),
+            transitionDuration: const Duration(milliseconds: 250),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  if (secondaryAnimation.status == AnimationStatus.forward ||
+                      secondaryAnimation.status == AnimationStatus.reverse) {
+                    return ScaleTransition(
+                      scale: Tween<double>(begin: 1.0, end: 0.9).animate(
+                        CurvedAnimation(
+                          parent: secondaryAnimation,
+                          curve: Curves.easeInCubic,
+                        ),
+                      ),
+                      child: FadeTransition(
+                        opacity: Tween<double>(
+                          begin: 1.0,
+                          end: 0.0,
+                        ).animate(secondaryAnimation),
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return ScaleTransition(
                     scale: Tween<double>(begin: 0.9, end: 1.0).animate(
                       CurvedAnimation(
                         parent: animation,
@@ -83,41 +122,56 @@ final List<RouteBase> appRoutes = [
                       ),
                     ),
                     child: FadeTransition(opacity: animation, child: child),
-                  ),
-                ),
-              );
-            }
-            return ScaleTransition(
-              scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              ),
-              child: FadeTransition(opacity: animation, child: child),
-            );
-          },
-        ),
+                  );
+                },
+          );
+        },
       ),
       GoRoute(
         path: AppRoutesPaths.dashboardSearch,
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const SearchScreen(),
-          transitionDuration: const Duration(milliseconds: 250),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            if (secondaryAnimation.status == AnimationStatus.forward ||
-                secondaryAnimation.status == AnimationStatus.reverse) {
-              return ScaleTransition(
-                scale: Tween<double>(begin: 1.0, end: 0.9).animate(
-                  CurvedAnimation(
-                    parent: secondaryAnimation,
-                    curve: Curves.easeInCubic,
-                  ),
-                ),
-                child: FadeTransition(
-                  opacity: Tween<double>(
-                    begin: 1.0,
-                    end: 0.0,
-                  ).animate(secondaryAnimation),
-                  child: ScaleTransition(
+        pageBuilder: (context, state) {
+          if (!_enableDashboardTransitions) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const SearchScreen(),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const SearchScreen(),
+            transitionDuration: const Duration(milliseconds: 250),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  if (secondaryAnimation.status == AnimationStatus.forward ||
+                      secondaryAnimation.status == AnimationStatus.reverse) {
+                    return ScaleTransition(
+                      scale: Tween<double>(begin: 1.0, end: 0.9).animate(
+                        CurvedAnimation(
+                          parent: secondaryAnimation,
+                          curve: Curves.easeInCubic,
+                        ),
+                      ),
+                      child: FadeTransition(
+                        opacity: Tween<double>(
+                          begin: 1.0,
+                          end: 0.0,
+                        ).animate(secondaryAnimation),
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return ScaleTransition(
                     scale: Tween<double>(begin: 0.9, end: 1.0).animate(
                       CurvedAnimation(
                         parent: animation,
@@ -125,41 +179,56 @@ final List<RouteBase> appRoutes = [
                       ),
                     ),
                     child: FadeTransition(opacity: animation, child: child),
-                  ),
-                ),
-              );
-            }
-            return ScaleTransition(
-              scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              ),
-              child: FadeTransition(opacity: animation, child: child),
-            );
-          },
-        ),
+                  );
+                },
+          );
+        },
       ),
       GoRoute(
         path: AppRoutesPaths.dashboardSettings,
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const DashboardSettingsScreen(),
-          transitionDuration: const Duration(milliseconds: 250),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            if (secondaryAnimation.status == AnimationStatus.forward ||
-                secondaryAnimation.status == AnimationStatus.reverse) {
-              return ScaleTransition(
-                scale: Tween<double>(begin: 1.0, end: 0.9).animate(
-                  CurvedAnimation(
-                    parent: secondaryAnimation,
-                    curve: Curves.easeInCubic,
-                  ),
-                ),
-                child: FadeTransition(
-                  opacity: Tween<double>(
-                    begin: 1.0,
-                    end: 0.0,
-                  ).animate(secondaryAnimation),
-                  child: ScaleTransition(
+        pageBuilder: (context, state) {
+          if (!_enableDashboardTransitions) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const DashboardSettingsScreen(),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const DashboardSettingsScreen(),
+            transitionDuration: const Duration(milliseconds: 250),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  if (secondaryAnimation.status == AnimationStatus.forward ||
+                      secondaryAnimation.status == AnimationStatus.reverse) {
+                    return ScaleTransition(
+                      scale: Tween<double>(begin: 1.0, end: 0.9).animate(
+                        CurvedAnimation(
+                          parent: secondaryAnimation,
+                          curve: Curves.easeInCubic,
+                        ),
+                      ),
+                      child: FadeTransition(
+                        opacity: Tween<double>(
+                          begin: 1.0,
+                          end: 0.0,
+                        ).animate(secondaryAnimation),
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return ScaleTransition(
                     scale: Tween<double>(begin: 0.9, end: 1.0).animate(
                       CurvedAnimation(
                         parent: animation,
@@ -167,18 +236,10 @@ final List<RouteBase> appRoutes = [
                       ),
                     ),
                     child: FadeTransition(opacity: animation, child: child),
-                  ),
-                ),
-              );
-            }
-            return ScaleTransition(
-              scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              ),
-              child: FadeTransition(opacity: animation, child: child),
-            );
-          },
-        ),
+                  );
+                },
+          );
+        },
       ),
     ],
   ),

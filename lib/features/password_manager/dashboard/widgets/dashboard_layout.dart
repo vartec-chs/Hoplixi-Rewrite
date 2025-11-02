@@ -52,7 +52,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
   void _onDestinationSelected(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.go(AppRoutesPaths.dashboardHome);
+        context.go(AppRoutesPaths.dashboard);
         break;
       case 1:
         context.go(AppRoutesPaths.dashboardCategories);
@@ -107,7 +107,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
                         alignment: Alignment.centerLeft,
                         widthFactor: _sidebarAnimation.value,
                         child: SizedBox(
-                          width: constraints.maxWidth / 2.5,
+                          width: constraints.maxWidth / 2.15,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Theme.of(
