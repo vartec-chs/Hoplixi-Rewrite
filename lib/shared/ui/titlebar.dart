@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
@@ -124,7 +125,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                   ThemeSwitcher(size: 26),
                   IconButton(
                     padding: const EdgeInsets.all(6),
-                    icon: Icon(Icons.remove, size: 20),
+                    icon: Icon(Icons.minimize, size: 20),
                     tooltip: 'Свернуть',
                     constraints: constraints,
                     onPressed: () => windowManager.minimize(),
@@ -133,7 +134,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                     padding: const EdgeInsets.all(6),
                     tooltip: 'Развернуть',
                     constraints: constraints,
-                    icon: Icon(Icons.minimize, size: 20),
+                    icon: Icon(Icons.crop_square, size: 20),
                     onPressed: () => windowManager.maximize(),
                   ),
                   IconButton(
@@ -141,7 +142,11 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                     tooltip: 'Закрыть',
                     hoverColor: Colors.red,
                     constraints: constraints,
-                    icon: Icon(Icons.close, size: 20),
+                    icon: Icon(
+                      Icons.close,
+                      size: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                     onPressed: () async => {
                       await windowManager.hide(),
                       // await windowManager.close(),

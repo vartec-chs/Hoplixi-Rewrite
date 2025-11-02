@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/shared/ui/status_bar.dart';
 import 'titlebar.dart';
 
 class DesktopShell extends StatelessWidget {
@@ -23,9 +24,10 @@ class DesktopShell extends StatelessWidget {
               },
             ),
             Expanded(child: child),
+            const StatusBar(),
           ],
         ),
-        Positioned(top: 0, left: 0, right: 0, child: TitleBar()),
+        const Positioned(top: 0, left: 0, right: 0, child: TitleBar()),
       ],
     );
   }
