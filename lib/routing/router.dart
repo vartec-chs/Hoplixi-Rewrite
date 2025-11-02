@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/logger/index.dart';
@@ -6,6 +7,7 @@ import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/routing/router_refresh_provider.dart';
 import 'package:hoplixi/routing/routes.dart';
 import 'package:hoplixi/shared/ui/desktop_shell.dart';
+import 'package:hoplixi/shared/ui/titlebar.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -15,6 +17,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: AppRoutesPaths.home,
     navigatorKey: navigatorKey,
+
     observers: [LoggingRouteObserver()],
     refreshListenable: refreshNotifier,
     routes: UniversalPlatform.isDesktop
@@ -34,6 +37,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
   );
+
+  router.routerDelegate.addListener(() {
+    final loc = router.state.path;
+    logTrace('Router location changed: $loc');
+    if (loc == AppRoutesPaths.home) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(titlebarStateProvider.notifier).setBackgroundTransparent(true);
+        
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(titlebarStateProvider.notifier)
+            .setBackgroundTransparent(false);
+      });
+    }
+  });
 
   ref.onDispose(() {
     refreshNotifier.dispose();

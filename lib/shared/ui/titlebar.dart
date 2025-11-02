@@ -70,12 +70,11 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                         Text(
                           titlebarState.label,
                           style: TextStyle(
-                            color:
-                                titlebarState.color ??
-                                (Theme.of(context).colorScheme.brightness ==
-                                        Brightness.dark
-                                    ? Colors.black
-                                    : Colors.white),
+                            color: titlebarState.backgroundTransparent
+                                ? Colors.white
+                                : Theme.of(
+                                    context,
+                                  ).appBarTheme.titleTextStyle?.color,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             fontStyle: FontStyle.normal,

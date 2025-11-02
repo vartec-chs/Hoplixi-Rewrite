@@ -94,6 +94,7 @@ class _AppState extends ConsumerState<App> with TrayListener {
     final themeMode = theme.value ?? ThemeMode.system;
 
     return MaterialApp.router(
+      
       title: MainConstants.appName,
       theme: AppTheme.light(context),
       darkTheme: AppTheme.dark(context),

@@ -39,6 +39,11 @@ abstract final class ComponentThemes {
     navigationRailUseIndicator: true,
     adaptiveAppBarScrollUnderOff: FlexAdaptive.all(),
     scaffoldBackgroundBaseColor: FlexScaffoldBaseColor.surface,
+    appBarTitleTextStyle: TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      color: Colors.black,
+    ),
   );
 
   /// Базовые подтемы для тёмной темы
@@ -69,6 +74,11 @@ abstract final class ComponentThemes {
 
     adaptiveAppBarScrollUnderOff: FlexAdaptive.all(),
     scaffoldBackgroundBaseColor: FlexScaffoldBaseColor.surface,
+    appBarTitleTextStyle: TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+    ),
   );
 }
 
