@@ -7,6 +7,8 @@ import 'package:hoplixi/core/utils/window_manager.dart';
 import 'package:hoplixi/routing/router.dart';
 import 'package:hoplixi/setup_tray.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:animated_theme_switcher/animated_theme_switcher.dart'
+    as animated_theme;
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -89,18 +91,29 @@ class _AppState extends ConsumerState<App> with TrayListener {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
-    final theme = ref.watch(themeProvider);
+    final theme = ref.read(themeProvider);
 
     final themeMode = theme.value ?? ThemeMode.system;
 
-    return MaterialApp.router(
-      
-      title: MainConstants.appName,
-      theme: AppTheme.light(context),
-      darkTheme: AppTheme.dark(context),
-      routerConfig: router,
-      themeMode: themeMode,
-      debugShowCheckedModeBanner: false,
+    return animated_theme.ThemeProvider(
+      initTheme: themeMode == ThemeMode.light
+          ? AppTheme.light(context)
+          : themeMode == ThemeMode.dark
+          ? AppTheme.dark(context)
+          : MediaQuery.of(context).platformBrightness == Brightness.dark
+          ? AppTheme.dark(context)
+          : AppTheme.light(context),
+      child: MaterialApp.router(
+        title: MainConstants.appName,
+        theme: AppTheme.light(context),
+        darkTheme: AppTheme.dark(context),
+        routerConfig: router,
+        // themeMode: themeMode,
+        debugShowCheckedModeBanner: false,
+        builder: (context, child) {
+          return animated_theme.ThemeSwitchingArea(child: child!);
+        },
+      ),
     );
   }
 }
