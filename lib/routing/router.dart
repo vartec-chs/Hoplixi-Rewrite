@@ -26,7 +26,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]
         : appRoutes,
 
-    redirect: (context, state) {},
+    redirect: (context, state) {
+      // Редирект с /dashboard на /dashboard/home
+      if (state.uri.toString() == AppRoutesPaths.dashboard) {
+        return AppRoutesPaths.dashboardHome;
+      }
+      return null;
+    },
   );
 
   ref.onDispose(() {

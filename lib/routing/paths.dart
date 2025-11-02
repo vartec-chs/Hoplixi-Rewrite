@@ -11,4 +11,8 @@ class AppRoutesPaths {
 
   // Dashboard related paths
   static const String dashboard = '/dashboard';
+  static const String dashboardHome = '/dashboard/home';
+  static const String dashboardCategories = '/dashboard/categories';
+  static const String dashboardSearch = '/dashboard/search';
+  static const String dashboardSettings = '/dashboard/settings';
 }

@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
+import 'package:hoplixi/routing/paths.dart';
 
-/// Адаптивный layout для dashboard
-/// На больших экранах: NavigationRail слева + main content + sidebar справа
-/// На маленьких экранах: только main content (формы открываются на новой странице)
+/// Адаптивный layout для dashboard с использованием ShellRoute
+/// На больших экранах: NavigationRail слева + main content + sidebar справа (child)
+/// На маленьких экранах: BottomNavigationBar + main content, sidebar открывается по отдельным роутам
 class DashboardLayout extends StatefulWidget {
-  final bool isDesktop;
-  final Widget? navigationRail;
-  final Widget mainContent;
-  final Widget? sidebarContent;
-  final VoidCallback? onCloseSidebar;
-  final double breakpoint;
+  final Widget child;
 
-  const DashboardLayout({
-    super.key,
-    required this.isDesktop,
-    this.navigationRail,
-    required this.mainContent,
-    this.sidebarContent,
-    this.onCloseSidebar,
-    this.breakpoint = 900,
-  });
+  const DashboardLayout({super.key, required this.child});
 
   @override
   State<DashboardLayout> createState() => _DashboardLayoutState();
@@ -29,15 +19,11 @@ class _DashboardLayoutState extends State<DashboardLayout>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _sidebarAnimation;
-  late Animation<double> _fadeAnimation;
-  Widget? _currentSidebarContent;
-  bool _isClosing = false;
+  int _previousIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _currentSidebarContent = widget.sidebarContent;
-
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -47,79 +33,6 @@ class _DashboardLayoutState extends State<DashboardLayout>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
-      ),
-    );
-
-    if (widget.sidebarContent != null) {
-      _animationController.forward();
-    }
-  }
-
-  @override
-  void didUpdateWidget(DashboardLayout oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // На широком экране sidebar всегда открыт
-    if (widget.isDesktop) {
-      if (widget.sidebarContent != oldWidget.sidebarContent) {
-        // Просто обновляем контент без анимации скрытия/показа
-        if (_animationController.value < 1.0) {
-          _currentSidebarContent = widget.sidebarContent;
-          _animationController.forward();
-        } else {
-          // Fade out -> change content -> fade in
-          _animationController.reverse().then((_) {
-            if (mounted) {
-              setState(() {
-                _currentSidebarContent = widget.sidebarContent;
-              });
-              _animationController.forward();
-            }
-          });
-        }
-      }
-      return;
-    }
-
-    // На мобильном - стандартная логика открытия/закрытия
-    // Открытие sidebar
-    if (widget.sidebarContent != null && oldWidget.sidebarContent == null) {
-      _currentSidebarContent = widget.sidebarContent;
-      _isClosing = false;
-      _animationController.forward();
-    }
-    // Закрытие sidebar
-    else if (widget.sidebarContent == null &&
-        oldWidget.sidebarContent != null) {
-      _isClosing = true;
-      _animationController.reverse().then((_) {
-        if (mounted) {
-          setState(() {
-            _currentSidebarContent = null;
-            _isClosing = false;
-          });
-        }
-      });
-    }
-    // Смена контента
-    else if (widget.sidebarContent != null &&
-        oldWidget.sidebarContent != null &&
-        widget.sidebarContent != oldWidget.sidebarContent) {
-      // Fade out -> change content -> fade in
-      _animationController.reverse().then((_) {
-        if (mounted) {
-          setState(() {
-            _currentSidebarContent = widget.sidebarContent;
-          });
-          _animationController.forward();
-        }
-      });
-    }
   }
 
   @override
@@ -128,34 +41,73 @@ class _DashboardLayoutState extends State<DashboardLayout>
     super.dispose();
   }
 
+  int _getSelectedIndex(BuildContext context) {
+    final location = GoRouterState.of(context).uri.toString();
+    if (location.startsWith(AppRoutesPaths.dashboardCategories)) return 1;
+    if (location.startsWith(AppRoutesPaths.dashboardSearch)) return 2;
+    if (location.startsWith(AppRoutesPaths.dashboardSettings)) return 3;
+    return 0; // home
+  }
+
+  void _onDestinationSelected(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go(AppRoutesPaths.dashboardHome);
+        break;
+      case 1:
+        context.go(AppRoutesPaths.dashboardCategories);
+        break;
+      case 2:
+        context.go(AppRoutesPaths.dashboardSearch);
+        break;
+      case 3:
+        context.go(AppRoutesPaths.dashboardSettings);
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // if (widget.isDesktop) {
-    // Десктопная версия с NavigationRail слева
-    return Row(
-      children: [
-        // NavigationRail слева
-        if (widget.navigationRail != null) widget.navigationRail!,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+        final selectedIndex = _getSelectedIndex(context);
 
-        // Main content в центре
-        Expanded(flex: 2, child: widget.mainContent),
+        // Управление анимацией при изменении выбранного индекса
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_previousIndex != selectedIndex) {
+            if (selectedIndex == 0) {
+              // Закрываем sidebar
+              _animationController.reverse();
+            } else if (_previousIndex == 0) {
+              // Открываем sidebar
+              _animationController.forward();
+            }
+            _previousIndex = selectedIndex;
+          }
+        });
 
-        // Анимированный Sidebar справа
-        if (_currentSidebarContent != null || _isClosing)
-          AnimatedBuilder(
-            animation: _sidebarAnimation,
-            builder: (context, child) {
-              return ClipRect(
-                child: SizedBox(
-                  width: widget.isDesktop
-                      ? MediaQuery.of(context).size.width /
-                            2.25 *
-                            _sidebarAnimation.value
-                      : MediaQuery.of(context).size.width *
-                            _sidebarAnimation.value,
-                  child: _sidebarAnimation.value > 0
-                      ? Opacity(
-                          opacity: _fadeAnimation.value,
+        if (isDesktop) {
+          // Desktop layout: NavigationRail + Content (или Content + Sidebar)
+          return Scaffold(
+            body: Row(
+              children: [
+                // NavigationRail слева
+                _buildNavigationRail(context, selectedIndex),
+
+                // Home контент (всегда присутствует)
+                const Expanded(flex: 1, child: DashboardHomeScreen()),
+
+                // Анимированный Sidebar справа
+                AnimatedBuilder(
+                  animation: _sidebarAnimation,
+                  builder: (context, child) {
+                    return ClipRect(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: _sidebarAnimation.value,
+                        child: SizedBox(
+                          width: constraints.maxWidth / 2.5,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Theme.of(
@@ -168,73 +120,178 @@ class _DashboardLayoutState extends State<DashboardLayout>
                                 ),
                               ),
                             ),
-                            child: _sidebarAnimation.value > 0.3
-                                ? Column(
-                                    children: [
-                                      // Заголовок sidebar с кнопкой закрытия
-                                      // Container(
-                                      //   height: 56,
-                                      //   padding: const EdgeInsets.symmetric(
-                                      //     horizontal: 16,
-                                      //   ),
-                                      //   decoration: BoxDecoration(
-                                      //     border: Border(
-                                      //       bottom: BorderSide(
-                                      //         color: Theme.of(
-                                      //           context,
-                                      //         ).dividerColor,
-                                      //         width: 1,
-                                      //       ),
-                                      //     ),
-                                      //   ),
-                                      //   child: Row(
-                                      //     mainAxisAlignment:
-                                      //         MainAxisAlignment.end,
-                                      //     children: [
-                                      //       IconButton(
-                                      //         icon: const Icon(Icons.close),
-                                      //         onPressed: widget.onCloseSidebar,
-                                      //         tooltip: 'Закрыть',
-                                      //       ),
-                                      //     ],
-                                      //   ),
-                                      // ),
-
-                                      // Содержимое sidebar
-                                      Expanded(
-                                        child:
-                                            _currentSidebarContent ??
-                                            const SizedBox.shrink(),
-                                      ),
-                                    ],
-                                  )
+                            child: selectedIndex != 0
+                                ? widget.child
                                 : const SizedBox.shrink(),
                           ),
-                        )
-                      : const SizedBox.shrink(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-      ],
+              ],
+            ),
+          );
+        } else {
+          // Mobile layout: BottomNavigationBar (без анимации для избежания конфликтов GlobalKey)
+          return Scaffold(
+            body: widget.child,
+            bottomNavigationBar: _buildBottomNavigationBar(
+              context,
+              selectedIndex,
+            ),
+            floatingActionButton: selectedIndex == 0
+                ? FloatingActionButton(
+                    onPressed: () {
+                      // Добавить создание записи
+                    },
+                    child: const Icon(Icons.add),
+                  )
+                : null,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerDocked,
+          );
+        }
+      },
     );
   }
-}
 
-/// Провайдер для управления состоянием sidebar
-class DashboardSidebarController extends ChangeNotifier {
-  Widget? _sidebarContent;
-
-  Widget? get sidebarContent => _sidebarContent;
-  bool get hasSidebar => _sidebarContent != null;
-
-  void openSidebar(Widget content) {
-    _sidebarContent = content;
-    notifyListeners();
+  Widget _buildNavigationRail(BuildContext context, int selectedIndex) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+        ),
+      ),
+      child: NavigationRail(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) =>
+            _onDestinationSelected(context, index),
+        labelType: NavigationRailLabelType.selected,
+        leading: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: FloatingActionButton(
+            elevation: 0,
+            onPressed: () {
+              // Добавить создание записи
+            },
+            child: const Icon(Icons.add),
+          ),
+        ),
+        destinations: const [
+          NavigationRailDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: Text('Главная'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.folder_outlined),
+            selectedIcon: Icon(Icons.folder),
+            label: Text('Категории'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.search_outlined),
+            selectedIcon: Icon(Icons.search),
+            label: Text('Поиск'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: Text('Настройки'),
+          ),
+        ],
+      ),
+    );
   }
 
-  void closeSidebar() {
-    _sidebarContent = null;
-    notifyListeners();
+  Widget _buildBottomNavigationBar(BuildContext context, int selectedIndex) {
+    return BottomAppBar(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 70,
+      notchMargin: 5,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.dashboard_outlined,
+            selectedIcon: Icons.dashboard,
+            label: 'Главная',
+            index: 0,
+            selectedIndex: selectedIndex,
+          ),
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.folder_outlined,
+            selectedIcon: Icons.folder,
+            label: 'Категории',
+            index: 1,
+            selectedIndex: selectedIndex,
+          ),
+          const SizedBox(width: 40), // Место для FAB по центру
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.search_outlined,
+            selectedIcon: Icons.search,
+            label: 'Поиск',
+            index: 2,
+            selectedIndex: selectedIndex,
+          ),
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.settings_outlined,
+            selectedIcon: Icons.settings,
+            label: 'Настройки',
+            index: 3,
+            selectedIndex: selectedIndex,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavIconButton(
+    BuildContext context, {
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+    required int index,
+    required int selectedIndex,
+  }) {
+    final isSelected = selectedIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: () => _onDestinationSelected(context, index),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
