@@ -198,6 +198,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   description: 'Перейти к панели управления',
                   onTap: () => context.push(AppRoutesPaths.dashboard),
                 ),
+                const SizedBox(height: 12),
+                ActionButton(
+                  icon: CupertinoIcons.eye,
+                  label: 'Component Showcase',
+                  description: 'Демонстрация кастомных компонентов',
+                  onTap: () {
+                    context.push(AppRoutesPaths.componentShowcase);
+                    ref
+                        .read(titlebarStateProvider.notifier)
+                        .setBackgroundTransparent(false);
+                  },
+                ),
               ],
             ),
           );
@@ -257,6 +269,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              ActionButton(
+                icon: CupertinoIcons.eye,
+                label: 'Component Showcase',
+                description: 'Демонстрация кастомных компонентов',
+                onTap: () {
+                  context.push(AppRoutesPaths.componentShowcase);
+                  ref
+                      .read(titlebarStateProvider.notifier)
+                      .setBackgroundTransparent(false);
+                },
               ),
             ],
           ),

@@ -3,7 +3,6 @@ import 'package:riverpod/src/framework.dart';
 import 'app_logger.dart';
 
 final class LoggingProviderObserver extends ProviderObserver {
-  
   @override
   void didAddProvider(ProviderObserverContext context, Object? value) {
     logInfo(

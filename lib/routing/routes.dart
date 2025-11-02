@@ -9,6 +9,7 @@ import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_se
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
+import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
 /// Флаг для отключения/включения кастомных анимаций при переходах между экранами dashboard
@@ -27,6 +28,10 @@ final List<RouteBase> appRoutes = [
   GoRoute(
     path: AppRoutesPaths.logs,
     builder: (context, state) => const LogsTabsScreen(),
+  ),
+  GoRoute(
+    path: AppRoutesPaths.componentShowcase,
+    builder: (context, state) => const ComponentShowcaseScreen(),
   ),
   GoRoute(
     path: AppRoutesPaths.createStore,

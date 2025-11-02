@@ -31,6 +31,4 @@ class LoggingRouteObserver extends NavigatorObserver {
   void didRemove(Route route, Route? previousRoute) {
     logInfo('[ROUTE] ❌ REMOVE ${route.settings.name}', tag: 'Route');
   }
-
-
 }

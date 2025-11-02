@@ -6,12 +6,17 @@ enum SmoothButtonSize { small, medium, large }
 
 enum SmoothButtonIconPosition { start, end }
 
+enum SmoothButtonVariant { normal, error, warning, info, success }
+
 /// A smooth button with customizable properties.
 class SmoothButton extends StatelessWidget {
   final SmoothButtonType type;
   final SmoothButtonSize size;
+  final SmoothButtonVariant variant;
   final VoidCallback? onPressed;
   final VoidCallback? onLongPress;
+  final Function(bool)? onHover;
+  final Function(bool)? onFocusChange;
   final FocusNode? focusNode;
   final bool autofocus;
   final Clip clipBehavior;
@@ -29,10 +34,13 @@ class SmoothButton extends StatelessWidget {
     required this.onPressed,
     this.type = SmoothButtonType.filled,
     this.size = SmoothButtonSize.medium,
+    this.variant = SmoothButtonVariant.normal,
     this.onLongPress,
     this.focusNode,
     this.autofocus = false,
     this.clipBehavior = Clip.none,
+    this.onHover,
+    this.onFocusChange,
     this.style,
     this.icon,
     this.iconPosition = SmoothButtonIconPosition.start,
@@ -60,6 +68,22 @@ class SmoothButton extends StatelessWidget {
         return const EdgeInsets.symmetric(horizontal: 22, vertical: 18);
       case SmoothButtonSize.large:
         return const EdgeInsets.symmetric(horizontal: 26, vertical: 20);
+    }
+  }
+
+  Color _getVariantColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    switch (variant) {
+      case SmoothButtonVariant.normal:
+        return colorScheme.primary;
+      case SmoothButtonVariant.error:
+        return const Color(0xFFFF5252); // Яркий красный
+      case SmoothButtonVariant.warning:
+        return const Color(0xFFFF9800); // Яркий оранжевый
+      case SmoothButtonVariant.info:
+        return const Color(0xFF2196F3); // Яркий синий
+      case SmoothButtonVariant.success:
+        return const Color(0xFF4CAF50); // Яркий зелёный
     }
   }
 
@@ -106,10 +130,44 @@ class SmoothButton extends StatelessWidget {
 
   Widget _buildButton(BuildContext context) {
     final buttonChild = _buildChild();
+    final variantColor = _getVariantColor(context);
 
     final effectiveStyle = (style ?? ButtonStyle()).copyWith(
       padding: WidgetStateProperty.all(_padding),
     );
+
+    // Apply variant color for non-normal variants
+    ButtonStyle styledWithVariant = effectiveStyle;
+    if (variant != SmoothButtonVariant.normal) {
+      switch (type) {
+        case SmoothButtonType.filled:
+          styledWithVariant = effectiveStyle.copyWith(
+            backgroundColor: WidgetStateProperty.all(variantColor),
+          );
+          break;
+        case SmoothButtonType.tonal:
+          styledWithVariant = effectiveStyle.copyWith(
+            backgroundColor: WidgetStateProperty.all(
+              variantColor.withOpacity(0.2),
+            ),
+            foregroundColor: WidgetStateProperty.all(variantColor),
+          );
+          break;
+        case SmoothButtonType.outlined:
+          styledWithVariant = effectiveStyle.copyWith(
+            side: WidgetStateProperty.all(
+              BorderSide(color: variantColor, width: 1.5),
+            ),
+            foregroundColor: WidgetStateProperty.all(variantColor),
+          );
+          break;
+        case SmoothButtonType.text:
+          styledWithVariant = effectiveStyle.copyWith(
+            foregroundColor: WidgetStateProperty.all(variantColor),
+          );
+          break;
+      }
+    }
 
     switch (type) {
       case SmoothButtonType.text:
@@ -119,8 +177,12 @@ class SmoothButton extends StatelessWidget {
           focusNode: focusNode,
           autofocus: autofocus,
           clipBehavior: clipBehavior,
-          style: effectiveStyle,
+          style: styledWithVariant,
           child: buttonChild,
+          onHover: (isHovered) {
+            onHover?.call(isHovered);
+          },
+          onFocusChange: (value) => {onFocusChange?.call(value)},
         );
 
       case SmoothButtonType.filled:
@@ -130,8 +192,12 @@ class SmoothButton extends StatelessWidget {
           focusNode: focusNode,
           autofocus: autofocus,
           clipBehavior: clipBehavior,
-          style: effectiveStyle,
+          style: styledWithVariant,
           child: buttonChild,
+          onHover: (isHovered) {
+            onHover?.call(isHovered);
+          },
+          onFocusChange: (value) => {onFocusChange?.call(value)},
         );
 
       case SmoothButtonType.tonal:
@@ -141,23 +207,33 @@ class SmoothButton extends StatelessWidget {
           focusNode: focusNode,
           autofocus: autofocus,
           clipBehavior: clipBehavior,
-          style: effectiveStyle,
+          style: styledWithVariant,
           child: buttonChild,
+          onHover: (isHovered) {
+            onHover?.call(isHovered);
+          },
+          onFocusChange: (value) => {onFocusChange?.call(value)},
         );
 
       case SmoothButtonType.outlined:
         return OutlinedButton(
           onPressed: loading ? null : onPressed,
           onLongPress: onLongPress,
+          onHover: (isHovered) {
+            onHover?.call(isHovered);
+          },
+          onFocusChange: (value) {
+            onFocusChange?.call(value);
+          },
           focusNode: focusNode,
           autofocus: autofocus,
           clipBehavior: clipBehavior,
-          style: effectiveStyle.copyWith(
+          style: styledWithVariant.copyWith(
             side: WidgetStateProperty.all(
               BorderSide(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.12),
+                color: variant == SmoothButtonVariant.normal
+                    ? Theme.of(context).colorScheme.onSurface.withOpacity(0.12)
+                    : variantColor,
                 width: 1.5,
               ),
             ),

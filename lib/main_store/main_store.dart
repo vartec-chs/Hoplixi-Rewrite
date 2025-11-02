@@ -34,9 +34,4 @@ class MainStore extends _$MainStore {
 
   @override
   int get schemaVersion => MainConstants.databaseSchemaVersion;
-
-
-  
-
-  
 }

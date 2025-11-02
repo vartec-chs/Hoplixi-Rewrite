@@ -16,10 +16,29 @@ InputDecoration primaryInputDecoration(
   Widget? helper,
   String? helperText,
   Widget? prefixIcon,
-  Widget? suffixIcon, 
+  Widget? suffixIcon,
   bool enabled = true,
   bool filled = true,
   Widget? icon,
+  VisualDensity? visualDensity,
+  Widget? hint,
+  Widget? suffix,
+  BoxConstraints? constraints = const BoxConstraints(
+    minWidth: 50,
+    minHeight: 50,
+  ),
+  Color? focusColor,
+  Color? hoverColor,
+  Widget? prefix,
+  String? suffixText,
+  String? prefixText,
+  bool? alignLabelWithHint,
+  bool isCollapsed = false,
+  bool isDense = false,
+  EdgeInsetsGeometry? contentPadding,
+  int? errorMaxLines = 1,
+  int? helperMaxLines = 1,
+  int? hintMaxLines = 1,
 }) {
   final theme = Theme.of(context);
   return InputDecoration(
@@ -33,31 +52,68 @@ InputDecoration primaryInputDecoration(
     icon: icon,
     prefixIcon: prefixIcon,
     suffixIcon: suffixIcon,
-    
+    hint: hint,
+    suffix: suffix,
+    constraints: constraints,
 
-    labelStyle: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16),
+    prefix: prefix,
+    focusColor: focusColor,
+    hoverColor: hoverColor,
+    suffixText: suffixText,
+    prefixText: prefixText,
+    errorStyle: TextStyle(color: theme.colorScheme.error, fontSize: 12),
+    alignLabelWithHint: alignLabelWithHint,
+    isCollapsed: isCollapsed,
+    isDense: isDense,
+    contentPadding:
+        contentPadding ??
+        const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+    errorMaxLines: errorMaxLines,
+    helperMaxLines: helperMaxLines,
+    hintMaxLines: hintMaxLines,
+    suffixStyle: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16),
+    suffixIconColor: theme.colorScheme.onSurface,
+    prefixStyle: TextStyle(color: theme.colorScheme.onSurface, fontSize: 16),
+    iconColor: theme.colorScheme.onSurface,
+    prefixIconColor: theme.colorScheme.onSurface,
+    prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+    suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
 
+    // focusColor: theme.colorScheme.primary,
+    labelStyle: (errorText != null || error != null)
+        ? TextStyle(color: theme.colorScheme.error, fontSize: 14)
+        : TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+    hintStyle: TextStyle(
+      fontSize: 14,
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+    ),
     border: UnderlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
       borderSide: const BorderSide(color: Colors.transparent, width: 0),
     ),
+    hintTextDirection: TextDirection.ltr,
     filled: filled,
     errorBorder: UnderlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
-      borderSide: BorderSide(color: Colors.transparent, width: 0),
+      borderSide: const BorderSide(color: Colors.transparent, width: 0),
     ),
     focusedErrorBorder: UnderlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
       borderSide: BorderSide(color: Colors.transparent, width: 0),
     ),
-
     floatingLabelBehavior: FloatingLabelBehavior.auto,
     floatingLabelAlignment: FloatingLabelAlignment.start,
-    floatingLabelStyle: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      color: Theme.of(context).colorScheme.onSurface,
-    ),
+    floatingLabelStyle: (errorText != null || error != null)
+        ? TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.error,
+          )
+        : TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
     fillColor: theme.colorScheme.surfaceContainerHighest,
     enabledBorder: UnderlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
@@ -76,6 +132,44 @@ InputDecoration primaryInputDecoration(
       fontSize: 12,
       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
     ),
+    visualDensity: visualDensity ?? VisualDensity.standard,
+  ).copyWith(
+    // Apply disabled styles when enabled is false
+    fillColor: !enabled
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+        : theme.colorScheme.surfaceContainerHighest,
+    labelStyle: !enabled
+        ? TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontSize: 14,
+          )
+        : (errorText != null || error != null)
+        ? TextStyle(color: theme.colorScheme.error, fontSize: 14)
+        : TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+    hintStyle: !enabled
+        ? TextStyle(
+            fontSize: 14,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          )
+        : TextStyle(
+            fontSize: 14,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
+    prefixIconColor: !enabled
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+        : theme.colorScheme.onSurface,
+    suffixIconColor: !enabled
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+        : theme.colorScheme.onSurface,
+    helperStyle: !enabled
+        ? TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          )
+        : TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
   );
 }
 
@@ -161,32 +255,24 @@ class PrimaryTextField extends StatelessWidget {
       labelText: label,
       hintText: hintText,
       filled: filled,
+      enabled: enabled ?? true,
     );
 
-    final effectiveDecoration = (decoration ?? const InputDecoration())
-        .copyWith(
-          // allow short-hands (prefix/suffix) and icons to override
-          prefixIcon: prefixIcon ?? (decoration?.prefixIcon),
-          suffixIcon: suffixIcon ?? (decoration?.suffixIcon),
-          prefix: prefix ?? decoration?.prefix,
-          suffix: suffix ?? decoration?.suffix,
-        )
-        .copyWith(
-          // ensure base defaults are present, but decoration overrides base
-          labelText: decoration?.labelText ?? baseDecoration.labelText,
-          hintText: decoration?.hintText ?? baseDecoration.hintText,
-          fillColor: decoration?.fillColor ?? baseDecoration.fillColor,
-          filled: decoration?.filled ?? baseDecoration.filled,
-          border: decoration?.border ?? baseDecoration.border,
-          enabledBorder:
-              decoration?.enabledBorder ?? baseDecoration.enabledBorder,
-          focusedBorder:
-              decoration?.focusedBorder ?? baseDecoration.focusedBorder,
-          errorBorder: decoration?.errorBorder ?? baseDecoration.errorBorder,
-          floatingLabelStyle:
-              decoration?.floatingLabelStyle ??
-              baseDecoration.floatingLabelStyle,
-        );
+    final effectiveDecoration = baseDecoration.copyWith(
+      prefixIcon: prefixIcon ?? decoration?.prefixIcon,
+      suffixIcon: suffixIcon ?? decoration?.suffixIcon,
+      prefix: prefix ?? decoration?.prefix,
+      suffix: suffix ?? decoration?.suffix,
+      labelText: decoration?.labelText ?? label,
+      hintText: decoration?.hintText ?? hintText,
+      fillColor: decoration?.fillColor,
+      filled: decoration?.filled,
+      border: decoration?.border,
+      enabledBorder: decoration?.enabledBorder,
+      focusedBorder: decoration?.focusedBorder,
+      errorBorder: decoration?.errorBorder,
+      floatingLabelStyle: decoration?.floatingLabelStyle,
+    );
 
     return TextField(
       controller: controller,
@@ -312,31 +398,26 @@ class PrimaryTextFormField extends StatelessWidget {
       labelText: label,
       hintText: hintText,
       filled: filled,
+      helperText: helperText,
+      enabled: enabled ?? true,
     );
 
-    final effectiveDecoration = (decoration ?? const InputDecoration())
-        .copyWith(
-          prefixIcon: prefixIcon ?? (decoration?.prefixIcon),
-          suffixIcon: suffixIcon ?? (decoration?.suffixIcon),
-          prefix: prefix ?? decoration?.prefix,
-          suffix: suffix ?? decoration?.suffix,
-          helperText: helperText ?? decoration?.helperText,
-        )
-        .copyWith(
-          labelText: decoration?.labelText ?? baseDecoration.labelText,
-          hintText: decoration?.hintText ?? baseDecoration.hintText,
-          fillColor: decoration?.fillColor ?? baseDecoration.fillColor,
-          filled: decoration?.filled ?? baseDecoration.filled,
-          border: decoration?.border ?? baseDecoration.border,
-          enabledBorder:
-              decoration?.enabledBorder ?? baseDecoration.enabledBorder,
-          focusedBorder:
-              decoration?.focusedBorder ?? baseDecoration.focusedBorder,
-          errorBorder: decoration?.errorBorder ?? baseDecoration.errorBorder,
-          floatingLabelStyle:
-              decoration?.floatingLabelStyle ??
-              baseDecoration.floatingLabelStyle,
-        );
+    final effectiveDecoration = baseDecoration.copyWith(
+      prefixIcon: prefixIcon ?? decoration?.prefixIcon,
+      suffixIcon: suffixIcon ?? decoration?.suffixIcon,
+      prefix: prefix ?? decoration?.prefix,
+      suffix: suffix ?? decoration?.suffix,
+      labelText: decoration?.labelText ?? label,
+      hintText: decoration?.hintText ?? hintText,
+      fillColor: decoration?.fillColor,
+      filled: decoration?.filled,
+      border: decoration?.border,
+      enabledBorder: decoration?.enabledBorder,
+      focusedBorder: decoration?.focusedBorder,
+      errorBorder: decoration?.errorBorder,
+      floatingLabelStyle: decoration?.floatingLabelStyle,
+      helperText: decoration?.helperText ?? helperText,
+    );
 
     return TextFormField(
       controller: controller,
@@ -353,7 +434,6 @@ class PrimaryTextFormField extends StatelessWidget {
       readOnly: readOnly,
       onTap: onTap,
       maxLines: maxLines,
-
       minLines: minLines,
       maxLength: maxLength,
       enabled: enabled,

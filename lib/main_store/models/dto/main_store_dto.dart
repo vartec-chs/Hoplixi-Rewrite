@@ -42,7 +42,6 @@ sealed class UpdateStoreDto with _$UpdateStoreDto {
       _$UpdateStoreDtoFromJson(json);
 }
 
-
 /// DTO для просмотра базовой информации о хранилище
 @freezed
 sealed class StoreInfoDto with _$StoreInfoDto {
