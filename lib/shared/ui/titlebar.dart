@@ -32,9 +32,21 @@ class _TitleBarState extends ConsumerState<TitleBar> {
       child: AnimatedContainer(
         height: 40,
         duration: const Duration(milliseconds: 300),
-        color: titlebarState.backgroundTransparent
-            ? Colors.transparent
-            : Theme.of(context).appBarTheme.backgroundColor,
+
+        decoration: BoxDecoration(
+          color: titlebarState.backgroundTransparent
+              ? Colors.transparent
+              : Theme.of(context).appBarTheme.backgroundColor,
+          border: Border(
+            bottom: BorderSide(
+              color: titlebarState.backgroundTransparent
+                  ? Colors.transparent
+                  : Theme.of(context).dividerColor,
+              width: 1,
+            ),
+          ),
+          // borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

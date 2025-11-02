@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hoplixi/core/theme/constants.dart';
 
 /// Адаптивный layout для dashboard
-/// На больших экранах: main content + sidebar справа
+/// На больших экранах: NavigationRail слева + main content + sidebar справа
 /// На маленьких экранах: только main content (формы открываются на новой странице)
 class DashboardLayout extends StatefulWidget {
+  final bool isDesktop;
+  final Widget? navigationRail;
   final Widget mainContent;
   final Widget? sidebarContent;
   final VoidCallback? onCloseSidebar;
@@ -12,6 +14,8 @@ class DashboardLayout extends StatefulWidget {
 
   const DashboardLayout({
     super.key,
+    required this.isDesktop,
+    this.navigationRail,
     required this.mainContent,
     this.sidebarContent,
     this.onCloseSidebar,
@@ -104,104 +108,96 @@ class _DashboardLayoutState extends State<DashboardLayout>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= widget.breakpoint;
+    if (widget.isDesktop) {
+      // Десктопная версия с NavigationRail слева
+      return Row(
+        children: [
+          // NavigationRail слева
+          if (widget.navigationRail != null) widget.navigationRail!,
 
-        if (isDesktop && (_currentSidebarContent != null || _isClosing)) {
-          // Десктопная версия с анимированным sidebar
-          return Row(
-            children: [
-              // Main content
-              Expanded(flex: 2, child: widget.mainContent),
+          // Main content в центре
+          Expanded(flex: 2, child: widget.mainContent),
 
-              // Анимированный Sidebar
-              AnimatedBuilder(
-                animation: _sidebarAnimation,
-                builder: (context, child) {
-                  return ClipRect(
-                    child: SizedBox(
-                      width:
-                          MediaQuery.of(context).size.width /
-                          2 *
-                          _sidebarAnimation.value,
-                      child: _sidebarAnimation.value > 0
-                          ? Opacity(
-                              opacity: _fadeAnimation.value,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLow,
-                                  borderRadius: BorderRadius.only(
-                                    // bottomLeft: Radius.circular(screenPaddingValue),
-                                    topLeft: Radius.circular(
-                                      screenPaddingValue,
-                                    ),
+          // Анимированный Sidebar справа
+          if (_currentSidebarContent != null || _isClosing)
+            AnimatedBuilder(
+              animation: _sidebarAnimation,
+              builder: (context, child) {
+                return ClipRect(
+                  child: SizedBox(
+                    width:
+                        MediaQuery.of(context).size.width /
+                        2.2 *
+                        _sidebarAnimation.value,
+                    child: _sidebarAnimation.value > 0
+                        ? Opacity(
+                            opacity: _fadeAnimation.value,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerLow,
+                                border: Border(
+                                  left: BorderSide(
+                                    color: Theme.of(context).dividerColor,
+                                    width: 1,
                                   ),
-                                  // border: Border(
-                                  //   left: BorderSide(
-                                  //     color: Theme.of(context).dividerColor,
-                                  //     width: 1,
-                                  //   ),
-                                  // ),
                                 ),
-                                child: _sidebarAnimation.value > 0.3
-                                    ? Column(
-                                        children: [
-                                          // Заголовок sidebar с кнопкой закрытия
-                                          Container(
-                                            height: 56,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              border: Border(
-                                                bottom: BorderSide(
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).dividerColor,
-                                                  width: 1,
-                                                ),
+                              ),
+                              child: _sidebarAnimation.value > 0.3
+                                  ? Column(
+                                      children: [
+                                        // Заголовок sidebar с кнопкой закрытия
+                                        Container(
+                                          height: 56,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                              bottom: BorderSide(
+                                                color: Theme.of(
+                                                  context,
+                                                ).dividerColor,
+                                                width: 1,
                                               ),
                                             ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(Icons.close),
-                                                  onPressed:
-                                                      widget.onCloseSidebar,
-                                                  tooltip: 'Закрыть',
-                                                ),
-                                              ],
-                                            ),
                                           ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(Icons.close),
+                                                onPressed:
+                                                    widget.onCloseSidebar,
+                                                tooltip: 'Закрыть',
+                                              ),
+                                            ],
+                                          ),
+                                        ),
 
-                                          // Содержимое sidebar
-                                          if (_currentSidebarContent != null)
-                                            Expanded(
-                                              child: _currentSidebarContent!,
-                                            ),
-                                        ],
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          );
-        }
+                                        // Содержимое sidebar
+                                        if (_currentSidebarContent != null)
+                                          Expanded(
+                                            child: _currentSidebarContent!,
+                                          ),
+                                      ],
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                );
+              },
+            ),
+        ],
+      );
+    }
 
-        // Мобильная версия - только main content
-        return widget.mainContent;
-      },
-    );
+    // Мобильная версия - только main content
+    return widget.mainContent;
   }
 }
 

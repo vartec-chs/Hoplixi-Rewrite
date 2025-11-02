@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/theme/constants.dart';
-import 'package:hoplixi/core/theme/theme_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/dashboard_sidebar_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_app_bar.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final sidebarState = ref.watch(dashboardSidebarProvider);
     final sidebarNotifier = ref.read(dashboardSidebarProvider.notifier);
 
@@ -19,13 +26,204 @@ class DashboardScreen extends ConsumerWidget {
           final isDesktop = constraints.maxWidth >= 900;
 
           return DashboardLayout(
+            isDesktop: isDesktop,
+            navigationRail: isDesktop ? _buildNavigationRail(context) : null,
             mainContent: _buildMainContent(context, ref, isDesktop),
             sidebarContent: sidebarState.content,
             onCloseSidebar: sidebarNotifier.close,
           );
         },
       ),
+      extendBody: true,
+      bottomNavigationBar: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+          if (isDesktop) return const SizedBox.shrink();
+          return _buildBottomAppBar(context);
+        },
+      ),
+      floatingActionButton: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 900;
+          if (isDesktop) return const SizedBox.shrink();
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton(
+                onPressed: () => _openCreateForm(context, ref),
+                child: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Создать',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
+  }
+
+  Widget _buildNavigationRail(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+        ),
+      ),
+      child: NavigationRail(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          _handleNavigationTap(index, context, ref);
+        },
+        labelType: NavigationRailLabelType.selected,
+        leading: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: FloatingActionButton(
+            elevation: 0,
+            onPressed: () => _openCreateForm(context, ref),
+            child: const Icon(Icons.add),
+          ),
+        ),
+        destinations: const [
+          NavigationRailDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: Text('Главная'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.folder_outlined),
+            selectedIcon: Icon(Icons.folder),
+            label: Text('Категории'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.search_outlined),
+            selectedIcon: Icon(Icons.search),
+            label: Text('Поиск'),
+          ),
+          NavigationRailDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: Text('Настройки'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomAppBar(BuildContext context) {
+    return BottomAppBar(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 70,
+
+      notchMargin: 5,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.dashboard_outlined,
+            selectedIcon: Icons.dashboard,
+            label: 'Главная',
+            index: 0,
+          ),
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.folder_outlined,
+            selectedIcon: Icons.folder,
+            label: 'Категории',
+            index: 1,
+          ),
+          const SizedBox(width: 40), // Место для FAB по центру
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.search_outlined,
+            selectedIcon: Icons.search,
+            label: 'Поиск',
+            index: 2,
+          ),
+          _buildBottomNavIconButton(
+            context,
+            icon: Icons.settings_outlined,
+            selectedIcon: Icons.settings,
+            label: 'Настройки',
+            index: 3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavIconButton(
+    BuildContext context, {
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+    required int index,
+  }) {
+    final isSelected = _selectedIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+        _handleNavigationTap(index, context, ref);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleNavigationTap(int index, BuildContext context, WidgetRef ref) {
+    switch (index) {
+      case 0:
+        // Главная - ничего не делаем, уже на главной
+        break;
+      case 1:
+        _openCategoriesForm(context, ref);
+        break;
+      case 2:
+        _openSearchForm(context, ref);
+        break;
+      case 3:
+        // Открыть настройки
+        break;
+    }
   }
 
   Widget _buildMainContent(
@@ -33,36 +231,45 @@ class DashboardScreen extends ConsumerWidget {
     WidgetRef ref,
     bool isDesktop,
   ) {
-    return Stack(
-      children: [
-        CustomScrollView(
-          slivers: [
-            // AppBar встроен в main content
-            SliverAppBar(
-              title: const Text('Dashboard'),
-              floating: true,
-              pinned: true,
-              snap: true,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    // Настройки
-                  },
-                  tooltip: 'Настройки',
-                ),
-              ],
-            ),
+    return CustomScrollView(
+      slivers: [
+        // AppBar с поиском и вкладками
+        DashboardSliverAppBar(
+          title: 'Dashboard',
+          expandedHeight: 168,
+          pinned: isDesktop,
+          floating: true,
+          snap: true,
+          onMenuPressed: isDesktop
+              ? null
+              : () {
+                  // Открыть drawer на мобильных устройствах
+                },
+          additionalActions: [
+            if (isDesktop)
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  // Настройки
+                },
+                tooltip: 'Настройки',
+              ),
+          ],
+        ),
 
-            // Padding сверху
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        // Padding сверху
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // Главный контент
-            SliverFillRemaining(
-              // hasScrollBody: false,
-              child: Center(
+        // Главный контент
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: Center(
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.folder_open,
@@ -87,6 +294,7 @@ class DashboardScreen extends ConsumerWidget {
                     Wrap(
                       spacing: 16,
                       runSpacing: 16,
+                      alignment: WrapAlignment.center,
                       children: [
                         _ActionCard(
                           icon: Icons.add_circle_outline,
@@ -112,17 +320,6 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
             ),
-          ],
-        ),
-
-        // FloatingActionButton только в main content
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton.extended(
-            onPressed: () => _openCreateForm(context, ref),
-            icon: const Icon(Icons.add),
-            label: const Text('Создать'),
           ),
         ),
       ],
@@ -210,8 +407,6 @@ class DashboardScreen extends ConsumerWidget {
   ) {
     return Consumer(
       builder: (context, ref, child) {
-        // Отслеживаем изменения темы для автоматического перестроения UI
-        ref.watch(themeProvider);
         final theme = Theme.of(context);
 
         return Column(
