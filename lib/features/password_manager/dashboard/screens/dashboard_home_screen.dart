@@ -9,124 +9,124 @@ class DashboardHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: CustomScrollView(
-      slivers: [
-        // AppBar с поиском и вкладками
-        DashboardSliverAppBar(
-          title: 'Dashboard',
-          expandedHeight: 168,
-          pinned: MediaQuery.of(context).size.width >= 900,
-          floating: true,
-          snap: true,
-          onMenuPressed: MediaQuery.of(context).size.width >= 900
-              ? null
-              : () {
-                  // Открыть drawer на мобильных
-                },
-          additionalActions: [
-            if (MediaQuery.of(context).size.width >= 900)
-              IconButton(
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {
-                  // Дополнительные действия
-                },
-              ),
-          ],
-        ),
-
-        // Padding сверху
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-        // Быстрые действия
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Быстрые действия',
-                  style: Theme.of(context).textTheme.titleLarge,
+        slivers: [
+          // AppBar с поиском и вкладками
+          DashboardSliverAppBar(
+            title: 'Dashboard',
+            expandedHeight: 168,
+            pinned: MediaQuery.of(context).size.width >= 900,
+            floating: true,
+            snap: true,
+            onMenuPressed: MediaQuery.of(context).size.width >= 900
+                ? null
+                : () {
+                    // Открыть drawer на мобильных
+                  },
+            additionalActions: [
+              if (MediaQuery.of(context).size.width >= 900)
+                IconButton(
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () {
+                    // Дополнительные действия
+                  },
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    _ActionCard(
-                      icon: Icons.add_circle_outline,
-                      title: 'Добавить запись',
-                      description: 'Создать новую запись пароля',
-                      onTap: () {
-                        // Добавить логику создания
-                      },
-                    ),
-                    _ActionCard(
-                      icon: Icons.folder_outlined,
-                      title: 'Категории',
-                      description: 'Управление категориями',
-                      onTap: () {
-                        // Открыть категории
-                      },
-                    ),
-                    _ActionCard(
-                      icon: Icons.security_outlined,
-                      title: 'Безопасность',
-                      description: 'Проверить безопасность паролей',
-                      onTap: () {
-                        // Открыть проверку безопасности
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
+            ],
           ),
-        ),
 
-        // Заголовок последних записей
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Последние записи',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
+          // Padding сверху
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-        // Список последних записей
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text('${index + 1}')),
-                  title: Text('Запись ${index + 1}'),
-                  subtitle: Text('Описание записи ${index + 1}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {
-                      // Показать меню действий
-                    },
+          // Быстрые действия
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Быстрые действия',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                ),
-              );
-            }, childCount: 5),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      _ActionCard(
+                        icon: Icons.add_circle_outline,
+                        title: 'Добавить запись',
+                        description: 'Создать новую запись пароля',
+                        onTap: () {
+                          // Добавить логику создания
+                        },
+                      ),
+                      _ActionCard(
+                        icon: Icons.folder_outlined,
+                        title: 'Категории',
+                        description: 'Управление категориями',
+                        onTap: () {
+                          // Открыть категории
+                        },
+                      ),
+                      _ActionCard(
+                        icon: Icons.security_outlined,
+                        title: 'Безопасность',
+                        description: 'Проверить безопасность паролей',
+                        onTap: () {
+                          // Открыть проверку безопасности
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
           ),
-        ),
 
-        // Padding снизу
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ],
+          // Заголовок последних записей
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Последние записи',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+
+          // Список последних записей
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    title: Text('Запись ${index + 1}'),
+                    subtitle: Text('Описание записи ${index + 1}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      onPressed: () {
+                        // Показать меню действий
+                      },
+                    ),
+                  ),
+                );
+              }, childCount: 5),
+            ),
+          ),
+
+          // Padding снизу
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
       ),
     );
   }
