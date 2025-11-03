@@ -44,6 +44,8 @@ abstract final class ComponentThemes {
       fontWeight: FontWeight.w600,
       color: Colors.black,
     ),
+    bottomSheetModalBackgroundColor: SchemeColor.surfaceContainerLow,
+    dialogBackgroundSchemeColor: SchemeColor.surfaceContainerLow,
   );
 
   /// Базовые подтемы для тёмной темы
@@ -79,6 +81,8 @@ abstract final class ComponentThemes {
       fontWeight: FontWeight.w600,
       color: Colors.white,
     ),
+    bottomSheetModalBackgroundColor: SchemeColor.surfaceContainerLow,
+    dialogBackgroundSchemeColor: SchemeColor.surfaceContainerLow,
   );
 }
 

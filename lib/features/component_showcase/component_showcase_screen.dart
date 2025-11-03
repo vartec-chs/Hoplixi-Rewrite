@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/features/component_showcase/screens/button_showcase_screen.dart';
+import 'package:hoplixi/features/component_showcase/screens/modal_sheet_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/notification_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/slider_button_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/text_field_showcase_screen.dart';
+import 'package:hoplixi/features/component_showcase/screens/universal_modal_showcase_screen.dart';
 
 /// Основной экран для демонстрации всех кастомных компонентов
 class ComponentShowcaseScreen extends StatefulWidget {
@@ -33,9 +35,19 @@ class _ComponentShowcaseScreenState extends State<ComponentShowcaseScreen> {
       screen: const SliderButtonShowcaseScreen(),
     ),
     ShowcaseItem(
+      title: 'Modal Sheets',
+      icon: Icons.layers,
+      screen: const ModalSheetShowcaseScreen(),
+    ),
+    ShowcaseItem(
       title: 'Notifications',
       icon: Icons.notifications,
       screen: const NotificationShowcaseScreen(),
+    ),
+    ShowcaseItem(
+      title: 'Universal Modal',
+      icon: Icons.dashboard,
+      screen: const UniversalModalShowcaseScreen(),
     ),
   ];
 
