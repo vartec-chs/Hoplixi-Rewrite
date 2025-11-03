@@ -10,6 +10,6 @@ class MainConstants {
   static const Size maxWindowSize = Size(1200, 1000);
   static const bool isCenter = true;
 
-  static const int databaseSchemaVersion = 1;
+  static const int databaseSchemaVersion = 2;
   static const String dbExtension = '.hplxdb';
 }

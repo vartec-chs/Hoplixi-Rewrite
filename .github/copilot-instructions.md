@@ -1,26 +1,26 @@
 # Hoplixi AI Guide
-- **Entry flow** `lib/main.dart` blocks web, loads `.env`, initializes `AppLogger`, window/tray services, then boots `App` inside a `ProviderScope` for Riverpod.
-- **Error capture** `runZonedGuarded`, `FlutterError.onError`, and `PlatformDispatcher.onError` already forward to `logError` and `Toaster.error`; reuse these helpers instead of duplicating try/catch UI toasts.
-- **Logging stack** `lib/core/logger/app_logger.dart` writes JSONL sessions via `LogBuffer` and exposes top-level helpers (`logInfo`, `logWarning`, etc.); prefer those so config toggles in `LoggerConfig` keep working.
-- **Log storage** Paths come from `AppPaths` (`appLogsPath`, `appCrashReportsPath`); keep new persistence under that API so desktop/mobile storage layout stays consistent.
-- **Log viewer** `lib/features/logs_viewer` parses the JSONL files with `LogParser` and Riverpod notifiers (`filteredLogsProvider`); when altering log schemas update both the writer and parser.
-- **Navigator access** `Toaster` in `lib/core/utils/toastification.dart` depends on `navigatorKey`; supply a `BuildContext` only when triggering toasts outside the global navigator.
-- **State management** Everything is Riverpod 3 `Notifier`/`AsyncNotifier`; expose new state as providers and watch them in widgets instead of storing mutable state directly.
-- **Routing** `routerProvider` (GoRouter) wraps desktop flows in `DesktopShell`, which reserves 40px for the custom title bar; add new routes to `routing/routes.dart` and mind the `AppRoutesPaths` constants.
-- **Title bar** `shared/ui/titlebar.dart` owns window buttons and theme toggle; adjust visibility or coloring through `titlebarStateProvider` rather than manipulating UI widgets manually.
-- **Windowing** `core/utils/window_manager.dart` hides the native frame on Windows and listens for window events; guard new window operations with `UniversalPlatform.isWindows` to avoid mobile crashes.
-- **Tray integration** `setup_tray.dart` registers icons and menus using `tray_manager`; convert clicks into `AppTrayMenuItemKey` enum values so the existing switch stays exhaustive.
-- **Theming** `ThemeProvider` (AsyncNotifier) persists `ThemeMode` via `PreferencesService`; when changing theme options remember to save with `_saveTheme` and surface controls through `ThemeSwitcher`.
-- **Preferences** Use typed keys from `core/app_preferences/app_preference_keys.dart` (`PrefKey`, `SecureKey`) and resolve storages via `getIt.get<PreferencesService>()`/`SecureStorageService` after `setupDI()`.
-- **Data layer** `lib/main_store` is a Drift database backed by SQLCipher; extend `MainStore` with new tables, bump `MainConstants.databaseSchemaVersion`, then run build_runner to regenerate `main_store.g.dart`.
-- **Domain errors** Reuse the `DatabaseError` Freezed union (`main_store/models/db_errors.dart`) or add new cases there so existing `result_dart` pipelines can match on codes/messages.
-- **File system** Call `AppPaths` helpers (`appStoragePath`, `clearTempDirectory`, `exportStoragesPath`) before touching the disk—these functions create platform-safe directories and log failures.
-- **Desktop shell** Desktop widgets expect `TitleBar` space at the top; when building new screens, start from `DesktopShell` to inherit drag regions and window controls.
-- **Toast UX** Follow the `Toaster` presets (`success`, `error`, `warning`, `infoDebug`) to keep consistent styling and clipboard behavior for error toasts.
-- **Example pattern** Persisting theme: `ref.read(themeProvider.notifier).setDarkTheme();` saves to prefs and updates UI—favor these notifier methods over manual SharedPreferences calls.
-- **Code generation** Regenerate Freezed/Drift artifacts with `flutter pub run build_runner build --delete-conflicting-outputs` (shortcut script: `build_ranner.bat`).
-- **Build & test** Use `flutter pub get`, `flutter analyze`, `flutter test`, and `flutter run -d windows` for the desktop shell; SQLCipher assets require running on a real desktop/mobile target.
-- **Linting** Analyzer is configured via `analysis_options.yaml` (Flutter lints); add ignores sparingly and prefer fixing warnings to keep the CI clean.
-- **Platform limits** Web is explicitly unsupported; gate new platform-specific APIs with `UniversalPlatform` checks to avoid runtime UnsupportedErrors.
-- **Configuration** Constants in `MainConstants` drive window sizes, production flags, and schema versions—update there instead of scattering literals.
-- **Secrets** Sensitive values live in secure storage (`SecureStorageService`); mask them using `AppLogger.infoWithSecretData` when logging to avoid leaking credentials.
+- **Entry flow** `lib/main.dart` blocks web builds, loads `.env`, initializes `AppLogger`, window/tray services, then boots `App` inside a `ProviderScope` with the `LoggingProviderObserver`.
+- **Error funnel** `runZonedGuarded`, `FlutterError.onError`, and `PlatformDispatcher.onError` already route through `logError` and `Toaster.error`; reuse those instead of local try/catch toasts.
+- **Logging stack** `lib/core/logger/app_logger.dart` buffers JSONL sessions via `LogBuffer`; call the top-level helpers (`logInfo`, `logWarning`, etc.) so `LoggerConfig` flags stay honored.
+- **Log viewer** `lib/features/logs_viewer` parses those JSONL files with `LogParser` and Riverpod filters; keep schema changes in sync between the writer and parser.
+- **Storage paths** Use `AppPaths` (`appLogsPath`, `appCrashReportsPath`, `exportStoragesPath`, etc.) before touching disk so the cross-platform layout stays consistent and logged.
+- **Dependency setup** `setupDI()` registers `PreferencesService`, `FlutterSecureStorage`, `HiveBoxManager`, and `DatabaseHistoryService`; resolve long-lived services through `getIt` instead of newing them up.
+- **Encrypted Hive boxes** `core/services/hive_box_manager.dart` mints AES keys into secure storage—open Hive boxes through it to avoid mismatched encryption keys.
+- **Database history** `main_store/services/db_history_services.dart` keeps recent stores keyed by path; always let it create/update entries so the tray picker and recent lists stay accurate.
+- **Main store lifecycle** `main_store/main_store_manager.dart` owns Drift + SQLCipher connections and returns `AsyncResultDart<..., DatabaseError>`; propagate those results instead of throwing.
+- **Drift schema** `MainStore` (with `StoreMetaTable`) drives persistence; bump `MainConstants.databaseSchemaVersion` and rerun codegen when adding tables or columns.
+- **Domain errors** Extend `DatabaseError` (`main_store/models/db_errors.dart`) so `result_dart` pipelines can pattern-match without ad-hoc exception types.
+- **State management** Stick with Riverpod `Notifier`/`AsyncNotifier` patterns (examples in `features/password_manager/create_store/*`); derive UI state from providers rather than mutable fields.
+- **Provider observers** Prefer side-effects via providers (`routerRefreshNotifier`, `titlebarStateProvider`) instead of widget singletons; observers already log transitions for you.
+- **Routing shell** `routing/router.dart` wraps desktop routes in `DesktopShell` and uses `AppRoutesPaths`; update `routing/routes.dart` and keep redirect logic in sync.
+- **Title bar state** `shared/ui/titlebar.dart` reads `titlebarStateProvider`, and `routerProvider` toggles transparency post-navigation—update the notifier instead of poking widget props.
+- **Desktop layout** `shared/ui/desktop_shell.dart` reserves 40px for `TitleBar` and anchors `StatusBar`; new desktop screens should live inside this shell.
+- **Theme workflow** `ThemeProvider` persists mode via `PreferencesService` and feeds `ThemeSwitcher`; call notifier helpers (`setDarkTheme`, `toggleTheme`) so `_saveTheme` runs.
+- **Toast UX** `core/utils/toastification.dart` centralizes presets, clipboard copy, and navigator access via `global_key.dart`; favor `Toaster.success/error/...` over inline snackbars.
+- **Window controls** `core/utils/window_manager.dart` hides the native frame on Windows only; guard new window APIs with `UniversalPlatform.isWindows` or risk mobile crashes.
+- **Tray integration** `setup_tray.dart` maps menu callbacks through `AppTrayMenuItemKey`; extend the enum to keep the switch exhaustive.
+- **Preferences API** Typed keys live in `core/app_preferences/app_preference_keys.dart`; run through `PreferencesService`/`SecureStorageService` from DI to respect platform storage quirks.
+- **Build & test** Use `flutter pub get`, `flutter analyze`, `flutter test`, and `flutter run -d windows` for desktop verification; SQLCipher assets require a non-web target.
+- **Code generation** Regenerate Freezed/Drift artifacts with `flutter pub run build_runner build --delete-conflicting-outputs` (shortcut: `build_ranner.bat`).
+- **Platform limits** Web is explicitly unsupported; wrap platform-specific logic with `UniversalPlatform` checks and bail early like `main.dart` does.
+- **Secrets** Mask sensitive payloads via `AppLogger.infoWithSecretData` and keep raw values inside `SecureStorageService`.
