@@ -1,6 +1,6 @@
-enum CategoryType { notes, password, totp, mixed }
+enum CategoryType { notes, password, totp, bankCard, files, mixed }
 
-enum TagType { notes, password, totp, mixed }
+enum TagType { notes, password, totp, bankCard, files, mixed }
 
 enum OtpType { totp, hotp }
 
