@@ -13,7 +13,7 @@ class RouterRefreshNotifier extends Notifier<int> with ChangeNotifier {
       if (next.hasValue && next.value!.isOpen) {
         notifyListeners();
       }
-    }, fireImmediately: false);
+    });
 
     return 0;
   }

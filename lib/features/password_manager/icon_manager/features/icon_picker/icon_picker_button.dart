@@ -48,14 +48,18 @@ class _IconPickerButtonState extends ConsumerState<IconPickerButton> {
   void didUpdateWidget(IconPickerButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.selectedIconId != oldWidget.selectedIconId) {
-      if (widget.selectedIconId != null) {
-        _loadIcon(widget.selectedIconId!);
-      } else {
-        setState(() {
-          _iconData = null;
-          _iconType = null;
-        });
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        if (widget.selectedIconId != null) {
+          _loadIcon(widget.selectedIconId!);
+        } else {
+          setState(() {
+            _iconData = null;
+            _iconType = null;
+          });
+        }
+      });
     }
   }
 
@@ -157,9 +161,7 @@ class _IconPickerButtonState extends ConsumerState<IconPickerButton> {
 
   Widget _buildContent(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_iconData != null && _iconType != null) {
@@ -182,8 +184,8 @@ class _IconPickerButtonState extends ConsumerState<IconPickerButton> {
         Text(
           widget.hintText ?? 'Выбрать иконку',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -191,7 +193,8 @@ class _IconPickerButtonState extends ConsumerState<IconPickerButton> {
   }
 
   Widget _buildIconPreview() {
-    final isSvg = _iconType!.toLowerCase() == 'svg' ||
+    final isSvg =
+        _iconType!.toLowerCase() == 'svg' ||
         _iconType!.toLowerCase() == 'image/svg+xml' ||
         _iconType!.toLowerCase().contains('svg');
 
@@ -199,9 +202,8 @@ class _IconPickerButtonState extends ConsumerState<IconPickerButton> {
       return SvgPicture.memory(
         _iconData!,
         fit: BoxFit.contain,
-        placeholderBuilder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        placeholderBuilder: (context) =>
+            const Center(child: CircularProgressIndicator()),
       );
     } else {
       return Image.memory(

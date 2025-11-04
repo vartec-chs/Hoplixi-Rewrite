@@ -82,6 +82,7 @@ dependencies:
   dotted_border: ^3.1.0
   infinite_scroll_pagination: ^5.1.1
   pinput: ^5.0.2
+  flutter_colorpicker: ^1.1.0
  
 
 dev_dependencies:

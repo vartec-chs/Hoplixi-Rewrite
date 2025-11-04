@@ -4,6 +4,7 @@ import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'package:hoplixi/main_store/tables/categories.dart';
+import 'package:uuid/uuid.dart';
 
 part 'category_dao.g.dart';
 
@@ -67,19 +68,19 @@ class CategoryDao extends DatabaseAccessor<MainStore> with _$CategoryDaoMixin {
   }
 
   /// Создать новую категорию
-  Future<String> createCategory(CreateCategoryDto dto) {
+  Future<String> createCategory(CreateCategoryDto dto) async {
+    final id = const Uuid()
+        .v4(); // Генерируем уникальный ID для новой категории
     final companion = CategoriesCompanion.insert(
+      id: Value(id),
       name: dto.name,
       type: CategoryTypeX.fromString(dto.type),
       description: Value(dto.description),
       color: Value(dto.color ?? 'FFFFFF'),
       iconId: Value(dto.iconId),
     );
-    return into(categories).insert(companion).then((id) {
-      return (select(
-        categories,
-      )..where((c) => c.id.equals(id.toString()))).map((c) => c.id).getSingle();
-    });
+    await into(categories).insert(companion);
+    return id;
   }
 
   /// Обновить категорию

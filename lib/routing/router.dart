@@ -40,7 +40,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         if (dbState.isOpen &&
             (currentPath == AppRoutesPaths.createStore ||
-                currentPath == AppRoutesPaths.openStore)) {
+                currentPath == AppRoutesPaths.openStore ||
+                currentPath == AppRoutesPaths.home)) {
           return AppRoutesPaths.dashboardHome;
         }
       }

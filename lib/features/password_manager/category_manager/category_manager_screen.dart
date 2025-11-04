@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'providers/category_filter_provider.dart';
 import 'providers/category_pagination_provider.dart';
+import 'widgets/category_form_modal.dart';
 
 class CategoryManagerScreen extends ConsumerStatefulWidget {
   const CategoryManagerScreen({super.key});
@@ -18,6 +18,7 @@ class CategoryManagerScreen extends ConsumerStatefulWidget {
 class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
   final TextEditingController _searchController = TextEditingController();
   late final PagingController<int, CategoryCardDto> _pagingController;
+  bool _isSearchActive = false;
 
   @override
   void initState() {
@@ -45,162 +46,130 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
     );
   }
 
-  void _showCreateCategoryModal() {
-    WoltModalSheet.show(
-      context: context,
-      pageListBuilder: (context) => [_buildCreateCategoryPage(context)],
-    );
-  }
-
-  WoltModalSheetPage _buildCreateCategoryPage(BuildContext modalContext) {
-    final formKey = GlobalKey<FormState>();
-    String name = '';
-    String? description;
-    String? color;
-
-    return WoltModalSheetPage(
-      surfaceTintColor: Colors.transparent,
-      hasTopBarLayer: true,
-      topBarTitle: Text(
-        'Создать категорию',
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
-      isTopBarLayerAlwaysVisible: true,
-      leadingNavBarWidget: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () => Navigator.of(modalContext).pop(),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 80),
-        child: Form(
-          key: formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Название',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Введите название';
-                  }
-                  return null;
-                },
-                onSaved: (value) => name = value!,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Описание (необязательно)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                onSaved: (value) => description = value,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Цвет (HEX, например FFFFFF)',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => color = value,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    formKey.currentState!.save();
-                    // TODO: Создать категорию через DAO
-                    Navigator.of(modalContext).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Категория "$name" создана')),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('Создать'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _refresh() {
+    _pagingController.refresh();
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentSortField = ref.watch(
+      categoryFilterProvider.select((filter) => filter.sortField),
+    );
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            floating: true,
             pinned: true,
-            expandedHeight: 120,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Поиск категорий...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              ref
-                                  .read(categoryFilterProvider.notifier)
-                                  .updateQuery('');
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+            snap: false,
+            title: _isSearchActive
+                ? TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Поиск категорий...',
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref
+                              .read(categoryFilterProvider.notifier)
+                              .updateQuery('');
+                        },
+                      ),
                     ),
-                    filled: true,
-                  ),
-                  onChanged: (value) {
-                    ref
-                        .read(categoryFilterProvider.notifier)
-                        .updateQuery(value);
-                  },
-                ),
-              ),
-            ),
+                    onChanged: (value) {
+                      ref
+                          .read(categoryFilterProvider.notifier)
+                          .updateQuery(value);
+                    },
+                  )
+                : const Text('Категории'),
             actions: [
+              if (!_isSearchActive)
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    setState(() {
+                      _isSearchActive = true;
+                    });
+                  },
+                  tooltip: 'Поиск',
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() {
+                      _isSearchActive = false;
+                      _searchController.clear();
+                      ref.read(categoryFilterProvider.notifier).updateQuery('');
+                    });
+                  },
+                  tooltip: 'Закрыть поиск',
+                ),
               PopupMenuButton<CategoriesSortField>(
                 icon: const Icon(Icons.sort),
-                onSelected: (value) {
-                  ref
-                      .read(categoryFilterProvider.notifier)
-                      .updateSortField(value);
+                tooltip: 'Сортировка',
+                onSelected: (sortField) async {
+                  if (sortField != currentSortField) {
+                    await ref
+                        .read(categoryFilterProvider.notifier)
+                        .updateSortField(sortField);
+                  }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: CategoriesSortField.name,
-                    child: Text('По названию'),
+                    child: Row(
+                      children: [
+                        if (currentSortField == CategoriesSortField.name)
+                          const Icon(Icons.check, size: 20),
+                        if (currentSortField == CategoriesSortField.name)
+                          const SizedBox(width: 8),
+                        const Text('По названию'),
+                      ],
+                    ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: CategoriesSortField.type,
-                    child: Text('По типу'),
+                    child: Row(
+                      children: [
+                        if (currentSortField == CategoriesSortField.type)
+                          const Icon(Icons.check, size: 20),
+                        if (currentSortField == CategoriesSortField.type)
+                          const SizedBox(width: 8),
+                        const Text('По типу'),
+                      ],
+                    ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: CategoriesSortField.createdAt,
-                    child: Text('По дате создания'),
+                    child: Row(
+                      children: [
+                        if (currentSortField == CategoriesSortField.createdAt)
+                          const Icon(Icons.check, size: 20),
+                        if (currentSortField == CategoriesSortField.createdAt)
+                          const SizedBox(width: 8),
+                        const Text('По дате создания'),
+                      ],
+                    ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: CategoriesSortField.modifiedAt,
-                    child: Text('По дате изменения'),
+                    child: Row(
+                      children: [
+                        if (currentSortField == CategoriesSortField.modifiedAt)
+                          const Icon(Icons.check, size: 20),
+                        if (currentSortField == CategoriesSortField.modifiedAt)
+                          const SizedBox(width: 8),
+                        const Text('По дате изменения'),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: _showCreateCategoryModal,
               ),
             ],
           ),
@@ -240,6 +209,13 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
             },
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'categoryManagerFab',
+        onPressed: () {
+          showCategoryCreateModal(context, onSuccess: _refresh);
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -283,11 +259,15 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
             const PopupMenuItem(value: 'delete', child: Text('Удалить')),
           ],
           onSelected: (value) {
-            // TODO: Реализовать действия
+            if (value == 'edit') {
+              showCategoryEditModal(context, category, onSuccess: _refresh);
+            } else if (value == 'delete') {
+              // TODO: Реализовать удаление
+            }
           },
         ),
         onTap: () {
-          // TODO: Открыть детали категории
+          showCategoryEditModal(context, category, onSuccess: _refresh);
         },
       ),
     );
