@@ -3,6 +3,35 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'file_history_dto.freezed.dart';
 part 'file_history_dto.g.dart';
 
+/// DTO для создания записи истории файла
+@freezed
+sealed class CreateFileHistoryDto with _$CreateFileHistoryDto {
+  const factory CreateFileHistoryDto({
+    required String originalFileId,
+    required String action,
+    required String name,
+    required String fileName,
+    required String fileExtension,
+    required String filePath,
+    required String mimeType,
+    required int fileSize,
+    required String fileHash,
+    String? description,
+    String? categoryName,
+    required int usedCount,
+    required bool isFavorite,
+    required bool isArchived,
+    required bool isPinned,
+    required bool isDeleted,
+    required DateTime originalCreatedAt,
+    required DateTime originalModifiedAt,
+    DateTime? originalLastAccessedAt,
+  }) = _CreateFileHistoryDto;
+
+  factory CreateFileHistoryDto.fromJson(Map<String, dynamic> json) =>
+      _$CreateFileHistoryDtoFromJson(json);
+}
+
 /// DTO для получения записи из истории файла
 @freezed
 sealed class GetFileHistoryDto with _$GetFileHistoryDto {
@@ -42,7 +71,7 @@ sealed class FileHistoryCardDto with _$FileHistoryCardDto {
     required String action,
     required String name,
     required String fileName,
-    required int fileSize,
+    required String fileExtension,
     required DateTime actionAt,
   }) = _FileHistoryCardDto;
 

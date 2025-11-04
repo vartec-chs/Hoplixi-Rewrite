@@ -1,0 +1,182 @@
+import 'package:drift/drift.dart';
+import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/dto/file_dto.dart';
+import 'package:hoplixi/main_store/tables/files.dart';
+
+part 'file_dao.g.dart';
+
+@DriftAccessor(tables: [Files])
+class FileDao extends DatabaseAccessor<MainStore> with _$FileDaoMixin {
+  FileDao(super.db);
+
+  /// Получить все файлы
+  Future<List<FilesData>> getAllFiles() {
+    return select(files).get();
+  }
+
+  /// Получить файл по ID
+  Future<FilesData?> getFileById(String id) {
+    return (select(files)..where((f) => f.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Получить файлы в виде карточек
+  Future<List<FileCardDto>> getAllFileCards() {
+    return (select(files)..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)]))
+        .map(
+          (f) => FileCardDto(
+            id: f.id,
+            name: f.name,
+            fileName: f.fileName,
+            fileExtension: f.fileExtension,
+            fileSize: f.fileSize,
+            categoryName: null, // TODO: join with categories
+            isFavorite: f.isFavorite,
+            isPinned: f.isPinned,
+            usedCount: f.usedCount,
+            modifiedAt: f.modifiedAt,
+          ),
+        )
+        .get();
+  }
+
+  /// Смотреть все файлы с автообновлением
+  Stream<List<FilesData>> watchAllFiles() {
+    return (select(
+      files,
+    )..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)])).watch();
+  }
+
+  /// Смотреть файлы карточки с автообновлением
+  Stream<List<FileCardDto>> watchFileCards() {
+    return (select(
+      files,
+    )..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)])).watch().map(
+      (files) => files
+          .map(
+            (f) => FileCardDto(
+              id: f.id,
+              name: f.name,
+              fileName: f.fileName,
+              fileExtension: f.fileExtension,
+              fileSize: f.fileSize,
+              categoryName: null,
+              isFavorite: f.isFavorite,
+              isPinned: f.isPinned,
+              usedCount: f.usedCount,
+              modifiedAt: f.modifiedAt,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  /// Создать новый файл
+  Future<String> createFile(CreateFileDto dto) {
+    final companion = FilesCompanion.insert(
+      name: dto.name,
+      fileName: dto.fileName,
+      fileExtension: dto.fileExtension,
+      filePath: dto.filePath,
+      mimeType: dto.mimeType,
+      fileSize: dto.fileSize,
+      fileHash: dto.fileHash,
+      description: Value(dto.description),
+      categoryId: Value(dto.categoryId),
+    );
+    return into(files).insert(companion).then((id) {
+      return (select(
+        files,
+      )..where((f) => f.id.equals(id.toString()))).map((f) => f.id).getSingle();
+    });
+  }
+
+  /// Обновить файл
+  Future<bool> updateFile(String id, UpdateFileDto dto) async {
+    final companion = FilesCompanion(
+      name: dto.name != null ? Value(dto.name!) : const Value.absent(),
+      description: dto.description != null
+          ? Value(dto.description)
+          : const Value.absent(),
+      categoryId: dto.categoryId != null
+          ? Value(dto.categoryId)
+          : const Value.absent(),
+      isFavorite: dto.isFavorite != null
+          ? Value(dto.isFavorite!)
+          : const Value.absent(),
+      isArchived: dto.isArchived != null
+          ? Value(dto.isArchived!)
+          : const Value.absent(),
+      isPinned: dto.isPinned != null
+          ? Value(dto.isPinned!)
+          : const Value.absent(),
+      modifiedAt: Value(DateTime.now()),
+    );
+
+    final query = (update(files)..where((f) => f.id.equals(id)));
+    return query.write(companion).then((rowsAffected) => rowsAffected > 0);
+  }
+
+  /// Мягкое удаление файла
+  Future<bool> softDeleteFile(String id) async {
+    final query = (update(files)..where((f) => f.id.equals(id)));
+    return query.write(
+      const FilesCompanion(isDeleted: Value(true)),
+    ).then((rowsAffected) => rowsAffected > 0);
+  }
+
+  /// Получить файлы по категории
+  Stream<List<FileCardDto>> watchFilesByCategory(String? categoryId) {
+    var query = select(files);
+    if (categoryId != null) {
+      query = query..where((f) => f.categoryId.equals(categoryId));
+    } else {
+      query = query..where((f) => f.categoryId.isNull());
+    }
+    return (query..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)]))
+        .watch()
+        .map(
+          (files) => files
+              .map(
+                (f) => FileCardDto(
+                  id: f.id,
+                  name: f.name,
+                  fileName: f.fileName,
+                  fileExtension: f.fileExtension,
+                  fileSize: f.fileSize,
+                  categoryName: null,
+                  isFavorite: f.isFavorite,
+                  isPinned: f.isPinned,
+                  usedCount: f.usedCount,
+                  modifiedAt: f.modifiedAt,
+                ),
+              )
+              .toList(),
+        );
+  }
+
+  /// Получить избранные файлы
+  Stream<List<FileCardDto>> watchFavoriteFiles() {
+    return (select(files)
+          ..where((f) => f.isFavorite.equals(true))
+          ..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)]))
+        .watch()
+        .map(
+          (files) => files
+              .map(
+                (f) => FileCardDto(
+                  id: f.id,
+                  name: f.name,
+                  fileName: f.fileName,
+                  fileExtension: f.fileExtension,
+                  fileSize: f.fileSize,
+                  categoryName: null,
+                  isFavorite: f.isFavorite,
+                  isPinned: f.isPinned,
+                  usedCount: f.usedCount,
+                  modifiedAt: f.modifiedAt,
+                ),
+              )
+              .toList(),
+        );
+  }
+}

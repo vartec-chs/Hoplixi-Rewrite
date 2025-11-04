@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'categories.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,7 +9,12 @@ class BankCards extends Table {
   TextColumn get name => text().withLength(min: 1, max: 255)();
   TextColumn get cardholderName => text().withLength(min: 1, max: 255)();
   TextColumn get cardNumber => text()(); // Encrypted card number
-  TextColumn get cardType => text().nullable()(); // VISA, Mastercard, etc.
+  TextColumn get cardType => textEnum<CardType>()
+      .withDefault(Constant(CardType.debit.value))
+      .nullable()(); // VISA, Mastercard, etc.
+  TextColumn get cardNetwork => textEnum<CardNetwork>()
+      .withDefault(Constant(CardNetwork.other.value))
+      .nullable()(); // Card network
   TextColumn get expiryMonth => text().withLength(min: 2, max: 2)(); // MM
   TextColumn get expiryYear => text().withLength(min: 4, max: 4)(); // YYYY
   TextColumn get cvv => text().nullable()(); // Encrypted CVV

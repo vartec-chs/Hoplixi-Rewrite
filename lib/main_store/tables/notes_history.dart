@@ -3,7 +3,7 @@ import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:uuid/uuid.dart';
 import 'converters.dart';
 
-@DataClassName('NotesHistory')
+@DataClassName('NotesHistoryData')
 class NotesHistory extends Table {
   TextColumn get id => text().clientDefault(() => Uuid().v4())(); // UUID v4
   TextColumn get originalNoteId => text()(); // ID of original note

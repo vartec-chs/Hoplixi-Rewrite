@@ -3,7 +3,7 @@ import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:uuid/uuid.dart';
 import 'converters.dart';
 
-@DataClassName('OtpsHistory')
+@DataClassName('OtpsHistoryData')
 class OtpsHistory extends Table {
   TextColumn get id => text().clientDefault(() => Uuid().v4())(); // UUID v4
   TextColumn get originalOtpId => text()(); // ID of original OTP

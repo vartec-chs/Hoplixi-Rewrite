@@ -3,6 +3,35 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'password_history_dto.freezed.dart';
 part 'password_history_dto.g.dart';
 
+/// DTO для создания записи истории пароля
+@freezed
+sealed class CreatePasswordHistoryDto with _$CreatePasswordHistoryDto {
+  const factory CreatePasswordHistoryDto({
+    required String originalPasswordId,
+    required String action,
+    required String name,
+    String? login,
+    String? email,
+    String? url,
+    String? description,
+    String? notes,
+    String? password,
+    String? categoryName,
+    String? tags,
+    int? usedCount,
+    bool? isFavorite,
+    bool? isArchived,
+    bool? isPinned,
+    bool? isDeleted,
+    required DateTime originalCreatedAt,
+    required DateTime originalModifiedAt,
+    DateTime? lastAccessedAt,
+  }) = _CreatePasswordHistoryDto;
+
+  factory CreatePasswordHistoryDto.fromJson(Map<String, dynamic> json) =>
+      _$CreatePasswordHistoryDtoFromJson(json);
+}
+
 /// DTO для получения записи из истории пароля
 @freezed
 sealed class GetPasswordHistoryDto with _$GetPasswordHistoryDto {

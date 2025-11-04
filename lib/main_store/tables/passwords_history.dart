@@ -3,7 +3,7 @@ import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:uuid/uuid.dart';
 import 'converters.dart';
 
-@DataClassName('PasswordsHistory')
+@DataClassName('PasswordsHistoryData')
 class PasswordsHistory extends Table {
   TextColumn get id => text().clientDefault(() => Uuid().v4())(); // UUID v4
   TextColumn get originalPasswordId => text()(); // ID of original password

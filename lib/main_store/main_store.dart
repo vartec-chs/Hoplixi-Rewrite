@@ -1,12 +1,59 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/main_store/dao/password_dao.dart';
+import 'package:hoplixi/main_store/dao/password_history_dao.dart';
+import 'package:hoplixi/main_store/dao/otp_dao.dart';
+import 'package:hoplixi/main_store/dao/otp_history_dao.dart';
+import 'package:hoplixi/main_store/dao/note_dao.dart';
+import 'package:hoplixi/main_store/dao/note_history_dao.dart';
+import 'package:hoplixi/main_store/dao/bank_card_dao.dart';
+import 'package:hoplixi/main_store/dao/bank_card_history_dao.dart';
+import 'package:hoplixi/main_store/dao/file_dao.dart';
+import 'package:hoplixi/main_store/dao/file_history_dao.dart';
+import 'package:hoplixi/main_store/dao/category_dao.dart';
+import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 import 'package:uuid/uuid.dart';
 
 part 'main_store.g.dart';
 
-@DriftDatabase(tables: [StoreMetaTable])
+@DriftDatabase(
+  tables: [
+    StoreMetaTable,
+    Passwords,
+    PasswordsHistory,
+    Otps,
+    OtpsHistory,
+    Notes,
+    NotesHistory,
+    BankCards,
+    BankCardsHistory,
+    Files,
+    FilesTags,
+    FilesHistory,
+    Categories,
+    Tags,
+    Icons,
+    PasswordsTags,
+    OtpsTags,
+    NotesTags,
+    BankCardsTags,
+  ],
+  daos: [
+    PasswordDao,
+    PasswordHistoryDao,
+    OtpDao,
+    OtpHistoryDao,
+    NoteDao,
+    NoteHistoryDao,
+    BankCardDao,
+    BankCardHistoryDao,
+    FileDao,
+    FileHistoryDao,
+    CategoryDao,
+  ],
+)
 class MainStore extends _$MainStore {
   static const String _logTag = 'MainStore';
 

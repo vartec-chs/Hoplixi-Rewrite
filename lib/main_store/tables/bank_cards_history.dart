@@ -3,7 +3,7 @@ import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:uuid/uuid.dart';
 import 'converters.dart';
 
-@DataClassName('BankCardsHistory')
+@DataClassName('BankCardsHistoryData')
 class BankCardsHistory extends Table {
   TextColumn get id => text().clientDefault(() => Uuid().v4())(); // UUID v4
   TextColumn get originalCardId => text()(); // ID of original card
@@ -17,7 +17,10 @@ class BankCardsHistory extends Table {
   TextColumn get cardholderName => text().withLength(min: 1, max: 255)();
   TextColumn get cardNumber =>
       text().nullable()(); // Encrypted card number (nullable for privacy)
-  TextColumn get cardType => text().nullable()(); // VISA, Mastercard, etc.
+  TextColumn get cardType =>
+      textEnum<CardType>().nullable()(); // Card type (debit, credit, etc.)
+  TextColumn get cardNetwork => textEnum<CardNetwork>()
+      .nullable()(); // Card network (VISA, Mastercard, etc.)
   TextColumn get expiryMonth => text().nullable()(); // MM
   TextColumn get expiryYear => text().nullable()(); // YYYY
   TextColumn get cvv =>
