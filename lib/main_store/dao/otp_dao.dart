@@ -3,7 +3,6 @@ import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/otps.dart';
-import 'dart:typed_data';
 
 part 'otp_dao.g.dart';
 

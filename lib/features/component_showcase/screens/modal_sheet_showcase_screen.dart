@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hoplixi/core/theme/theme_provider.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 /// Экран для демонстрации Wolt Modal Sheet
@@ -417,8 +415,9 @@ class _ModalSheetShowcaseScreenState extends State<ModalSheetShowcaseScreen> {
                           prefixIcon: Icon(Icons.email),
                         ),
                         validator: (value) {
-                          if (value?.isEmpty ?? true)
+                          if (value?.isEmpty ?? true) {
                             return 'Email is required';
+                          }
                           if (!value!.contains('@')) return 'Invalid email';
                           return null;
                         },

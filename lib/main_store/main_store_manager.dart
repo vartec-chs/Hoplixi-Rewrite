@@ -39,6 +39,8 @@ class MainStoreManager {
   /// Получить текущий путь к хранилищу
   String? get currentStorePath => _currentStorePath;
 
+  MainStore? get currentStore => _currentStore;
+
   /// Создать новое хранилище
   ///
   /// [dto] - данные для создания хранилища

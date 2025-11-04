@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:uuid/uuid.dart';
-import 'converters.dart';
 
 @DataClassName('NotesHistoryData')
 class NotesHistory extends Table {

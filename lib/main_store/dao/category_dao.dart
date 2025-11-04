@@ -119,6 +119,27 @@ class CategoryDao extends DatabaseAccessor<MainStore> with _$CategoryDaoMixin {
         );
   }
 
+  /// Получить категории с пагинацией
+  Future<List<CategoryCardDto>> getCategoryCardsPaginated({
+    required int limit,
+    required int offset,
+  }) {
+    return (select(categories)
+          ..orderBy([(c) => OrderingTerm.asc(c.name)])
+          ..limit(limit, offset: offset))
+        .map(
+          (c) => CategoryCardDto(
+            id: c.id,
+            name: c.name,
+            type: c.type.value,
+            color: c.color,
+            iconId: c.iconId,
+            itemsCount: 0, // TODO: count items in category
+          ),
+        )
+        .get();
+  }
+
   /// Удалить категорию
   Future<bool> deleteCategory(String id) async {
     final rowsAffected = await (delete(

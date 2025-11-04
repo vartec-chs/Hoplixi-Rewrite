@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hoplixi/main_store/models/enums/index.dart';
 
 part 'bank_card_history_dto.freezed.dart';
 part 'bank_card_history_dto.g.dart';

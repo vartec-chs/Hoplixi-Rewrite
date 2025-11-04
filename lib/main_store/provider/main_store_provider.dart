@@ -19,6 +19,18 @@ final mainStoreStateProvider = FutureProvider<DatabaseState>((ref) async {
   return state;
 });
 
+/// Провайдер для получения MainStoreManager по готовности
+///
+/// Отслеживает состояние БД и предоставляет менеджер только когда хранилище открыто.
+/// Возвращает null если хранилище не открыто или находится в процессе открытия/закрытия.
+final mainStoreManagerProvider = FutureProvider<MainStoreManager?>((ref) async {
+  final asyncState = await ref.watch(mainStoreProvider.future);
+
+  return asyncState.isOpen
+      ? ref.read(mainStoreProvider.notifier).currentMainStoreManager
+      : null;
+});
+
 /// AsyncNotifier для управления состоянием хранилища MainStore
 ///
 /// Предоставляет методы для:
@@ -36,14 +48,10 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
 
   Future<MainStoreManager> get _getManager async {
     // Если сервис еще не инициализирован, ждем его
-    if (_dbHistoryService == null) {
-      _dbHistoryService = await ref.read(dbHistoryProvider.future);
-    }
+    _dbHistoryService ??= await ref.read(dbHistoryProvider.future);
 
     // Если менеджер еще не создан, создаем его
-    if (_manager == null) {
-      _manager = MainStoreManager(_dbHistoryService!);
-    }
+    _manager ??= MainStoreManager(_dbHistoryService!);
 
     return _manager!;
   }
@@ -563,4 +571,15 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
   void clearError() {
     _setState(_currentState.copyWith(error: null));
   }
+
+  /// Get Current MainStoreManager
+  MainStoreManager? get currentMainStoreManager {
+    if (_manager == null) {
+      logWarning('MainStoreManager is not initialized', tag: _logTag);
+    }
+    return _manager;
+  }
+
+  /// Получить MainStoreManager по готовности
+  Future<MainStoreManager> getManager() async => await _getManager;
 }

@@ -100,12 +100,12 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
     UniversalModal.show(
       context: context,
       builder: (context) => const UniversalModalContent(
+        shrinkWrap: true,
         child: Text(
           'Это простой модал с коротким текстом. '
           'На мобильных устройствах отобразится как bottom sheet, '
           'на десктопе — как dialog.',
         ),
-        shrinkWrap: true,
       ),
     );
   }
@@ -130,7 +130,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       builder: (context) => UniversalModalContent(
         title: const Text('Подтверждение действия'),
         shrinkWrap: true,
-        child: const Text('Вы уверены, что хотите выполнить это действие?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -146,6 +145,7 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             child: const Text('Подтвердить'),
           ),
         ],
+        child: const Text('Вы уверены, что хотите выполнить это действие?'),
       ),
     );
   }
@@ -160,6 +160,12 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (context) => UniversalModalContent(
         title: const Text('Длинный контент'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Закрыть'),
+          ),
+        ],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -195,12 +201,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Закрыть'),
-          ),
-        ],
       ),
     );
   }
@@ -214,6 +214,26 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (context) => UniversalModalContent(
         title: const Text('Форма обратной связи'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                formKey.currentState!.save();
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Спасибо, $name! Мы получили ваше письмо'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Отправить'),
+          ),
+        ],
         child: Form(
           key: formKey,
           child: Column(
@@ -259,26 +279,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Отмена'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                formKey.currentState!.save();
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Спасибо, $name! Мы получили ваше письмо'),
-                  ),
-                );
-              }
-            },
-            child: const Text('Отправить'),
-          ),
-        ],
       ),
     );
   }
@@ -336,6 +336,12 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       constraints: const BoxConstraints.expand(),
       builder: (context) => UniversalModalContent(
         title: const Text('Полноэкранный модал'),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Закрыть'),
+          ),
+        ],
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -359,12 +365,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             ],
           ),
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Закрыть'),
-          ),
-        ],
       ),
     );
   }
@@ -379,21 +379,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       builder: (context) => UniversalModalContent(
         title: const Text('Внимание'),
         shrinkWrap: true,
-        child: Column(
-          children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Вы собираетесь удалить этот элемент. '
-              'Это действие невозможно отменить.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -412,6 +397,21 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             child: const Text('Удалить'),
           ),
         ],
+        child: Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 48,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Вы собираетесь удалить этот элемент. '
+              'Это действие невозможно отменить.',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -422,7 +422,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       builder: (context) => UniversalModalContent(
         title: const Text('Основной модал'),
         shrinkWrap: true,
-        child: const Text('Нажмите кнопку ниже, чтобы открыть вложенный модал'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -435,6 +434,7 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             child: const Text('Открыть вложенный'),
           ),
         ],
+        child: const Text('Нажмите кнопку ниже, чтобы открыть вложенный модал'),
       ),
     );
   }
@@ -445,16 +445,16 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       builder: (context) => UniversalModalContent(
         title: const Text('Вложенный модал'),
         shrinkWrap: true,
-        child: const Text(
-          'Это вложенный модал, открытый поверх основного. '
-          'Вы можете открывать модалы один внутри другого.',
-        ),
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Закрыть'),
           ),
         ],
+        child: const Text(
+          'Это вложенный модал, открытый поверх основного. '
+          'Вы можете открывать модалы один внутри другого.',
+        ),
       ),
     );
   }
@@ -465,10 +465,6 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
       builder: (context) => UniversalModalContent(
         title: const Text('Выберите опцию'),
         shrinkWrap: true,
-        child: const Text(
-          'Модал может возвращать значение при закрытии. '
-          'Нажмите одну из кнопок ниже.',
-        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop('Отмена'),
@@ -479,6 +475,10 @@ class UniversalModalShowcaseScreen extends StatelessWidget {
             child: const Text('Выбрать'),
           ),
         ],
+        child: const Text(
+          'Модал может возвращать значение при закрытии. '
+          'Нажмите одну из кнопок ниже.',
+        ),
       ),
     );
 
