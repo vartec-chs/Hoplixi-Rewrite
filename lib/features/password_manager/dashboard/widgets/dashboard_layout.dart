@@ -44,7 +44,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
 
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith(AppRoutesPaths.dashboardCategories)) return 1;
+    if (location.startsWith(AppRoutesPaths.dashboardCategoryManager)) return 1;
     if (location.startsWith(AppRoutesPaths.dashboardIconManager)) return 2;
     if (location.startsWith(AppRoutesPaths.dashboardSettings)) return 3;
     return 0; // home
@@ -56,7 +56,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
         context.go(AppRoutesPaths.dashboard);
         break;
       case 1:
-        context.go(AppRoutesPaths.dashboardCategories);
+        context.go(AppRoutesPaths.dashboardCategoryManager);
         break;
       case 2:
         context.go(AppRoutesPaths.dashboardIconManager);

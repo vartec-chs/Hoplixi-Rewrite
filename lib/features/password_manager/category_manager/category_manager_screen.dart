@@ -45,15 +45,6 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
     );
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Перезагружаем данные при изменении фильтра
-    ref.listen(categoryFilterProvider, (previous, next) {
-      _pagingController.refresh();
-    });
-  }
-
   void _showCreateCategoryModal() {
     WoltModalSheet.show(
       context: context,
@@ -163,7 +154,7 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
                               _searchController.clear();
                               ref
                                   .read(categoryFilterProvider.notifier)
-                                  .updateSearchQuery('');
+                                  .updateQuery('');
                             },
                           )
                         : null,
@@ -175,7 +166,7 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
                   onChanged: (value) {
                     ref
                         .read(categoryFilterProvider.notifier)
-                        .updateSearchQuery(value);
+                        .updateQuery(value);
                   },
                 ),
               ),
@@ -224,33 +215,26 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
                     return _buildCategoryCard(item);
                   },
                   firstPageProgressIndicatorBuilder: (context) =>
-                      const SliverFillRemaining(
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
+                      const Center(child: CircularProgressIndicator()),
                   newPageProgressIndicatorBuilder: (context) => const Padding(
                     padding: EdgeInsets.all(16),
                     child: Center(child: CircularProgressIndicator()),
                   ),
                   noItemsFoundIndicatorBuilder: (context) =>
-                      const SliverFillRemaining(
-                        child: Center(child: Text('Категории не найдены')),
-                      ),
-                  firstPageErrorIndicatorBuilder: (context) =>
-                      SliverFillRemaining(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Ошибка загрузки категорий'),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => _pagingController.refresh(),
-                                child: const Text('Повторить'),
-                              ),
-                            ],
-                          ),
+                      const Center(child: Text('Категории не найдены')),
+                  firstPageErrorIndicatorBuilder: (context) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Ошибка загрузки категорий'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => _pagingController.refresh(),
+                          child: const Text('Повторить'),
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },

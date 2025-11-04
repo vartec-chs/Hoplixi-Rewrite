@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/global_key.dart';
+import 'package:hoplixi/main_store/provider/main_store_provider.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/routing/router_refresh_provider.dart';
 import 'package:hoplixi/routing/routes.dart';
@@ -30,8 +31,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         : appRoutes,
 
     redirect: (context, state) {
-      // Редирект с /dashboard на /dashboard/home
-      if (state.uri.toString() == AppRoutesPaths.dashboard) {
+      final dbStateAsync = ref.read(mainStoreProvider);
+
+      // Редирект на dashboard если БД открыта и пользователь на пути создания/открытия БД
+      if (dbStateAsync.hasValue) {
+        final dbState = dbStateAsync.value!;
+        final currentPath = state.matchedLocation;
+
+        if (dbState.isOpen &&
+            (currentPath == AppRoutesPaths.createStore ||
+                currentPath == AppRoutesPaths.openStore)) {
+          return AppRoutesPaths.dashboardHome;
+        }
+      }
+
+      // // Редирект с /dashboard на /dashboard/home
+      if (state.matchedLocation == AppRoutesPaths.dashboard) {
         return AppRoutesPaths.dashboardHome;
       }
       return null;
@@ -44,7 +59,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     if (loc == AppRoutesPaths.home) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(titlebarStateProvider.notifier).setBackgroundTransparent(true);
-        
       });
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {

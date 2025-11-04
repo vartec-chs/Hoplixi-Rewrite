@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
@@ -206,6 +207,16 @@ final List<RouteBase> appRoutes = [
           return MaterialPage(
             key: state.pageKey,
             child: const IconManagerScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardCategoryManager,
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const CategoryManagerScreen(),
           );
         },
       ),
