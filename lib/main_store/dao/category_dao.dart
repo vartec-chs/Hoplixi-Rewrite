@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
+import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'package:hoplixi/main_store/tables/categories.dart';
 
 part 'category_dao.g.dart';
@@ -146,5 +147,196 @@ class CategoryDao extends DatabaseAccessor<MainStore> with _$CategoryDaoMixin {
       categories,
     )..where((c) => c.id.equals(id))).go();
     return rowsAffected > 0;
+  }
+
+  /// Получить отфильтрованные категории
+  Future<List<CategoriesData>> getCategoriesFiltered(CategoriesFilter filter) {
+    var query = select(categories);
+
+    // Фильтр по поисковому запросу (название)
+    if (filter.query.isNotEmpty) {
+      query = query..where((c) => c.name.like('%${filter.query}%'));
+    }
+
+    // Фильтр по типу
+    if (filter.type != null) {
+      query = query..where((c) => c.type.equals(filter.type!));
+    }
+
+    // Фильтр по цвету
+    if (filter.color != null) {
+      query = query..where((c) => c.color.equals(filter.color!));
+    }
+
+    // Фильтр по наличию иконки
+    if (filter.hasIcon != null) {
+      if (filter.hasIcon!) {
+        query = query..where((c) => c.iconId.isNotNull());
+      } else {
+        query = query..where((c) => c.iconId.isNull());
+      }
+    }
+
+    // Фильтр по наличию описания
+    if (filter.hasDescription != null) {
+      if (filter.hasDescription!) {
+        query = query..where((c) => c.description.isNotNull());
+      } else {
+        query = query..where((c) => c.description.isNull());
+      }
+    }
+
+    // Фильтр по дате создания
+    if (filter.createdAfter != null) {
+      query = query
+        ..where((c) => c.createdAt.isBiggerThanValue(filter.createdAfter!));
+    }
+    if (filter.createdBefore != null) {
+      query = query
+        ..where((c) => c.createdAt.isSmallerThanValue(filter.createdBefore!));
+    }
+
+    // Фильтр по дате изменения
+    if (filter.modifiedAfter != null) {
+      query = query
+        ..where((c) => c.modifiedAt.isBiggerThanValue(filter.modifiedAfter!));
+    }
+    if (filter.modifiedBefore != null) {
+      query = query
+        ..where((c) => c.modifiedAt.isSmallerThanValue(filter.modifiedBefore!));
+    }
+
+    // Сортировка
+    query = query..orderBy([(c) => _getSortOrderByTerm(filter.sortField)]);
+
+    // Пагинация
+    if (filter.limit != null && filter.limit! > 0) {
+      query = query..limit(filter.limit!, offset: filter.offset ?? 0);
+    }
+
+    return query.get();
+  }
+
+  /// Смотреть отфильтрованные категории с автообновлением
+  Stream<List<CategoriesData>> watchCategoriesFiltered(
+    CategoriesFilter filter,
+  ) {
+    var query = select(categories);
+
+    // Фильтр по поисковому запросу (название)
+    if (filter.query.isNotEmpty) {
+      query = query..where((c) => c.name.like('%${filter.query}%'));
+    }
+
+    // Фильтр по типу
+    if (filter.type != null) {
+      query = query..where((c) => c.type.equals(filter.type!));
+    }
+
+    // Фильтр по цвету
+    if (filter.color != null) {
+      query = query..where((c) => c.color.equals(filter.color!));
+    }
+
+    // Фильтр по наличию иконки
+    if (filter.hasIcon != null) {
+      if (filter.hasIcon!) {
+        query = query..where((c) => c.iconId.isNotNull());
+      } else {
+        query = query..where((c) => c.iconId.isNull());
+      }
+    }
+
+    // Фильтр по наличию описания
+    if (filter.hasDescription != null) {
+      if (filter.hasDescription!) {
+        query = query..where((c) => c.description.isNotNull());
+      } else {
+        query = query..where((c) => c.description.isNull());
+      }
+    }
+
+    // Фильтр по дате создания
+    if (filter.createdAfter != null) {
+      query = query
+        ..where((c) => c.createdAt.isBiggerThanValue(filter.createdAfter!));
+    }
+    if (filter.createdBefore != null) {
+      query = query
+        ..where((c) => c.createdAt.isSmallerThanValue(filter.createdBefore!));
+    }
+
+    // Фильтр по дате изменения
+    if (filter.modifiedAfter != null) {
+      query = query
+        ..where((c) => c.modifiedAt.isBiggerThanValue(filter.modifiedAfter!));
+    }
+    if (filter.modifiedBefore != null) {
+      query = query
+        ..where((c) => c.modifiedAt.isSmallerThanValue(filter.modifiedBefore!));
+    }
+
+    // Сортировка
+    query = query..orderBy([(c) => _getSortOrderByTerm(filter.sortField)]);
+
+    // Пагинация
+    if (filter.limit != null && filter.limit! > 0) {
+      query = query..limit(filter.limit!, offset: filter.offset ?? 0);
+    }
+
+    return query.watch();
+  }
+
+  /// Получить отфильтрованные категории в виде карточек
+  Future<List<CategoryCardDto>> getCategoryCardsFiltered(
+    CategoriesFilter filter,
+  ) async {
+    final categories = await getCategoriesFiltered(filter);
+    return categories
+        .map(
+          (c) => CategoryCardDto(
+            id: c.id,
+            name: c.name,
+            type: c.type.value,
+            color: c.color,
+            iconId: c.iconId,
+            itemsCount: 0, // TODO: count items in category
+          ),
+        )
+        .toList();
+  }
+
+  /// Смотреть отфильтрованные категории карточки с автообновлением
+  Stream<List<CategoryCardDto>> watchCategoryCardsFiltered(
+    CategoriesFilter filter,
+  ) {
+    return watchCategoriesFiltered(filter).map(
+      (categories) => categories
+          .map(
+            (c) => CategoryCardDto(
+              id: c.id,
+              name: c.name,
+              type: c.type.value,
+              color: c.color,
+              iconId: c.iconId,
+              itemsCount: 0, // TODO: count items in category
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  /// Получить тип сортировки для Drift
+  OrderingTerm _getSortOrderByTerm(CategoriesSortField sortField) {
+    switch (sortField) {
+      case CategoriesSortField.name:
+        return OrderingTerm.asc(categories.name);
+      case CategoriesSortField.type:
+        return OrderingTerm.asc(categories.type);
+      case CategoriesSortField.createdAt:
+        return OrderingTerm.asc(categories.createdAt);
+      case CategoriesSortField.modifiedAt:
+        return OrderingTerm.asc(categories.modifiedAt);
+    }
   }
 }

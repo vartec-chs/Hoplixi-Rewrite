@@ -6,6 +6,7 @@ part 'categories_filter.g.dart';
 enum CategoriesSortField { name, type, createdAt, modifiedAt }
 
 @freezed
+@immutable
 abstract class CategoriesFilter with _$CategoriesFilter {
   const factory CategoriesFilter({
     @Default('') String query,

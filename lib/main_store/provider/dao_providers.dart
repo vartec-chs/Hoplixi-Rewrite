@@ -62,6 +62,10 @@ final categoryDaoProvider = FutureProvider<CategoryDao>(
   (ref) => _ensureDao(ref, (store) => CategoryDao(store)),
 );
 
+final iconDaoProvider = FutureProvider<IconDao>(
+  (ref) => _ensureDao(ref, (store) => IconDao(store)),
+);
+
 // /// DAO провайдер для работы с паролями
 // final passwordDaoProvider = FutureProvider<PasswordDao?>((ref) async {
 //   final mainStore = await ref.watch(mainStoreManagerProvider.future);

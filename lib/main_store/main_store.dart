@@ -12,6 +12,7 @@ import 'package:hoplixi/main_store/dao/bank_card_history_dao.dart';
 import 'package:hoplixi/main_store/dao/file_dao.dart';
 import 'package:hoplixi/main_store/dao/file_history_dao.dart';
 import 'package:hoplixi/main_store/dao/category_dao.dart';
+import 'package:hoplixi/main_store/dao/icon_dao.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 import 'package:uuid/uuid.dart';
@@ -52,6 +53,7 @@ part 'main_store.g.dart';
     FileDao,
     FileHistoryDao,
     CategoryDao,
+    IconDao,
   ],
 )
 class MainStore extends _$MainStore {

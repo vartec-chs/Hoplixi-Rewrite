@@ -12,3 +12,4 @@ export 'bank_card_history_dto.dart';
 export 'file_dto.dart';
 export 'file_history_dto.dart';
 export 'category_dto.dart';
+export 'icon_dto.dart';
