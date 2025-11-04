@@ -123,7 +123,7 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
   }
 
   /// Получить отфильтрованные иконки
-  Future<List<IconsData>> getIconsFiltered(IconsFilter filter) {
+  Future<List<IconsData>> getIconsFiltered(IconsFilter filter) async {
     var query = select(icons);
 
     // Фильтр по поисковому запросу (название)
@@ -164,7 +164,7 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
       query = query..limit(filter.limit!, offset: filter.offset ?? 0);
     }
 
-    return query.get();
+    return await query.get();
   }
 
   /// Смотреть отфильтрованные иконки с автообновлением

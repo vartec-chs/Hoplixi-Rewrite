@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:hoplixi/main_store/models/filter/icons_filter.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 import '../provider/icon_filter_provider.dart';
@@ -41,7 +42,6 @@ class _IconManagerAppBarState extends ConsumerState<IconManagerAppBar> {
               decoration: primaryInputDecoration(
                 context,
                 hintText: 'Поиск иконок...',
-
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
@@ -51,6 +51,7 @@ class _IconManagerAppBarState extends ConsumerState<IconManagerAppBar> {
                 ),
               ),
               onChanged: (value) {
+                // Используем встроенный дебаунсинг в updateQuery
                 ref.read(iconFilterProvider.notifier).updateQuery(value);
               },
             )
@@ -87,10 +88,10 @@ class _IconManagerAppBarState extends ConsumerState<IconManagerAppBar> {
             return PopupMenuButton<IconsSortField>(
               icon: const Icon(Icons.sort),
               tooltip: 'Сортировка',
-              onSelected: (sortField) {
+              onSelected: (sortField) async {
                 // Избегаем ненужного обновления если значение не изменилось
                 if (sortField != currentSortField) {
-                  ref
+                  await ref
                       .read(iconFilterProvider.notifier)
                       .updateSortField(sortField);
                 }
@@ -162,53 +163,163 @@ class _IconManagerAppBarState extends ConsumerState<IconManagerAppBar> {
   void _showFilterDialog(BuildContext context) {
     final filter = ref.read(iconFilterProvider);
 
-    showDialog(
+    // Локальное состояние для диалога
+    String? typeFilter = filter.type;
+    DateTime? createdAfter = filter.createdAfter;
+    DateTime? createdBefore = filter.createdBefore;
+
+    WoltModalSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Фильтры'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Фильтр по типу
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Тип иконки',
-                  hintText: 'Например: svg, png',
+      barrierDismissible: true,
+      pageListBuilder: (modalContext) {
+        return [
+          WoltModalSheetPage(
+            surfaceTintColor: Colors.transparent,
+            hasTopBarLayer: true,
+            topBarTitle: Text(
+              'Фильтры',
+              style: Theme.of(modalContext).textTheme.titleMedium,
+            ),
+            isTopBarLayerAlwaysVisible: true,
+            leadingNavBarWidget: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(modalContext).pop(),
+            ),
+            child: StatefulBuilder(
+              builder: (context, setState) => Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Фильтр по типу
+                    TextField(
+                      decoration: primaryInputDecoration(
+                        context,
+                        labelText: 'Тип иконки',
+                        hintText: 'Например: svg, png',
+                      ),
+                      controller: TextEditingController(text: typeFilter ?? ''),
+                      onChanged: (value) {
+                        setState(() {
+                          typeFilter = value.isEmpty ? null : value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    // Фильтр по дате создания (от)
+                    TextField(
+                      decoration: primaryInputDecoration(
+                        context,
+                        labelText: 'Создана после',
+                        hintText: 'Выберите дату',
+                        prefixIcon: const Icon(Icons.calendar_today),
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: createdAfter ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (date != null) {
+                          setState(() {
+                            createdAfter = date;
+                          });
+                        }
+                      },
+                      controller: TextEditingController(
+                        text: createdAfter != null
+                            ? '${createdAfter!.day}.${createdAfter!.month}.${createdAfter!.year}'
+                            : '',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Фильтр по дате создания (до)
+                    TextField(
+                      decoration: primaryInputDecoration(
+                        context,
+                        labelText: 'Создана до',
+                        hintText: 'Выберите дату',
+                        prefixIcon: const Icon(Icons.calendar_today),
+                      ),
+                      readOnly: true,
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: createdBefore ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (date != null) {
+                          setState(() {
+                            createdBefore = date;
+                          });
+                        }
+                      },
+                      controller: TextEditingController(
+                        text: createdBefore != null
+                            ? '${createdBefore!.day}.${createdBefore!.month}.${createdBefore!.year}'
+                            : '',
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Кнопки действий
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            await ref.read(iconFilterProvider.notifier).reset();
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          child: const Text('Сбросить'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: () async {
+                            // Применяем фильтры
+                            if (typeFilter != null &&
+                                typeFilter!.trim().isNotEmpty) {
+                              await ref
+                                  .read(iconFilterProvider.notifier)
+                                  .updateType(typeFilter);
+                            } else if (typeFilter != filter.type) {
+                              await ref
+                                  .read(iconFilterProvider.notifier)
+                                  .updateType(null);
+                            }
+
+                            if (createdAfter != filter.createdAfter) {
+                              await ref
+                                  .read(iconFilterProvider.notifier)
+                                  .updateCreatedAfter(createdAfter);
+                            }
+
+                            if (createdBefore != filter.createdBefore) {
+                              await ref
+                                  .read(iconFilterProvider.notifier)
+                                  .updateCreatedBefore(createdBefore);
+                            }
+
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          child: const Text('Применить'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                controller: TextEditingController(text: filter.type ?? ''),
-                onChanged: (value) {
-                  ref
-                      .read(iconFilterProvider.notifier)
-                      .updateType(value.isEmpty ? null : value);
-                },
               ),
-              const SizedBox(height: 16),
-              // Здесь можно добавить больше фильтров (даты и т.д.)
-              Text(
-                'Фильтры по датам можно добавить здесь',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              ref.read(iconFilterProvider.notifier).reset();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Сбросить'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Применить'),
-          ),
-        ],
-      ),
+        ];
+      },
     );
   }
 }

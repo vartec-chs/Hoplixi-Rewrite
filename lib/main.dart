@@ -14,7 +14,7 @@ import 'package:universal_platform/universal_platform.dart';
 import 'di_init.dart';
 import 'app.dart';
 
-void main() async {
+Future<void> main() async {
   const String logTag = 'Main';
   if (UniversalPlatform.isWeb) {
     throw UnsupportedError(

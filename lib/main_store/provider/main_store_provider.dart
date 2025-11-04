@@ -1,11 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/main_store_manager.dart';
 import 'package:hoplixi/main_store/models/db_errors.dart';
 import 'package:hoplixi/main_store/models/db_state.dart';
 import 'package:hoplixi/main_store/models/dto/main_store_dto.dart';
 import 'package:hoplixi/main_store/provider/db_history_provider.dart';
 import 'package:hoplixi/main_store/services/db_history_services.dart';
+
+final _mainStoreManagerProvider = FutureProvider<MainStoreManager>((ref) async {
+  final dbHistoryService = await ref.read(dbHistoryProvider.future);
+  final manager = MainStoreManager(dbHistoryService);
+
+  // Cleanup on dispose
+  ref.onDispose(() {
+    logInfo(
+      'Освобождение ресурсов databaseManagerProvider',
+      tag: 'DatabaseProviders',
+    );
+    // manager.dispose();
+  });
+
+  return manager;
+});
 
 /// Провайдер для MainStoreManager (AsyncNotifier версия)
 final mainStoreProvider =
@@ -43,18 +60,7 @@ final mainStoreManagerProvider = FutureProvider<MainStoreManager?>((ref) async {
 class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
   static const String _logTag = 'MainStoreAsyncNotifier';
 
-  MainStoreManager? _manager;
-  DatabaseHistoryService? _dbHistoryService;
-
-  Future<MainStoreManager> get _getManager async {
-    // Если сервис еще не инициализирован, ждем его
-    _dbHistoryService ??= await ref.read(dbHistoryProvider.future);
-
-    // Если менеджер еще не создан, создаем его
-    _manager ??= MainStoreManager(_dbHistoryService!);
-
-    return _manager!;
-  }
+  late final MainStoreManager _manager;
 
   /// Получить текущее значение состояния или дефолтное
   DatabaseState get _currentState {
@@ -70,9 +76,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
   Future<DatabaseState> build() async {
     // Инициализация с idle состоянием
 
-    _dbHistoryService = await ref.watch(dbHistoryProvider.future);
-
     logInfo('MainStoreAsyncNotifier initialized', tag: _logTag);
+    _manager = await ref.read(_mainStoreManagerProvider.future);
     return const DatabaseState(status: DatabaseStatus.idle);
   }
 
@@ -90,15 +95,15 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем создание хранилища
-      final manager = await _getManager;
-      final result = await manager.createStore(dto);
+
+      final result = await _manager.createStore(dto);
 
       return result.fold(
         (storeInfo) {
           // Успех - обновляем состояние
           _setState(
             DatabaseState(
-              path: manager.currentStorePath,
+              path: _manager.currentStorePath,
               name: storeInfo.name,
               status: DatabaseStatus.open,
               modifiedAt: storeInfo.modifiedAt,
@@ -155,15 +160,15 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем открытие хранилища
-      final manager = await _getManager;
-      final result = await manager.openStore(dto);
+
+      final result = await _manager.openStore(dto);
 
       return result.fold(
         (storeInfo) {
           // Успех - обновляем состояние
           _setState(
             DatabaseState(
-              path: manager.currentStorePath,
+              path: _manager.currentStorePath,
               name: storeInfo.name,
               status: DatabaseStatus.open,
               modifiedAt: storeInfo.modifiedAt,
@@ -221,8 +226,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем закрытие хранилища
-      final manager = await _getManager;
-      final result = await manager.closeStore();
+      final result = await _manager.closeStore();
 
       return result.fold(
         (_) {
@@ -317,11 +321,10 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       }
 
       // Закрываем текущее соединение
-      final manager = await _getManager;
-      await manager.closeStore();
+      await _manager.closeStore();
 
       // Пытаемся открыть заново с паролем
-      final result = await manager.openStore(
+      final result = await _manager.openStore(
         OpenStoreDto(path: currentPath, password: password),
       );
 
@@ -389,8 +392,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем обновление хранилища
-      final manager = await _getManager;
-      final result = await manager.updateStore(dto);
+      final result = await _manager.updateStore(dto);
 
       return result.fold(
         (storeInfo) {
@@ -453,8 +455,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       );
 
       // Вызываем удаление хранилища
-      final manager = await _getManager;
-      final result = await manager.deleteStore(
+      final result = await _manager.deleteStore(
         path,
         deleteFromDisk: deleteFromDisk,
       );
@@ -510,8 +511,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         return null;
       }
 
-      final manager = await _getManager;
-      final result = await manager.getAttachmentsPath();
+      final result = await _manager.getAttachmentsPath();
 
       return result.fold((path) => path, (error) {
         logError(
@@ -541,8 +541,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         return null;
       }
 
-      final manager = await _getManager;
-      final result = await manager.createSubfolder(folderName);
+      final result = await _manager.createSubfolder(folderName);
 
       return result.fold(
         (path) {
@@ -574,12 +573,24 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
 
   /// Get Current MainStoreManager
   MainStoreManager? get currentMainStoreManager {
-    if (_manager == null) {
-      logWarning('MainStoreManager is not initialized', tag: _logTag);
-    }
     return _manager;
   }
 
   /// Получить MainStoreManager по готовности
-  Future<MainStoreManager> getManager() async => await _getManager;
+
+  MainStore get currentDatabase {
+    final db = _manager.currentStore;
+    if (db == null) {
+      logError(
+        'Попытка доступа к базе данных, когда она не открыта',
+        tag: 'DatabaseAsyncNotifier',
+        data: {'state': state.toString()},
+      );
+      throw DatabaseError.unknown(
+        message: 'Database must be opened before accessing it',
+        stackTrace: StackTrace.current,
+      );
+    }
+    return db;
+  }
 }
