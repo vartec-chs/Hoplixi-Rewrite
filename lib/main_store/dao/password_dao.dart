@@ -131,10 +131,8 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
 
   /// Удалить пароль (мягкое удаление)
   Future<bool> softDeletePassword(String id) async {
-    final result = await (update(passwords)
-          ..where((p) => p.id.equals(id))).write(
-      const PasswordsCompanion(isDeleted: Value(true)),
-    );
+    final result = await (update(passwords)..where((p) => p.id.equals(id)))
+        .write(const PasswordsCompanion(isDeleted: Value(true)));
     return result > 0;
   }
 
