@@ -45,7 +45,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith(AppRoutesPaths.dashboardCategories)) return 1;
-    if (location.startsWith(AppRoutesPaths.dashboardSearch)) return 2;
+    if (location.startsWith(AppRoutesPaths.dashboardIconManager)) return 2;
     if (location.startsWith(AppRoutesPaths.dashboardSettings)) return 3;
     return 0; // home
   }
@@ -59,7 +59,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
         context.go(AppRoutesPaths.dashboardCategories);
         break;
       case 2:
-        context.go(AppRoutesPaths.dashboardSearch);
+        context.go(AppRoutesPaths.dashboardIconManager);
         break;
       case 3:
         context.go(AppRoutesPaths.dashboardSettings);
@@ -191,9 +191,9 @@ class _DashboardLayoutState extends State<DashboardLayout>
             label: Text('Категории'),
           ),
           NavigationRailDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: Text('Поиск'),
+            icon: Icon(Icons.import_contacts),
+            selectedIcon: Icon(Icons.import_contacts_outlined),
+            label: Text('Иконки'),
           ),
           NavigationRailDestination(
             icon: Icon(Icons.settings_outlined),
@@ -246,9 +246,9 @@ class _DashboardLayoutState extends State<DashboardLayout>
           ),
           _buildBottomNavIconButton(
             context,
-            icon: Icons.search_outlined,
-            selectedIcon: Icons.search,
-            label: 'Поиск',
+            icon: Icons.import_contacts_outlined,
+            selectedIcon: Icons.import_contacts,
+            label: 'Иконки',
             index: 2,
             selectedIndex: selectedIndex,
           ),

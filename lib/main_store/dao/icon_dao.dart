@@ -4,6 +4,7 @@ import 'package:hoplixi/main_store/models/dto/icon_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/models/filter/icons_filter.dart';
 import 'package:hoplixi/main_store/tables/icons.dart';
+import 'package:uuid/uuid.dart';
 
 part 'icon_dao.g.dart';
 
@@ -63,17 +64,16 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
   }
 
   /// Создать новую иконку
-  Future<String> createIcon(CreateIconDto dto) {
+  Future<String> createIcon(CreateIconDto dto) async {
+    final id = const Uuid().v4();
     final companion = IconsCompanion.insert(
+      id: Value(id),
       name: dto.name,
       type: IconTypeX.fromString(dto.type),
       data: Uint8List.fromList(dto.data),
     );
-    return into(icons).insert(companion).then((id) {
-      return (select(
-        icons,
-      )..where((i) => i.id.equals(id.toString()))).map((i) => i.id).getSingle();
-    });
+    await into(icons).insert(companion);
+    return id;
   }
 
   /// Обновить иконку

@@ -6,6 +6,7 @@ import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_ho
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
+import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
@@ -192,57 +193,19 @@ final List<RouteBase> appRoutes = [
       GoRoute(
         path: AppRoutesPaths.dashboardSettings,
         pageBuilder: (context, state) {
-          if (!_enableDashboardTransitions) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const DashboardSettingsScreen(),
-            );
-          }
-          return CustomTransitionPage(
+          return MaterialPage(
             key: state.pageKey,
             child: const DashboardSettingsScreen(),
-            transitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  if (secondaryAnimation.status == AnimationStatus.forward ||
-                      secondaryAnimation.status == AnimationStatus.reverse) {
-                    return ScaleTransition(
-                      scale: Tween<double>(begin: 1.0, end: 0.9).animate(
-                        CurvedAnimation(
-                          parent: secondaryAnimation,
-                          curve: Curves.easeInCubic,
-                        ),
-                      ),
-                      child: FadeTransition(
-                        opacity: Tween<double>(
-                          begin: 1.0,
-                          end: 0.0,
-                        ).animate(secondaryAnimation),
-                        child: ScaleTransition(
-                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          ),
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return ScaleTransition(
-                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardIconManager,
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const IconManagerScreen(),
           );
         },
       ),
