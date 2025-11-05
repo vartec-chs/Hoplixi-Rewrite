@@ -12,6 +12,8 @@ import 'package:hoplixi/setup_tray.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'di_init.dart';
+import 'package:flutter/rendering.dart';
+
 import 'app.dart';
 
 Future<void> main() async {
@@ -50,6 +52,12 @@ Future<void> main() async {
 
       // Handle Flutter errors
       FlutterError.onError = (FlutterErrorDetails details) {
+        // Ignore specific debugNeedsLayout assertion error WoltModalSheet Flutter issue
+        if (details.exceptionAsString().contains(
+          "Failed assertion: line 3047 pos 12: '!debugNeedsLayout': is not true.",
+        )) {
+          return;
+        }
         logError(
           'Flutter error: ${details.exceptionAsString()}',
           stackTrace: details.stack,

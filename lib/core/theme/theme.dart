@@ -41,6 +41,7 @@ abstract final class AppTheme {
               surfaceTintColor: Colors.transparent,
               useSafeArea: true,
               enableDrag: true,
+              mainContentScrollPhysics: ClampingScrollPhysics(),
             ),
           ],
         );
@@ -90,6 +91,7 @@ abstract final class AppTheme {
               surfaceTintColor: Colors.transparent,
               useSafeArea: true,
               enableDrag: true,
+              mainContentScrollPhysics: ClampingScrollPhysics(),
               // dragHandleColor: Colors.white54,
             ),
           ],

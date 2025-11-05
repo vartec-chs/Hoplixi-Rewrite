@@ -95,6 +95,21 @@ class _ModalSheetShowcaseScreenState extends State<ModalSheetShowcaseScreen> {
           ],
         ),
         const SizedBox(height: 32),
+
+        _buildSection(
+          context,
+          title: 'Modal with Long Text',
+          children: [
+            FilledButton(
+              onPressed: () =>
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _showModalWithLongText(context);
+                  }),
+              child: const Text('Show Long Text Modal'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
       ],
     );
   }
@@ -362,6 +377,11 @@ class _ModalSheetShowcaseScreenState extends State<ModalSheetShowcaseScreen> {
     final formKey = GlobalKey<FormState>();
     String name = '';
     String email = '';
+    String phone = '';
+    String company = '';
+    String country = '';
+    String message = '';
+    bool subscribe = false;
 
     WoltModalSheet.show(
       context: context,
@@ -423,6 +443,72 @@ class _ModalSheetShowcaseScreenState extends State<ModalSheetShowcaseScreen> {
                         },
                         onSaved: (value) => email = value ?? '',
                       ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Phone',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.phone),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value?.isEmpty ?? true)
+                            return 'Phone is required';
+                          return null;
+                        },
+                        onSaved: (value) => phone = value ?? '',
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Company',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.business),
+                        ),
+                        validator: (value) {
+                          if (value?.isEmpty ?? true)
+                            return 'Company is required';
+                          return null;
+                        },
+                        onSaved: (value) => company = value ?? '',
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Country',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.public),
+                        ),
+                        validator: (value) {
+                          if (value?.isEmpty ?? true)
+                            return 'Country is required';
+                          return null;
+                        },
+                        onSaved: (value) => country = value ?? '',
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Message',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.message),
+                        ),
+                        maxLines: 3,
+                        validator: (value) {
+                          if (value?.isEmpty ?? true)
+                            return 'Message is required';
+                          return null;
+                        },
+                        onSaved: (value) => message = value ?? '',
+                      ),
+                      const SizedBox(height: 16),
+                      CheckboxListTile(
+                        title: const Text('Subscribe to newsletter'),
+                        value: subscribe,
+                        onChanged: (value) {
+                          subscribe = value ?? false;
+                        },
+                      ),
                       const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -440,7 +526,9 @@ class _ModalSheetShowcaseScreenState extends State<ModalSheetShowcaseScreen> {
                               if (formKey.currentState!.validate()) {
                                 formKey.currentState!.save();
                                 Navigator.of(context).pop();
-                                _updateAction('Form submitted: $name, $email');
+                                _updateAction(
+                                  'Form submitted: $name, $email, $phone, $company, $country, Message: $message, subscribe: $subscribe',
+                                );
                               }
                             },
                             child: const Text('Submit'),
@@ -591,6 +679,77 @@ class _ModalSheetShowcaseScreenState extends State<ModalSheetShowcaseScreen> {
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  // Modal with long text content using SliverWoltModalSheetPage
+  void _showModalWithLongText(BuildContext context) {
+    WoltModalSheet.show(
+      context: context,
+      modalTypeBuilder: (_) =>
+          const WoltDialogType(), // или WoltBottomSheetType()
+
+      pageListBuilder: (context) => [
+        SliverWoltModalSheetPage(
+          surfaceTintColor: Colors.transparent,
+          hasTopBarLayer: true,
+          topBarTitle: Text('Long Text Content'),
+          isTopBarLayerAlwaysVisible: true,
+          leadingNavBarWidget: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          mainContentSliversBuilder: (context) => [
+            SliverPadding(
+              padding: const EdgeInsets.all(12),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Terms and Conditions'),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                      'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '
+                      'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\n'
+                      'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. '
+                      'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\n'
+                      'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, '
+                      'totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.\n\n'
+                      'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.\n\n'
+                      'Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, '
+                      'sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem.',
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _updateAction('Long text modal declined');
+                          },
+                          child: const Text('Decline'),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _updateAction('Long text modal accepted');
+                          },
+                          child: const Text('Accept'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Добавляем bottom safe area
+            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+          ],
         ),
       ],
     );
