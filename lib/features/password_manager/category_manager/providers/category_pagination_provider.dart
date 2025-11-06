@@ -1,25 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
-import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
 import '../models/category_pagination_state.dart';
 import 'category_filter_provider.dart';
-
-/// Провайдер для получения одной страницы категорий
-final categoryPageProvider =
-    FutureProvider.family<
-      List<CategoryCardDto>,
-      ({CategoriesFilter filter, int pageKey})
-    >((ref, params) async {
-      final categoryDao = await ref.read(categoryDaoProvider.future);
-
-      final paginatedFilter = params.filter.copyWith(
-        offset: params.pageKey * 30,
-        limit: 30,
-      );
-
-      return await categoryDao.getCategoryCardsFiltered(paginatedFilter);
-    });
 
 /// Провайдер для получения отфильтрованного списка категорий с пагинацией
 final categoryListProvider =

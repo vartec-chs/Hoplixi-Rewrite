@@ -9,6 +9,7 @@ import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/core/utils/window_manager.dart';
 import 'package:hoplixi/setup_tray.dart';
+import 'package:hoplixi/shared/ui/desktop_shell.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'di_init.dart';

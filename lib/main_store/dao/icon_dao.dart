@@ -22,20 +22,60 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
     return (select(icons)..where((i) => i.id.equals(id))).getSingleOrNull();
   }
 
+  /// Получить бинарные данные иконки по ID
+  Future<Uint8List?> getIconData(String id) async {
+    final query = selectOnly(icons)
+      ..where(icons.id.equals(id))
+      ..addColumns([icons.data]);
+    final result = await query.getSingleOrNull();
+    return result?.read(icons.data);
+  }
+
+  /// Получить иконку по ID без данных (без поля data)
+  Future<IconCardDto?> getIconByIdNotData(String id) async {
+    final query = selectOnly(icons)
+      ..where(icons.id.equals(id))
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ]);
+    final icon = await query.getSingleOrNull();
+
+    if (icon == null) return null;
+
+    return IconCardDto(
+      id: icon.rawData.read(icons.id.name),
+      name: icon.rawData.read(icons.name.name),
+      type: icon.rawData.read(icons.type.name),
+      createdAt: icon.rawData.read(icons.createdAt.name),
+      modifiedAt: icon.rawData.read(icons.modifiedAt.name),
+    );
+  }
+
   /// Получить иконки в виде карточек
   Future<List<IconCardDto>> getAllIconCards() {
-    return (select(icons)..orderBy([(i) => OrderingTerm.asc(i.name)]))
-        .map(
-          (i) => IconCardDto(
-            id: i.id,
-            name: i.name,
-            type: i.type.value,
-            createdAt: i.createdAt,
-            modifiedAt: i.modifiedAt,
-            data: i.data,
-          ),
-        )
-        .get();
+    final query = selectOnly(icons)
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ])
+      ..orderBy([OrderingTerm.asc(icons.name)]);
+
+    return query.map((row) {
+      return IconCardDto(
+        id: row.read(icons.id)!,
+        name: row.read(icons.name)!,
+        type: row.read(icons.type)!,
+        createdAt: row.read(icons.createdAt)!,
+        modifiedAt: row.read(icons.modifiedAt)!,
+      );
+    }).get();
   }
 
   /// Смотреть все иконки с автообновлением
@@ -45,22 +85,29 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
 
   /// Смотреть иконки карточки с автообновлением
   Stream<List<IconCardDto>> watchIconCards() {
-    return (select(
-      icons,
-    )..orderBy([(i) => OrderingTerm.asc(i.name)])).watch().map(
-      (icons) => icons
+    final query = selectOnly(icons)
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ])
+      ..orderBy([OrderingTerm.asc(icons.name)]);
+
+    return query.watch().map((rows) {
+      return rows
           .map(
-            (i) => IconCardDto(
-              id: i.id,
-              name: i.name,
-              type: i.type.value,
-              createdAt: i.createdAt,
-              modifiedAt: i.modifiedAt,
-              data: i.data,
+            (row) => IconCardDto(
+              id: row.read(icons.id)!,
+              name: row.read(icons.name)!,
+              type: row.read(icons.type)!,
+              createdAt: row.read(icons.createdAt)!,
+              modifiedAt: row.read(icons.modifiedAt)!,
             ),
           )
-          .toList(),
-    );
+          .toList();
+    });
   }
 
   /// Создать новую иконку
@@ -98,20 +145,26 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
     required int limit,
     required int offset,
   }) {
-    return (select(icons)
-          ..orderBy([(i) => OrderingTerm.asc(i.name)])
-          ..limit(limit, offset: offset))
-        .map(
-          (i) => IconCardDto(
-            id: i.id,
-            name: i.name,
-            type: i.type.value,
-            createdAt: i.createdAt,
-            modifiedAt: i.modifiedAt,
-            data: i.data,
-          ),
-        )
-        .get();
+    final query = selectOnly(icons)
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ])
+      ..orderBy([OrderingTerm.asc(icons.name)])
+      ..limit(limit, offset: offset);
+
+    return query.map((row) {
+      return IconCardDto(
+        id: row.read(icons.id)!,
+        name: row.read(icons.name)!,
+        type: row.read(icons.type)!,
+        createdAt: row.read(icons.createdAt)!,
+        modifiedAt: row.read(icons.modifiedAt)!,
+      );
+    }).get();
   }
 
   /// Удалить иконку
@@ -124,92 +177,131 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
 
   /// Получить отфильтрованные иконки
   Future<List<IconsData>> getIconsFiltered(IconsFilter filter) async {
-    var query = select(icons);
+    var query = selectOnly(icons)
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ]);
 
     // Фильтр по поисковому запросу (название)
     if (filter.query.isNotEmpty) {
-      query = query..where((i) => i.name.like('%${filter.query}%'));
+      query = query..where(icons.name.like('%${filter.query}%'));
     }
 
     // Фильтр по типу
     if (filter.type != null) {
-      query = query..where((i) => i.type.equals(filter.type!));
+      query = query..where(icons.type.equals(filter.type!));
     }
 
     // Фильтр по дате создания
     if (filter.createdAfter != null) {
       query = query
-        ..where((i) => i.createdAt.isBiggerThanValue(filter.createdAfter!));
+        ..where(icons.createdAt.isBiggerThanValue(filter.createdAfter!));
     }
     if (filter.createdBefore != null) {
       query = query
-        ..where((i) => i.createdAt.isSmallerThanValue(filter.createdBefore!));
+        ..where(icons.createdAt.isSmallerThanValue(filter.createdBefore!));
     }
 
     // Фильтр по дате изменения
     if (filter.modifiedAfter != null) {
       query = query
-        ..where((i) => i.modifiedAt.isBiggerThanValue(filter.modifiedAfter!));
+        ..where(icons.modifiedAt.isBiggerThanValue(filter.modifiedAfter!));
     }
     if (filter.modifiedBefore != null) {
       query = query
-        ..where((i) => i.modifiedAt.isSmallerThanValue(filter.modifiedBefore!));
+        ..where(icons.modifiedAt.isSmallerThanValue(filter.modifiedBefore!));
     }
 
     // Сортировка
-    query = query..orderBy([(i) => _getSortOrderByTerm(filter.sortField)]);
+    query = query..orderBy([_getSortOrderByTerm(filter.sortField)]);
 
     // Пагинация
     if (filter.limit != null && filter.limit! > 0) {
       query = query..limit(filter.limit!, offset: filter.offset ?? 0);
     }
 
-    return await query.get();
+    final rows = await query.get();
+    return rows
+        .map(
+          (row) => IconsData(
+            id: row.read(icons.id)!,
+            name: row.read(icons.name)!,
+            type: IconTypeX.fromString(row.read(icons.type)!),
+            data: Uint8List(0), // Empty data for filtered results
+            createdAt: row.read(icons.createdAt)!,
+            modifiedAt: row.read(icons.modifiedAt)!,
+          ),
+        )
+        .toList();
   }
 
   /// Смотреть отфильтрованные иконки с автообновлением
   Stream<List<IconsData>> watchIconsFiltered(IconsFilter filter) {
-    var query = select(icons);
+    var query = selectOnly(icons)
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ]);
 
     // Фильтр по поисковому запросу (название)
     if (filter.query.isNotEmpty) {
-      query = query..where((i) => i.name.like('%${filter.query}%'));
+      query = query..where(icons.name.like('%${filter.query}%'));
     }
 
     // Фильтр по типу
     if (filter.type != null) {
-      query = query..where((i) => i.type.equals(filter.type!));
+      query = query..where(icons.type.equals(filter.type!));
     }
 
     // Фильтр по дате создания
     if (filter.createdAfter != null) {
       query = query
-        ..where((i) => i.createdAt.isBiggerThanValue(filter.createdAfter!));
+        ..where(icons.createdAt.isBiggerThanValue(filter.createdAfter!));
     }
     if (filter.createdBefore != null) {
       query = query
-        ..where((i) => i.createdAt.isSmallerThanValue(filter.createdBefore!));
+        ..where(icons.createdAt.isSmallerThanValue(filter.createdBefore!));
     }
 
     // Фильтр по дате изменения
     if (filter.modifiedAfter != null) {
       query = query
-        ..where((i) => i.modifiedAt.isBiggerThanValue(filter.modifiedAfter!));
+        ..where(icons.modifiedAt.isBiggerThanValue(filter.modifiedAfter!));
     }
     if (filter.modifiedBefore != null) {
       query = query
-        ..where((i) => i.modifiedAt.isSmallerThanValue(filter.modifiedBefore!));
+        ..where(icons.modifiedAt.isSmallerThanValue(filter.modifiedBefore!));
     }
 
     // Сортировка
-    query = query..orderBy([(i) => _getSortOrderByTerm(filter.sortField)]);
+    query = query..orderBy([_getSortOrderByTerm(filter.sortField)]);
 
     // Пагинация
     if (filter.limit != null && filter.limit! > 0) {
       query = query..limit(filter.limit!, offset: filter.offset ?? 0);
     }
 
-    return query.watch();
+    return query.watch().map((rows) {
+      return rows
+          .map(
+            (row) => IconsData(
+              id: row.read(icons.id)!,
+              name: row.read(icons.name)!,
+              type: IconTypeX.fromString(row.read(icons.type)!),
+              data: Uint8List(0), // Empty data for filtered results
+              createdAt: row.read(icons.createdAt)!,
+              modifiedAt: row.read(icons.modifiedAt)!,
+            ),
+          )
+          .toList();
+    });
   }
 
   /// Получить отфильтрованные иконки в виде карточек
@@ -223,7 +315,6 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
             type: i.type.value,
             createdAt: i.createdAt,
             modifiedAt: i.modifiedAt,
-            data: i.data,
           ),
         )
         .toList();
@@ -240,7 +331,6 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
               type: i.type.value,
               createdAt: i.createdAt,
               modifiedAt: i.modifiedAt,
-              data: i.data,
             ),
           )
           .toList(),
@@ -256,7 +346,7 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
       id: icon.id,
       name: icon.name,
       type: icon.type.value,
-      data: icon.data,
+      // data: icon.data,
       createdAt: icon.createdAt,
       modifiedAt: icon.modifiedAt,
     );
@@ -264,24 +354,30 @@ class IconDao extends DatabaseAccessor<MainStore> with _$IconDaoMixin {
 
   /// Получить иконки по типу
   Stream<List<IconCardDto>> watchIconsByType(String type) {
-    return (select(icons)
-          ..where((i) => i.type.equals(type))
-          ..orderBy([(i) => OrderingTerm.asc(i.name)]))
-        .watch()
-        .map(
-          (icons) => icons
-              .map(
-                (i) => IconCardDto(
-                  id: i.id,
-                  name: i.name,
-                  type: i.type.value,
-                  createdAt: i.createdAt,
-                  modifiedAt: i.modifiedAt,
-                  data: i.data,
-                ),
-              )
-              .toList(),
-        );
+    final query = selectOnly(icons)
+      ..addColumns([
+        icons.id,
+        icons.name,
+        icons.type,
+        icons.createdAt,
+        icons.modifiedAt,
+      ])
+      ..where(icons.type.equals(type))
+      ..orderBy([OrderingTerm.asc(icons.name)]);
+
+    return query.watch().map((rows) {
+      return rows
+          .map(
+            (row) => IconCardDto(
+              id: row.read(icons.id)!,
+              name: row.read(icons.name)!,
+              type: row.read(icons.type)!,
+              createdAt: row.read(icons.createdAt)!,
+              modifiedAt: row.read(icons.modifiedAt)!,
+            ),
+          )
+          .toList();
+    });
   }
 
   /// Получить тип сортировки для Drift

@@ -10,7 +10,7 @@ sealed class IconCardDto with _$IconCardDto {
     required String id,
     required String name,
     required String type,
-    required List<int> data,
+    // required List<int> data,
     required DateTime createdAt,
     required DateTime modifiedAt,
   }) = _IconCardDto;
@@ -49,7 +49,7 @@ sealed class IconDetailDto with _$IconDetailDto {
     required String id,
     required String name,
     required String type,
-    required List<int> data,
+    // required List<int> data,
     required DateTime createdAt,
     required DateTime modifiedAt,
   }) = _IconDetailDto;

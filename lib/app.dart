@@ -6,6 +6,7 @@ import 'package:hoplixi/core/theme/index.dart';
 import 'package:hoplixi/core/utils/window_manager.dart';
 import 'package:hoplixi/routing/router.dart';
 import 'package:hoplixi/setup_tray.dart';
+import 'package:hoplixi/shared/ui/desktop_shell.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart'
     as animated_theme;
@@ -111,7 +112,9 @@ class _AppState extends ConsumerState<App> with TrayListener {
         // themeMode: themeMode,
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
-          return animated_theme.ThemeSwitchingArea(child: child!);
+          return animated_theme.ThemeSwitchingArea(
+            child: RootBarsOverlay(child: child!),
+          );
         },
       ),
     );

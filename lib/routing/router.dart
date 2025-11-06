@@ -19,7 +19,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutesPaths.home,
     navigatorKey: navigatorKey,
 
-    observers: [LoggingRouteObserver()],
+    observers: [LoggingRouteObserver(), RootOverlayObserver.instance],
     refreshListenable: refreshNotifier,
     routes: UniversalPlatform.isDesktop
         ? [

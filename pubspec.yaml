@@ -83,6 +83,7 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
   pinput: ^5.0.2
   flutter_colorpicker: ^1.1.0
+  image: ^4.5.4
  
 
 dev_dependencies:

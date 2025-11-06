@@ -129,27 +129,26 @@ class _IconPickerButtonState extends ConsumerState<IconPickerButton> {
         // Кнопка удаления (только если иконка выбрана)
         if (_iconData != null && !_isLoading)
           Positioned(
-            top: -4,
-            right: -4,
+            bottom: 0,
+            right: 0,
             child: Material(
               color: Colors.transparent,
-              child: InkWell(
-                onTap: _clearIcon,
-                customBorder: const CircleBorder(),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.error,
-                      width: 2,
+              child: Tooltip(
+                message: 'Удалить иконку',
+                child: InkWell(
+                  onTap: _clearIcon,
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      shape: BoxShape.circle,
                     ),
-                  ),
-                  child: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onErrorContainer,
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.onError,
+                    ),
                   ),
                 ),
               ),

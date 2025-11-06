@@ -7,9 +7,11 @@ import 'icon_picker_filter_provider.dart';
 
 /// Провайдер для управления списком иконок в picker
 final iconPickerListProvider =
-    AsyncNotifierProvider<IconPickerListNotifier, IconPickerState>(() {
-      return IconPickerListNotifier();
-    });
+    AsyncNotifierProvider.autoDispose<IconPickerListNotifier, IconPickerState>(
+      () {
+        return IconPickerListNotifier();
+      },
+    );
 
 /// Notifier для управления списком иконок с пагинацией
 class IconPickerListNotifier extends AsyncNotifier<IconPickerState> {

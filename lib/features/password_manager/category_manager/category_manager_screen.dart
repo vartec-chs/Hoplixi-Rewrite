@@ -1,60 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'providers/category_filter_provider.dart';
 import 'providers/category_pagination_provider.dart';
 import 'widgets/category_form_modal.dart';
 
-class CategoryManagerScreen extends ConsumerStatefulWidget {
+class CategoryManagerScreen extends ConsumerWidget {
   const CategoryManagerScreen({super.key});
 
   @override
-  ConsumerState<CategoryManagerScreen> createState() =>
-      _CategoryManagerScreenState();
-}
-
-class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  late final PagingController<int, CategoryCardDto> _pagingController;
-  bool _isSearchActive = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _pagingController = PagingController<int, CategoryCardDto>(
-      getNextPageKey: (state) {
-        if (state.lastPageIsEmpty) return null;
-        return state.nextIntPageKey;
-      },
-      fetchPage: _fetchPage,
-    );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _pagingController.dispose();
-    super.dispose();
-  }
-
-  Future<List<CategoryCardDto>> _fetchPage(int pageKey) async {
-    final filter = ref.read(categoryFilterProvider);
-    return await ref.read(
-      categoryPageProvider((filter: filter, pageKey: pageKey)).future,
-    );
-  }
-
-  void _refresh() {
-    _pagingController.refresh();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentSortField = ref.watch(
       categoryFilterProvider.select((filter) => filter.sortField),
     );
+    final categoryState = ref.watch(categoryListProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -63,53 +23,24 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
             floating: true,
             pinned: true,
             snap: false,
-            title: _isSearchActive
-                ? TextField(
-                    controller: _searchController,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Поиск категорий...',
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref
-                              .read(categoryFilterProvider.notifier)
-                              .updateQuery('');
-                        },
-                      ),
-                    ),
-                    onChanged: (value) {
+            title: const Text('Категории'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  final searchQuery = ref.read(categoryFilterProvider).query;
+                  showSearchDialog(
+                    context,
+                    initialValue: searchQuery,
+                    onSearch: (value) {
                       ref
                           .read(categoryFilterProvider.notifier)
                           .updateQuery(value);
                     },
-                  )
-                : const Text('Категории'),
-            actions: [
-              if (!_isSearchActive)
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () {
-                    setState(() {
-                      _isSearchActive = true;
-                    });
-                  },
-                  tooltip: 'Поиск',
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    setState(() {
-                      _isSearchActive = false;
-                      _searchController.clear();
-                      ref.read(categoryFilterProvider.notifier).updateQuery('');
-                    });
-                  },
-                  tooltip: 'Закрыть поиск',
-                ),
+                  );
+                },
+                tooltip: 'Поиск',
+              ),
               PopupMenuButton<CategoriesSortField>(
                 icon: const Icon(Icons.sort),
                 tooltip: 'Сортировка',
@@ -173,54 +104,117 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
               ),
             ],
           ),
-          PagingListener<int, CategoryCardDto>(
-            controller: _pagingController,
-            builder: (context, state, fetchNextPage) {
-              return PagedSliverList<int, CategoryCardDto>(
-                state: state,
-                fetchNextPage: fetchNextPage,
-                builderDelegate: PagedChildBuilderDelegate<CategoryCardDto>(
-                  itemBuilder: (context, item, index) {
-                    return _buildCategoryCard(item);
+          categoryState.when(
+            data: (state) {
+              if (state.items.isEmpty) {
+                return const SliverFillRemaining(
+                  child: Center(child: Text('Категории не найдены')),
+                );
+              }
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index == state.items.length && state.hasMore) {
+                      // Загружаем следующую страницу при достижении конца
+                      Future.microtask(
+                        () =>
+                            ref.read(categoryListProvider.notifier).loadMore(),
+                      );
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (index >= state.items.length) {
+                      return null;
+                    }
+                    return _buildCategoryCard(
+                      context,
+                      state.items[index],
+                      () => ref.read(categoryListProvider.notifier).refresh(),
+                    );
                   },
-                  firstPageProgressIndicatorBuilder: (context) =>
-                      const Center(child: CircularProgressIndicator()),
-                  newPageProgressIndicatorBuilder: (context) => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  noItemsFoundIndicatorBuilder: (context) =>
-                      const Center(child: Text('Категории не найдены')),
-                  firstPageErrorIndicatorBuilder: (context) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Ошибка загрузки категорий'),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => _pagingController.refresh(),
-                          child: const Text('Повторить'),
-                        ),
-                      ],
-                    ),
-                  ),
+                  childCount: state.hasMore
+                      ? state.items.length + 1
+                      : state.items.length,
                 ),
               );
             },
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, stack) => SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Ошибка загрузки категорий'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.read(categoryListProvider.notifier).refresh(),
+                      child: const Text('Повторить'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'categoryManagerFab',
         onPressed: () {
-          showCategoryCreateModal(context, onSuccess: _refresh);
+          showCategoryCreateModal(
+            context,
+            onSuccess: () => ref.read(categoryListProvider.notifier).refresh(),
+          );
         },
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildCategoryCard(CategoryCardDto category) {
+  static void showSearchDialog(
+    BuildContext context, {
+    required String initialValue,
+    required Function(String) onSearch,
+  }) {
+    final controller = TextEditingController(text: initialValue);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Поиск категорий'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Введите название...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              onSearch(controller.text);
+              Navigator.pop(context);
+            },
+            child: const Text('Найти'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard(
+    BuildContext context,
+    CategoryCardDto category,
+    VoidCallback onRefresh,
+  ) {
     final colorValue = int.tryParse(category.color ?? 'FFFFFF', radix: 16);
     final color = colorValue != null
         ? Color(0xFF000000 | colorValue)
@@ -260,14 +254,14 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
           ],
           onSelected: (value) {
             if (value == 'edit') {
-              showCategoryEditModal(context, category, onSuccess: _refresh);
+              showCategoryEditModal(context, category, onSuccess: onRefresh);
             } else if (value == 'delete') {
               // TODO: Реализовать удаление
             }
           },
         ),
         onTap: () {
-          showCategoryEditModal(context, category, onSuccess: _refresh);
+          showCategoryEditModal(context, category, onSuccess: onRefresh);
         },
       ),
     );
