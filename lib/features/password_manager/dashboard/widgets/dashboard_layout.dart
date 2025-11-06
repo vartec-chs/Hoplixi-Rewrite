@@ -46,7 +46,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith(AppRoutesPaths.dashboardCategoryManager)) return 1;
     if (location.startsWith(AppRoutesPaths.dashboardIconManager)) return 2;
-    if (location.startsWith(AppRoutesPaths.dashboardSettings)) return 3;
+    if (location.startsWith(AppRoutesPaths.dashboardTagManager)) return 3;
     return 0; // home
   }
 
@@ -62,7 +62,7 @@ class _DashboardLayoutState extends State<DashboardLayout>
         context.go(AppRoutesPaths.dashboardIconManager);
         break;
       case 3:
-        context.go(AppRoutesPaths.dashboardSettings);
+        context.go(AppRoutesPaths.dashboardTagManager);
         break;
     }
   }
@@ -196,9 +196,9 @@ class _DashboardLayoutState extends State<DashboardLayout>
             label: Text('Иконки'),
           ),
           NavigationRailDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: Text('Настройки'),
+            icon: Icon(Icons.tag_outlined),
+            selectedIcon: Icon(Icons.tag),
+            label: Text('Теги'),
           ),
         ],
       ),
@@ -254,9 +254,9 @@ class _DashboardLayoutState extends State<DashboardLayout>
           ),
           _buildBottomNavIconButton(
             context,
-            icon: Icons.settings_outlined,
-            selectedIcon: Icons.settings,
-            label: 'Настройки',
+            icon: Icons.tag_outlined,
+            selectedIcon: Icons.tag,
+            label: 'Теги',
             index: 3,
             selectedIndex: selectedIndex,
           ),

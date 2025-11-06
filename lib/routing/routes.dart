@@ -12,6 +12,7 @@ import 'package:hoplixi/features/password_manager/open_store/open_store_screen.d
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
+import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
 /// Флаг для отключения/включения кастомных анимаций при переходах между экранами dashboard
@@ -204,9 +205,33 @@ final List<RouteBase> appRoutes = [
       GoRoute(
         path: AppRoutesPaths.dashboardIconManager,
         pageBuilder: (context, state) {
-          return MaterialPage(
+          final isDesktop = MediaQuery.of(context).size.width >= 900;
+          if (!isDesktop) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const IconManagerScreen(),
+            );
+          }
+          return CustomTransitionPage(
             key: state.pageKey,
             child: const IconManagerScreen(),
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 250),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutCubic;
+                  final tween = Tween(
+                    begin: begin,
+                    end: end,
+                  ).chain(CurveTween(curve: curve));
+                  final offsetAnimation = animation.drive(tween);
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
           );
         },
       ),
@@ -214,9 +239,67 @@ final List<RouteBase> appRoutes = [
       GoRoute(
         path: AppRoutesPaths.dashboardCategoryManager,
         pageBuilder: (context, state) {
-          return MaterialPage(
+          final isDesktop = MediaQuery.of(context).size.width >= 900;
+          if (!isDesktop) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const CategoryManagerScreen(),
+            );
+          }
+          return CustomTransitionPage(
             key: state.pageKey,
             child: const CategoryManagerScreen(),
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 250),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutCubic;
+                  final tween = Tween(
+                    begin: begin,
+                    end: end,
+                  ).chain(CurveTween(curve: curve));
+                  final offsetAnimation = animation.drive(tween);
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardTagManager,
+        pageBuilder: (context, state) {
+          final isDesktop = MediaQuery.of(context).size.width >= 900;
+          if (!isDesktop) {
+            return MaterialPage(
+              key: state.pageKey,
+              child: const TagsManagerScreen(),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const TagsManagerScreen(),
+            transitionDuration: const Duration(milliseconds: 300),
+            reverseTransitionDuration: const Duration(milliseconds: 250),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeOutCubic;
+                  final tween = Tween(
+                    begin: begin,
+                    end: end,
+                  ).chain(CurveTween(curve: curve));
+                  final offsetAnimation = animation.drive(tween);
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
           );
         },
       ),

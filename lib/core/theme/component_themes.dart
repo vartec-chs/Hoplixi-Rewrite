@@ -13,6 +13,8 @@ abstract final class ComponentThemes {
     );
   }
 
+  static const double _cardElevation = 0.0;
+
   /// Базовые подтемы для светлой темы
   static const FlexSubThemesData lightSubThemes = FlexSubThemesData(
     // interactionEffects: true,
@@ -46,6 +48,7 @@ abstract final class ComponentThemes {
     ),
     bottomSheetModalBackgroundColor: SchemeColor.surfaceContainerLow,
     dialogBackgroundSchemeColor: SchemeColor.surfaceContainerLow,
+    cardElevation: _cardElevation,
   );
 
   /// Базовые подтемы для тёмной темы
@@ -83,6 +86,7 @@ abstract final class ComponentThemes {
     ),
     bottomSheetModalBackgroundColor: SchemeColor.surfaceContainerLow,
     dialogBackgroundSchemeColor: SchemeColor.surfaceContainerLow,
+    cardElevation: _cardElevation,
   );
 }
 

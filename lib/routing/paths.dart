@@ -18,4 +18,5 @@ class AppRoutesPaths {
   static const String dashboardSettings = '/dashboard/settings';
   static const String dashboardIconManager = '/dashboard/icon-manager';
   static const String dashboardCategoryManager = '/dashboard/category-manager';
+  static const String dashboardTagManager = '/dashboard/tag-manager';
 }

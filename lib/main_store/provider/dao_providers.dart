@@ -66,6 +66,10 @@ final iconDaoProvider = FutureProvider<IconDao>(
   (ref) => _ensureDao(ref, (store) => IconDao(store)),
 );
 
+final tagDaoProvider = FutureProvider<TagDao>(
+  (ref) => _ensureDao(ref, (store) => TagDao(store)),
+);
+
 
 
 // /// DAO провайдер для работы с паролями

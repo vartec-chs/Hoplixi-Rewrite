@@ -10,3 +10,4 @@ export 'file_dao.dart';
 export 'file_history_dao.dart';
 export 'category_dao.dart';
 export 'icon_dao.dart'; 
+export 'tag_dao.dart';
