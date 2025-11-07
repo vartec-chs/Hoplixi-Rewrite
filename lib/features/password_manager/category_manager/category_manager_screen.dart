@@ -4,6 +4,7 @@ import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
+import 'package:hoplixi/main_store/provider/dao_providers.dart';
 import 'providers/category_filter_provider.dart';
 import 'providers/category_pagination_provider.dart';
 import 'widgets/category_form_modal.dart';
@@ -279,11 +280,11 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
             const PopupMenuItem(value: 'edit', child: Text('Редактировать')),
             const PopupMenuItem(value: 'delete', child: Text('Удалить')),
           ],
-          onSelected: (value) {
+          onSelected: (value) async {
             if (value == 'edit') {
               showCategoryEditModal(context, category, onSuccess: onRefresh);
             } else if (value == 'delete') {
-              // TODO: Реализовать удаление
+              await _handleDeleteCategory(context, category, onRefresh);
             }
           },
         ),
@@ -292,5 +293,57 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _handleDeleteCategory(
+    BuildContext context,
+    CategoryCardDto category,
+    VoidCallback onRefresh,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Удалить категорию?'),
+        content: Text(
+          'Вы уверены, что хотите удалить категорию "${category.name}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        final categoryDao = await ref.read(categoryDaoProvider.future);
+        await categoryDao.deleteCategory(category.id);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Категория "${category.name}" успешно удалена'),
+            ),
+          );
+          onRefresh();
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ошибка удаления: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }
