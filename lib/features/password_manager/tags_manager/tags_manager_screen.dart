@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/filter/tags_filter.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
@@ -7,11 +8,24 @@ import 'providers/tag_filter_provider.dart';
 import 'providers/tag_pagination_provider.dart';
 import 'widgets/tag_form_modal.dart';
 
-class TagsManagerScreen extends ConsumerWidget {
+class TagsManagerScreen extends ConsumerStatefulWidget {
   const TagsManagerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TagsManagerScreen> createState() => _TagsManagerScreenState();
+}
+
+class _TagsManagerScreenState extends ConsumerState<TagsManagerScreen> {
+  List<String> _tagIds = [];
+  List<String> _tagNames = [];
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentSortField = ref.watch(
       tagFilterProvider.select((filter) => filter.sortField),
     );
@@ -19,6 +33,7 @@ class TagsManagerScreen extends ConsumerWidget {
 
     return Scaffold(
       body: CustomScrollView(
+
         slivers: [
           SliverAppBar(
             floating: true,
@@ -103,6 +118,24 @@ class TagsManagerScreen extends ConsumerWidget {
               ),
             ],
           ),
+          
+
+          SliverToBoxAdapter(
+            child: TagPickerField(
+              selectedTagIds: _tagIds,
+              selectedTagNames: _tagNames,
+              maxTagPicks: 10, // опционально
+              label: 'Теги',
+              hintText: 'Выберите теги',
+              onTagsSelected: (ids, names) {
+                setState(() {
+                  _tagIds = ids;
+                  _tagNames = names;
+                });
+              },
+            ),
+          ),
+
           tagState.when(
             data: (state) {
               if (state.items.isEmpty) {
