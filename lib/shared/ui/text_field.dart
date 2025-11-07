@@ -39,8 +39,11 @@ InputDecoration primaryInputDecoration(
   int? errorMaxLines = 1,
   int? helperMaxLines = 1,
   int? hintMaxLines = 1,
+  bool isFocused = false,
+  BorderRadius? borderRadius,
 }) {
   final theme = Theme.of(context);
+  final effectiveBorderRadius = borderRadius ?? defaultBorderRadiusValue;
   return InputDecoration(
     labelText: labelText,
     hintText: hintText,
@@ -126,7 +129,7 @@ InputDecoration primaryInputDecoration(
 
     focusedBorder: UnderlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
-      borderSide: const BorderSide(color: Colors.transparent, width: 0),
+      borderSide: const BorderSide(color: Colors.transparent, width: 1),
     ),
     helperStyle: TextStyle(
       fontSize: 12,
@@ -137,6 +140,8 @@ InputDecoration primaryInputDecoration(
     // Apply disabled styles when enabled is false
     fillColor: !enabled
         ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+        : isFocused
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8)
         : theme.colorScheme.surfaceContainerHighest,
     labelStyle: !enabled
         ? TextStyle(
@@ -145,6 +150,8 @@ InputDecoration primaryInputDecoration(
           )
         : (errorText != null || error != null)
         ? TextStyle(color: theme.colorScheme.error, fontSize: 14)
+        : isFocused
+        ? TextStyle(color: theme.colorScheme.primary, fontSize: 14)
         : TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
     hintStyle: !enabled
         ? TextStyle(
@@ -157,9 +164,13 @@ InputDecoration primaryInputDecoration(
           ),
     prefixIconColor: !enabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+        : isFocused
+        ? theme.colorScheme.primary
         : theme.colorScheme.onSurface,
     suffixIconColor: !enabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+        : isFocused
+        ? theme.colorScheme.primary
         : theme.colorScheme.onSurface,
     helperStyle: !enabled
         ? TextStyle(

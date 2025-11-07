@@ -70,8 +70,6 @@ final tagDaoProvider = FutureProvider<TagDao>(
   (ref) => _ensureDao(ref, (store) => TagDao(store)),
 );
 
-
-
 // /// DAO провайдер для работы с паролями
 // final passwordDaoProvider = FutureProvider<PasswordDao?>((ref) async {
 //   final mainStore = await ref.watch(mainStoreManagerProvider.future);

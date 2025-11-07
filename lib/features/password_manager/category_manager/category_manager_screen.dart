@@ -1,16 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'providers/category_filter_provider.dart';
 import 'providers/category_pagination_provider.dart';
 import 'widgets/category_form_modal.dart';
 
-class CategoryManagerScreen extends ConsumerWidget {
+class CategoryManagerScreen extends ConsumerStatefulWidget {
   const CategoryManagerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CategoryManagerScreen> createState() =>
+      _CategoryManagerScreenState();
+}
+
+class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
+  String? categoryId;
+  String? categoryName;
+  @override
+  void initState() {
+    super.initState();
+    // Инициализация или загрузка данных, если необходимо
+  }
+
+  Widget build(BuildContext context) {
     final currentSortField = ref.watch(
       categoryFilterProvider.select((filter) => filter.sortField),
     );
@@ -103,6 +118,18 @@ class CategoryManagerScreen extends ConsumerWidget {
                 ],
               ),
             ],
+          ),
+          SliverToBoxAdapter(
+            child: CategoryPickerField(
+              selectedCategoryId: categoryId,
+              selectedCategoryName: categoryName,
+              onCategorySelected: (id, name) {
+                setState(() {
+                  categoryId = id;
+                  categoryName = name;
+                });
+              },
+            ),
           ),
           categoryState.when(
             data: (state) {
