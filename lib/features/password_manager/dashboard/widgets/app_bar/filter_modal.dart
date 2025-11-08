@@ -20,6 +20,25 @@ import '../../providers/filter_providers/files_filter_provider.dart';
 // Секции фильтров
 import '../filter_sections/filter_sections.dart';
 
+/// Типобезопасное хранилище начальных значений фильтров
+class _InitialFilterValues {
+  final BaseFilter baseFilter;
+  final PasswordsFilter? passwordsFilter;
+  final NotesFilter? notesFilter;
+  final OtpsFilter? otpsFilter;
+  final BankCardsFilter? bankCardsFilter;
+  final FilesFilter? filesFilter;
+
+  _InitialFilterValues({
+    required this.baseFilter,
+    this.passwordsFilter,
+    this.notesFilter,
+    this.otpsFilter,
+    this.bankCardsFilter,
+    this.filesFilter,
+  });
+}
+
 /// Модальное окно фильтра на базе WoltModalSheet
 /// Адаптируется под выбранный тип сущности
 class FilterModal {
@@ -37,15 +56,6 @@ class FilterModal {
       pageListBuilder: (modalSheetContext) {
         return [_buildMainFilterPage(modalSheetContext, onFilterApplied)];
       },
-      // modalTypeBuilder: (context) {
-      //   // Адаптивный тип модалки в зависимости от размера экрана
-      //   final size = MediaQuery.of(context).size;
-      //   if (size.width < 768) {
-      //     return WoltModalType.bottomSheet();
-      //   } else {
-      //     return WoltModalType.dialog();
-      //   }
-      // },
       onModalDismissedWithBarrierTap: () {
         logDebug('FilterModal: Закрытие по тапу на барьер');
         Navigator.of(context).pop();
@@ -100,8 +110,8 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   List<String> _selectedTagIds = [];
   List<String> _selectedTagNames = [];
 
-  // Хранение начальных значений для отката
-  Map<String, dynamic> _initialValues = {};
+  // Типобезопасное хранение начальных значений для отката
+  _InitialFilterValues? _initialValues;
 
   @override
   void initState() {
@@ -122,104 +132,55 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
     final entityType = ref.read(entityTypeProvider).currentType;
     final baseFilter = ref.read(baseFilterProvider);
 
-    _initialValues = {
-      'categoryIds': List<String>.from(baseFilter.categoryIds),
-      'tagIds': List<String>.from(baseFilter.tagIds),
-      'query': baseFilter.query,
-      'isFavorite': baseFilter.isFavorite,
-      'isArchived': baseFilter.isArchived,
-      'isDeleted': baseFilter.isDeleted,
-      'isPinned': baseFilter.isPinned,
-      'hasNotes': baseFilter.hasNotes,
-      'createdAfter': baseFilter.createdAfter,
-      'createdBefore': baseFilter.createdBefore,
-      'modifiedAfter': baseFilter.modifiedAfter,
-      'modifiedBefore': baseFilter.modifiedBefore,
-      'lastAccessedAfter': baseFilter.lastAccessedAfter,
-      'lastAccessedBefore': baseFilter.lastAccessedBefore,
-      'minUsedCount': baseFilter.minUsedCount,
-      'maxUsedCount': baseFilter.maxUsedCount,
-      'sortDirection': baseFilter.sortDirection,
-      'limit': baseFilter.limit,
-      'offset': baseFilter.offset,
-    };
-
     // Сохраняем специфичные для типа значения
     switch (entityType) {
       case EntityType.password:
         final passwordFilter = ref.read(passwordsFilterProvider);
-        _initialValues.addAll({
-          'password_name': passwordFilter.name,
-          'password_login': passwordFilter.login,
-          'password_email': passwordFilter.email,
-          'password_url': passwordFilter.url,
-          'password_hasDescription': passwordFilter.hasDescription,
-          'password_hasUrl': passwordFilter.hasUrl,
-          'password_hasLogin': passwordFilter.hasLogin,
-          'password_hasEmail': passwordFilter.hasEmail,
-          'password_sortField': passwordFilter.sortField,
-        });
+        _initialValues = _InitialFilterValues(
+          baseFilter: baseFilter,
+          passwordsFilter: passwordFilter,
+        );
         break;
 
       case EntityType.note:
         final notesFilter = ref.read(notesFilterProvider);
-        _initialValues.addAll({
-          'notes_title': notesFilter.title,
-          'notes_content': notesFilter.content,
-          'notes_hasDescription': notesFilter.hasDescription,
-          'notes_hasDeltaJson': notesFilter.hasDeltaJson,
-          'notes_minContentLength': notesFilter.minContentLength,
-          'notes_maxContentLength': notesFilter.maxContentLength,
-          'notes_sortField': notesFilter.sortField,
-        });
+        _initialValues = _InitialFilterValues(
+          baseFilter: baseFilter,
+          notesFilter: notesFilter,
+        );
         break;
 
       case EntityType.otp:
         final otpFilter = ref.read(otpsFilterProvider);
-        _initialValues.addAll({
-          'otp_issuer': otpFilter.issuer,
-          'otp_accountName': otpFilter.accountName,
-          'otp_types': List<String>.from(otpFilter.types),
-          'otp_algorithms': List<String>.from(otpFilter.algorithms),
-          'otp_secretEncodings': List<String>.from(otpFilter.secretEncodings),
-          'otp_digits': List<int>.from(otpFilter.digits),
-          'otp_periods': List<int>.from(otpFilter.periods),
-          'otp_hasPasswordLink': otpFilter.hasPasswordLink,
-          'otp_sortField': otpFilter.sortField,
-        });
+        _initialValues = _InitialFilterValues(
+          baseFilter: baseFilter,
+          otpsFilter: otpFilter,
+        );
         break;
 
       case EntityType.bankCard:
         final bankCardsFilter = ref.read(bankCardsFilterProvider);
-        _initialValues.addAll({
-          'bankCard_bankName': bankCardsFilter.bankName,
-          'bankCard_cardholderName': bankCardsFilter.cardholderName,
-          'bankCard_cardTypes': List<String>.from(bankCardsFilter.cardTypes),
-          'bankCard_cardNetworks': List<String>.from(
-            bankCardsFilter.cardNetworks,
-          ),
-          'bankCard_hasExpiryDatePassed': bankCardsFilter.hasExpiryDatePassed,
-          'bankCard_isExpiringSoon': bankCardsFilter.isExpiringSoon,
-          'bankCard_sortField': bankCardsFilter.sortField,
-        });
+        _initialValues = _InitialFilterValues(
+          baseFilter: baseFilter,
+          bankCardsFilter: bankCardsFilter,
+        );
         break;
 
       case EntityType.file:
         final filesFilter = ref.read(filesFilterProvider);
-        _initialValues.addAll({
-          'file_fileName': filesFilter.fileName,
-          'file_fileExtensions': List<String>.from(filesFilter.fileExtensions),
-          'file_mimeTypes': List<String>.from(filesFilter.mimeTypes),
-          'file_minFileSize': filesFilter.minFileSize,
-          'file_maxFileSize': filesFilter.maxFileSize,
-          'file_sortField': filesFilter.sortField,
-        });
+        _initialValues = _InitialFilterValues(
+          baseFilter: baseFilter,
+          filesFilter: filesFilter,
+        );
         break;
     }
 
     logDebug(
       'FilterModal: Сохранены начальные значения',
-      data: {'entityType': entityType.id, 'valuesCount': _initialValues.length},
+      data: {
+        'entityType': entityType.id,
+        'hasBaseFilter': _initialValues != null,
+      },
     );
   }
 
@@ -241,7 +202,6 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final entityType = ref.watch(entityTypeProvider).currentType;
 
     return Container(
@@ -458,7 +418,6 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    final theme = Theme.of(context);
     final baseFilter = ref.watch(baseFilterProvider);
     final hasActiveFilters = baseFilter.hasActiveConstraints;
 
@@ -562,6 +521,98 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
       logInfo('FilterModal: Фильтры успешно сброшены');
     } catch (e) {
       logError('FilterModal: Ошибка при сбросе фильтров', error: e);
+    }
+  }
+
+  /// Восстановить начальные значения фильтров (если нужен откат)
+  /// Может быть использован для кнопки "Отменить изменения"
+  // ignore: unused_element
+  void _restoreInitialValues() {
+    if (_initialValues == null) {
+      logWarning(
+        'FilterModal: Нет сохраненных начальных значений для восстановления',
+      );
+      return;
+    }
+
+    logDebug('FilterModal: Восстановление начальных значений фильтров');
+
+    try {
+      final entityType = ref.read(entityTypeProvider).currentType;
+
+      // Восстановление базового фильтра через методы notifier
+      final baseNotifier = ref.read(baseFilterProvider.notifier);
+      final base = _initialValues!.baseFilter;
+
+      baseNotifier.setQuery(base.query);
+      baseNotifier.setCategoryIds(base.categoryIds);
+      baseNotifier.setTagIds(base.tagIds);
+      baseNotifier.setFavorite(base.isFavorite);
+      baseNotifier.setArchived(base.isArchived);
+      baseNotifier.setDeleted(base.isDeleted);
+      baseNotifier.setPinned(base.isPinned);
+      baseNotifier.setHasNotes(base.hasNotes);
+      baseNotifier.setCreatedAfter(base.createdAfter);
+      baseNotifier.setCreatedBefore(base.createdBefore);
+      baseNotifier.setModifiedAfter(base.modifiedAfter);
+      baseNotifier.setModifiedBefore(base.modifiedBefore);
+      baseNotifier.setLastAccessedAfter(base.lastAccessedAfter);
+      baseNotifier.setLastAccessedBefore(base.lastAccessedBefore);
+      baseNotifier.setMinUsedCount(base.minUsedCount);
+      baseNotifier.setMaxUsedCount(base.maxUsedCount);
+      baseNotifier.setSortDirection(base.sortDirection);
+
+      // Восстановление специфичного для типа фильтра
+      switch (entityType) {
+        case EntityType.password:
+          if (_initialValues!.passwordsFilter != null) {
+            ref
+                .read(passwordsFilterProvider.notifier)
+                .updateFilterDebounced(_initialValues!.passwordsFilter!);
+          }
+          break;
+        case EntityType.note:
+          if (_initialValues!.notesFilter != null) {
+            ref
+                .read(notesFilterProvider.notifier)
+                .updateFilterDebounced(_initialValues!.notesFilter!);
+          }
+          break;
+        case EntityType.otp:
+          if (_initialValues!.otpsFilter != null) {
+            ref
+                .read(otpsFilterProvider.notifier)
+                .updateFilterDebounced(_initialValues!.otpsFilter!);
+          }
+          break;
+        case EntityType.bankCard:
+          if (_initialValues!.bankCardsFilter != null) {
+            ref
+                .read(bankCardsFilterProvider.notifier)
+                .updateFilterDebounced(_initialValues!.bankCardsFilter!);
+          }
+          break;
+        case EntityType.file:
+          if (_initialValues!.filesFilter != null) {
+            ref
+                .read(filesFilterProvider.notifier)
+                .updateFilterDebounced(_initialValues!.filesFilter!);
+          }
+          break;
+      }
+
+      // Восстановление локального состояния
+      setState(() {
+        _selectedCategoryIds = List<String>.from(base.categoryIds);
+        _selectedTagIds = List<String>.from(base.tagIds);
+      });
+
+      logInfo('FilterModal: Начальные значения восстановлены');
+    } catch (e) {
+      logError(
+        'FilterModal: Ошибка при восстановлении начальных значений',
+        error: e,
+      );
     }
   }
 

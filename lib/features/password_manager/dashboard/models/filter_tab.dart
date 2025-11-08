@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'entity_type.dart';
 
 enum FilterTab {
-  all('Все', Icons.list),
-  favorites('Избранные', Icons.star),
-  frequent('Часто используемые', Icons.access_time),
-  archived('Архив', Icons.archive),
-  delete('Удаленные', Icons.delete);
+  all('Все', Icons.list, 'all'),
+  favorites('Избранные', Icons.star, 'favorites'),
+  frequent('Часто используемые', Icons.access_time, 'frequent'),
+  archived('Архив', Icons.archive, 'archived'),
+  delete('Удаленные', Icons.delete, 'delete');
 
   final String label;
   final IconData icon;
+  final String id;
 
-  const FilterTab(this.label, this.icon);
+  const FilterTab(this.label, this.icon, this.id);
 
   /// Получить доступные вкладки для типа сущности
   static List<FilterTab> getAvailableTabsForEntity(EntityType entityType) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_app_bar.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/app_bar/app_bar_widgets.dart';
 
 class DashboardHomeScreen extends ConsumerWidget {
   const DashboardHomeScreen({super.key});
@@ -10,27 +10,20 @@ class DashboardHomeScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // AppBar с поиском и вкладками
+          // AppBar с поиском, фильтрами и вкладками
           DashboardSliverAppBar(
-            title: 'Dashboard',
-            expandedHeight: 168,
-            pinned: MediaQuery.of(context).size.width >= 900,
-            floating: true,
-            snap: true,
-            onMenuPressed: MediaQuery.of(context).size.width >= 900
-                ? null
-                : () {
-                    // Открыть drawer на мобильных
-                  },
-            additionalActions: [
-              if (MediaQuery.of(context).size.width >= 900)
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () {
-                    // Дополнительные действия
-                  },
-                ),
-            ],
+            onMenuPressed: () {
+              // TODO: Открыть drawer
+            },
+            onFilterApplied: () {
+              // TODO: Обновить данные после применения фильтров
+            },
+            expandedHeight: 178.0,
+            collapsedHeight: 60.0,
+            pinned: true,
+            floating: false,
+            snap: false,
+            showEntityTypeSelector: true,
           ),
 
           // Padding сверху
