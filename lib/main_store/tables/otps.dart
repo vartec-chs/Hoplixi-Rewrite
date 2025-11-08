@@ -60,6 +60,9 @@ class Otps extends Table {
       boolean().withDefault(const Constant(false))(); // Favorite flag
   BoolColumn get isPinned =>
       boolean().withDefault(const Constant(false))(); // Pinned to top flag
+  //is archived
+  BoolColumn get isArchived =>
+      boolean().withDefault(const Constant(false))(); // Archived flag
   DateTimeColumn get createdAt =>
       dateTime().clientDefault(() => DateTime.now())();
   DateTimeColumn get modifiedAt =>
