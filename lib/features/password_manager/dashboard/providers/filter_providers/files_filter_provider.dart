@@ -32,6 +32,14 @@ class FilesFilterNotifier extends Notifier<FilesFilter> {
     return FilesFilter(base: ref.read(baseFilterProvider));
   }
 
+  void updateFilterDebounced(FilesFilter newFilter) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      logDebug('Фильтр обновлен с дебаунсом', tag: _logTag);
+      state = newFilter;
+    });
+  }
+
   // ============================================================================
   // Методы фильтрации по расширениям файлов
   // ============================================================================

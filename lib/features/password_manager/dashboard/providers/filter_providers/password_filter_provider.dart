@@ -33,6 +33,14 @@ class PasswordFilterNotifier extends Notifier<PasswordsFilter> {
     return PasswordsFilter(base: ref.read(baseFilterProvider));
   }
 
+  void updateFilterDebounced(PasswordsFilter newFilter) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      logDebug('Фильтр паролей обновлен с дебаунсом', tag: _logTag);
+      state = newFilter;
+    });
+  }
+
   // ============================================================================
   // Методы фильтрации по названию
   // ============================================================================

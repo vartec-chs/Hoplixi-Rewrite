@@ -32,6 +32,14 @@ class NotesFilterNotifier extends Notifier<NotesFilter> {
     return NotesFilter(base: ref.read(baseFilterProvider));
   }
 
+  void updateFilterDebounced(NotesFilter newFilter) {
+    _debounceTimer?.cancel();
+    logDebug('Фильтр обновлен с дебаунсом', tag: _logTag);
+    _debounceTimer = Timer(_debounceDuration, () {
+      state = newFilter;
+    });
+  }
+
   // ============================================================================
   // Методы фильтрации по названию
   // ============================================================================

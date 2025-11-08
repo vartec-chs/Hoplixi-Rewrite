@@ -33,6 +33,14 @@ class OtpFilterNotifier extends Notifier<OtpsFilter> {
     return OtpsFilter(base: ref.read(baseFilterProvider));
   }
 
+  void updateFilterDebounced(OtpsFilter newFilter) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      logDebug('Фильтр OTP обновлен с дебаунсом', tag: _logTag);
+      state = newFilter;
+    });
+  }
+
   // ============================================================================
   // Методы фильтрации по типам OTP
   // ============================================================================

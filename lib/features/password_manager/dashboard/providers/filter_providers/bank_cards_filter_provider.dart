@@ -34,6 +34,14 @@ class BankCardsFilterNotifier extends Notifier<BankCardsFilter> {
     return BankCardsFilter(base: ref.read(baseFilterProvider));
   }
 
+  void updateFilterDebounced(BankCardsFilter newFilter) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_debounceDuration, () {
+      logDebug('Фильтр обновлен с дебаунсом', tag: _logTag);
+      state = newFilter;
+    });
+  }
+
   // ============================================================================
   // Методы фильтрации по типам карт
   // ============================================================================
