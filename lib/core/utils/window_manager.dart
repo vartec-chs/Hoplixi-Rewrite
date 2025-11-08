@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 
@@ -44,6 +45,25 @@ class WindowManager {
   static Future<void> close() async {
     if (UniversalPlatform.isWindows) {
       await windowManager.close();
+    }
+  }
+
+  static Future<void> setAlwaysOnTop(bool isAlwaysOnTop) async {
+    if (UniversalPlatform.isWindows) {
+      await windowManager.setAlwaysOnTop(isAlwaysOnTop);
+    }
+  }
+
+  static Future<void> setFullScreen(bool isFullScreen) async {
+    if (UniversalPlatform.isWindows) {
+      await windowManager.setFullScreen(isFullScreen);
+    }
+  }
+
+  // resize
+  static Future<void> setSize(Size size) async {
+    if (UniversalPlatform.isWindows) {
+      await windowManager.setSize(size);
     }
   }
 }

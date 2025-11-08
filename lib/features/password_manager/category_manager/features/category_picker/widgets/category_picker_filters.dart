@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/providers/category_filter_provider.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
+import 'package:hoplixi/shared/ui/type_chip.dart';
 
 /// Панель фильтров для пикера категорий
 class CategoryPickerFilters extends ConsumerWidget {
@@ -83,25 +84,25 @@ class CategoryPickerFilters extends ConsumerWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Text(
-                  'Тип:',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 12),
+                // Text(
+                //   'Тип:',
+                //   style: theme.textTheme.bodyMedium?.copyWith(
+                //     fontWeight: FontWeight.w500,
+                //   ),
+                // ),
+                // const SizedBox(width: 12),
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _TypeChip(
+                        TypeChip(
                           label: 'Все',
                           isSelected: filter.type == null,
                           onTap: () => filterNotifier.updateType(null),
                         ),
                         const SizedBox(width: 8),
-                        _TypeChip(
+                        TypeChip(
                           label: 'Пароли',
                           isSelected:
                               filter.type == CategoryType.password.value,
@@ -110,7 +111,7 @@ class CategoryPickerFilters extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TypeChip(
+                        TypeChip(
                           label: 'Банковские карты',
                           isSelected:
                               filter.type == CategoryType.bankCard.value,
@@ -119,7 +120,7 @@ class CategoryPickerFilters extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TypeChip(
+                        TypeChip(
                           label: 'Заметки',
                           isSelected: filter.type == CategoryType.notes.value,
                           onTap: () => filterNotifier.updateType(
@@ -127,7 +128,7 @@ class CategoryPickerFilters extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TypeChip(
+                        TypeChip(
                           label: 'Файлы',
                           isSelected: filter.type == CategoryType.files.value,
                           onTap: () => filterNotifier.updateType(
@@ -135,7 +136,7 @@ class CategoryPickerFilters extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _TypeChip(
+                        TypeChip(
                           label: 'Mixed',
                           isSelected: filter.type == CategoryType.mixed.value,
                           onTap: () => filterNotifier.updateType(
@@ -150,52 +151,6 @@ class CategoryPickerFilters extends ConsumerWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Чип для выбора типа категории
-class _TypeChip extends StatelessWidget {
-  const _TypeChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primaryContainer
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? colorScheme.primary : Colors.transparent,
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: isSelected
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onSurface,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
       ),
     );
   }

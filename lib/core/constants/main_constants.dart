@@ -8,6 +8,9 @@ class MainConstants {
   static const Size defaultWindowSize = Size(650, 720);
   static const Size minWindowSize = Size(400, 500);
   static const Size maxWindowSize = Size(1200, 1000);
+
+  // dashboard size
+  static const Size defaultDashboardSize = Size(1080, 750);
   static const bool isCenter = true;
 
   static const int databaseSchemaVersion = 2;

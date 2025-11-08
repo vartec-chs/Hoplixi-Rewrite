@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/global_key.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
@@ -10,6 +11,7 @@ import 'package:hoplixi/routing/routes.dart';
 import 'package:hoplixi/shared/ui/desktop_shell.dart';
 import 'package:hoplixi/shared/ui/titlebar.dart';
 import 'package:universal_platform/universal_platform.dart';
+import 'package:window_manager/window_manager.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Listen to the RouterRefreshNotifier to trigger refreshes
@@ -42,7 +44,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             (currentPath == AppRoutesPaths.createStore ||
                 currentPath == AppRoutesPaths.openStore ||
                 currentPath == AppRoutesPaths.home)) {
+          WindowManager.instance.setSize(MainConstants.defaultDashboardSize);
+          WindowManager.instance.center();
           return AppRoutesPaths.dashboardHome;
+        } else if (dbState.isClosed &&
+            (currentPath.startsWith(AppRoutesPaths.dashboard))) {
+          WindowManager.instance.setSize(MainConstants.defaultWindowSize);
+          WindowManager.instance.center();
+          return AppRoutesPaths.home;
         }
       }
 

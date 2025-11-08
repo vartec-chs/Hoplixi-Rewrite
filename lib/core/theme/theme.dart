@@ -10,6 +10,21 @@ import 'colors.dart';
 import 'component_themes.dart';
 
 final visualDensity = VisualDensity.comfortable;
+final desktopOnlyUseDialogBuilders = false;
+
+WoltModalType buildModalType(BuildContext context) {
+  if (UniversalPlatform.isDesktop && desktopOnlyUseDialogBuilders) {
+    return WoltModalType.dialog();
+  }
+  final width = MediaQuery.sizeOf(context).width;
+  if (width < 523) {
+    return WoltModalType.bottomSheet();
+  } else if (width < 800) {
+    return WoltModalType.dialog();
+  } else {
+    return WoltModalType.dialog();
+  }
+}
 
 abstract final class AppTheme {
   static ThemeData _withNunito(ThemeData theme) {
@@ -42,19 +57,7 @@ abstract final class AppTheme {
               surfaceTintColor: Colors.transparent,
               useSafeArea: true,
               enableDrag: true,
-              modalTypeBuilder: (context) {
-                if (UniversalPlatform.isDesktop) {
-                  return WoltModalType.dialog();
-                }
-                final width = MediaQuery.sizeOf(context).width;
-                if (width < 523) {
-                  return WoltModalType.bottomSheet();
-                } else if (width < 800) {
-                  return WoltModalType.dialog();
-                } else {
-                  return WoltModalType.sideSheet();
-                }
-              },
+              modalTypeBuilder: buildModalType,
 
               mainContentScrollPhysics: ClampingScrollPhysics(),
             ),
@@ -106,19 +109,7 @@ abstract final class AppTheme {
               surfaceTintColor: Colors.transparent,
               useSafeArea: true,
               enableDrag: true,
-              modalTypeBuilder: (context) {
-                if (UniversalPlatform.isDesktop) {
-                  return WoltModalType.dialog();
-                }
-                final width = MediaQuery.sizeOf(context).width;
-                if (width < 523) {
-                  return WoltModalType.bottomSheet();
-                } else if (width < 800) {
-                  return WoltModalType.dialog();
-                } else {
-                  return WoltModalType.sideSheet();
-                }
-              },
+              modalTypeBuilder: buildModalType,
               mainContentScrollPhysics: ClampingScrollPhysics(),
               // dragHandleColor: Colors.white54,
             ),

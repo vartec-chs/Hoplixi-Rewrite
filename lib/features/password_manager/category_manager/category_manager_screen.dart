@@ -19,7 +19,6 @@ class CategoryManagerScreen extends ConsumerStatefulWidget {
 }
 
 class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
-  
   @override
   void initState() {
     super.initState();
@@ -120,7 +119,9 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
               ),
             ],
           ),
-         
+
+          SliverToBoxAdapter(child: CategoryPickerField(isFilter: true)),
+
           categoryState.when(
             data: (state) {
               if (state.items.isEmpty) {

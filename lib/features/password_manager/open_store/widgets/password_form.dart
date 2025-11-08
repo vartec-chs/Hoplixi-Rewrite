@@ -175,7 +175,11 @@ class _PasswordFormState extends ConsumerState<PasswordForm> {
               const SizedBox(height: 24),
 
               // Поле ввода пароля
-              PasswordField(label: 'Пароль', controller: _passwordController),
+              PasswordField(
+                label: 'Пароль',
+                controller: _passwordController,
+                autofocus: true,
+              ),
               if (passwordError != null) ...[
                 const SizedBox(height: 8),
                 Text(

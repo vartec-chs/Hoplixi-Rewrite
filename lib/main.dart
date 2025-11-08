@@ -106,6 +106,17 @@ Widget setupToastificationWrapper(Widget app) {
       alignment: UniversalPlatform.isDesktop
           ? Alignment.bottomRight
           : Alignment.topCenter,
+      marginBuilder: (context, alignment) {
+        if (UniversalPlatform.isDesktop) {
+          return const EdgeInsets.all(16);
+        } else {
+          return EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+          );
+        }
+      },
     ),
     child: app,
   );

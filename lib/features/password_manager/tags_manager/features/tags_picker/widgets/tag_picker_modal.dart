@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/providers/tag_picker_provider.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/widgets/tag_picker_filters.dart';
@@ -78,15 +79,13 @@ class TagPickerModal {
       isTopBarLayerAlwaysVisible: true,
       mainContentSliversBuilder: (context) => [
         // Контент с состоянием
-        SliverToBoxAdapter(
-          child: _TagPickerContent(
-            onTagsSelected: onTagsSelected,
-            onTagSelected: onTagSelected,
-            initialTagIds: currentTagIds,
-            maxTagPicks: maxTagPicks,
-            isSingleMode: isSingleMode,
-            filterByType: filterByType,
-          ),
+        _TagPickerContent(
+          onTagsSelected: onTagsSelected,
+          onTagSelected: onTagSelected,
+          initialTagIds: currentTagIds,
+          maxTagPicks: maxTagPicks,
+          isSingleMode: isSingleMode,
+          filterByType: filterByType,
         ),
       ],
     );
@@ -94,7 +93,7 @@ class TagPickerModal {
 }
 
 /// Контент модального окна с состоянием выбранных тегов
-class _TagPickerContent extends StatefulWidget {
+class _TagPickerContent extends ConsumerStatefulWidget {
   const _TagPickerContent({
     this.onTagsSelected,
     this.onTagSelected,
@@ -112,18 +111,87 @@ class _TagPickerContent extends StatefulWidget {
   final String? filterByType;
 
   @override
-  State<_TagPickerContent> createState() => _TagPickerContentState();
+  ConsumerState<_TagPickerContent> createState() => _TagPickerContentState();
 }
 
-class _TagPickerContentState extends State<_TagPickerContent> {
+class _TagPickerContentState extends ConsumerState<_TagPickerContent> {
   late List<String> _selectedTagIds;
-  bool _showLoadingIndicator = false;
-  List<dynamic>? _cachedItems; // Кешированные данные
+  final GlobalKey<SliverAnimatedListState> _listKey =
+      GlobalKey<SliverAnimatedListState>();
+  List<dynamic> _items = [];
 
   @override
   void initState() {
     super.initState();
     _selectedTagIds = List<String>.from(widget.initialTagIds);
+  }
+
+  void _updateItems(List<dynamic> newItems) {
+    if (!mounted) return;
+
+    final oldLength = _items.length;
+    final newLength = newItems.length;
+
+    // Если список пустой, просто заменяем
+    if (oldLength == 0) {
+      setState(() {
+        _items = List.from(newItems);
+      });
+      // Анимируем добавление всех элементов
+      for (int i = 0; i < newLength; i++) {
+        _listKey.currentState?.insertItem(
+          i,
+          duration: Duration(milliseconds: 200 + i * 20),
+        );
+      }
+      return;
+    }
+
+    // Удаляем лишние элементы
+    if (newLength < oldLength) {
+      for (int i = oldLength - 1; i >= newLength; i--) {
+        final item = _items[i];
+        final isSelected = _selectedTagIds.contains(item.id);
+        _listKey.currentState?.removeItem(
+          i,
+          (context, animation) =>
+              _buildAnimatedItem(item, animation, isSelected),
+          duration: const Duration(milliseconds: 200),
+        );
+      }
+    }
+
+    // Добавляем новые элементы
+    if (newLength > oldLength) {
+      for (int i = oldLength; i < newLength; i++) {
+        _listKey.currentState?.insertItem(
+          i,
+          duration: Duration(milliseconds: 200 + (i - oldLength) * 20),
+        );
+      }
+    }
+
+    setState(() {
+      _items = List.from(newItems);
+    });
+  }
+
+  Widget _buildAnimatedItem(
+    dynamic tag,
+    Animation<double> animation,
+    bool isSelected,
+  ) {
+    return SizeTransition(
+      sizeFactor: animation,
+      child: FadeTransition(
+        opacity: animation,
+        child: TagPickerItem(
+          tag: tag,
+          isSelected: isSelected,
+          onTap: () => _toggleTag(tag.id, tag.name, _items),
+        ),
+      ),
+    );
   }
 
   void _toggleTag(String tagId, String tagName, List<dynamic> allTags) {
@@ -150,12 +218,9 @@ class _TagPickerContentState extends State<_TagPickerContent> {
           // Проверяем лимит
           if (widget.maxTagPicks != null &&
               _selectedTagIds.length >= widget.maxTagPicks!) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Можно выбрать максимум ${widget.maxTagPicks} тегов',
-                ),
-              ),
+            Toaster.warning(
+              title: 'Теги',
+              description: 'Можно выбрать максимум ${widget.maxTagPicks} тегов',
             );
             return;
           }
@@ -181,179 +246,149 @@ class _TagPickerContentState extends State<_TagPickerContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Фильтры
-        TagPickerFilters(
-          filterByType: widget.filterByType,
-          selectedCount: _selectedTagIds.length,
-          maxCount: widget.maxTagPicks,
-        ),
+    final tagsState = ref.watch(tagPickerListProvider);
 
-        // Список тегов
-        Consumer(
-          builder: (context, ref, child) {
-            final tagsState = ref.watch(tagPickerListProvider);
+    return tagsState.when(
+      data: (state) {
+        // Обновляем список при получении новых данных
+        if (state.items.length != _items.length ||
+            (state.items.isNotEmpty &&
+                _items.isNotEmpty &&
+                state.items.first.id != _items.first.id)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateItems(state.items);
+          });
+        }
 
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: tagsState.when(
-                data: (state) {
-                  // Сбрасываем индикатор загрузки при получении данных
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && _showLoadingIndicator) {
-                      setState(() => _showLoadingIndicator = false);
-                    }
-                  });
-
-                  // Кешируем данные
-                  if (state.items.isNotEmpty) {
-                    _cachedItems = state.items;
-                  }
-
-                  if (state.items.isEmpty && !state.isLoading) {
-                    return SizedBox(
-                      height: 300,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.label_outline,
-                              size: 64,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.3),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Теги не найдены',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ...List.generate(state.items.length, (index) {
-                        final tag = state.items[index];
-                        final isSelected = _selectedTagIds.contains(tag.id);
-
-                        return TagPickerItem(
-                          tag: tag,
-                          isSelected: isSelected,
-                          onTap: () =>
-                              _toggleTag(tag.id, tag.name, state.items),
-                        );
-                      }),
-                      if (state.hasMore)
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: state.isLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              : TextButton(
-                                  onPressed: () {
-                                    ref
-                                        .read(tagPickerListProvider.notifier)
-                                        .loadMore();
-                                  },
-                                  child: const Text('Загрузить еще'),
-                                ),
-                        ),
-                    ],
-                  );
-                },
-                loading: () {
-                  // Показываем индикатор загрузки только после 300ms
-                  if (!_showLoadingIndicator) {
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      if (mounted) {
-                        setState(() => _showLoadingIndicator = true);
-                      }
-                    });
-                  }
-
-                  // Если есть кешированные данные, показываем их
-                  if (_cachedItems != null && _cachedItems!.isNotEmpty) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ...List.generate(_cachedItems!.length, (index) {
-                          final tag = _cachedItems![index];
-                          final isSelected = _selectedTagIds.contains(tag.id);
-
-                          return TagPickerItem(
-                            tag: tag,
-                            isSelected: isSelected,
-                            onTap: () =>
-                                _toggleTag(tag.id, tag.name, _cachedItems!),
-                          );
-                        }),
-                        // Показываем индикатор загрузки внизу списка
-                        if (_showLoadingIndicator)
-                          const Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                      ],
-                    );
-                  }
-
-                  // Если кеша нет, показываем центральный индикатор
-                  return SizedBox(
-                    height: 200,
-                    child: Center(
-                      child: _showLoadingIndicator
-                          ? const CircularProgressIndicator()
-                          : const SizedBox.shrink(),
-                    ),
-                  );
-                },
-                error: (error, stack) {
-                  // Сбрасываем индикатор при ошибке
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && _showLoadingIndicator) {
-                      setState(() => _showLoadingIndicator = false);
-                    }
-                  });
-
-                  return SizedBox(
-                    height: 200,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Ошибка загрузки тегов',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            error.toString(),
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+        if (state.items.isEmpty && !state.isLoading) {
+          return SliverMainAxisGroup(
+            slivers: [
+              SliverToBoxAdapter(
+                child: TagPickerFilters(
+                  filterByType: widget.filterByType,
+                  selectedCount: _selectedTagIds.length,
+                  maxCount: widget.maxTagPicks,
+                ),
               ),
-            );
-          },
-        ),
-      ],
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.label_outline,
+                        size: 64,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Теги не найдены',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return SliverMainAxisGroup(
+          slivers: [
+            SliverToBoxAdapter(
+              child: TagPickerFilters(
+                filterByType: widget.filterByType,
+                selectedCount: _selectedTagIds.length,
+                maxCount: widget.maxTagPicks,
+              ),
+            ),
+            SliverAnimatedList(
+              key: _listKey,
+              initialItemCount: _items.length,
+              itemBuilder: (context, index, animation) {
+                if (index >= _items.length) {
+                  return const SizedBox.shrink();
+                }
+
+                final tag = _items[index];
+                final isSelected = _selectedTagIds.contains(tag.id);
+
+                return _buildAnimatedItem(tag, animation, isSelected);
+              },
+            ),
+            if (state.hasMore)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: state.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Center(
+                          child: TextButton(
+                            onPressed: () {
+                              ref
+                                  .read(tagPickerListProvider.notifier)
+                                  .loadMore();
+                            },
+                            child: const Text('Загрузить еще'),
+                          ),
+                        ),
+                ),
+              ),
+          ],
+        );
+      },
+      loading: () => SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(
+            child: TagPickerFilters(
+              filterByType: widget.filterByType,
+              selectedCount: _selectedTagIds.length,
+              maxCount: widget.maxTagPicks,
+            ),
+          ),
+          SliverFillRemaining(
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      ),
+      error: (error, stack) => SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(
+            child: TagPickerFilters(
+              filterByType: widget.filterByType,
+              selectedCount: _selectedTagIds.length,
+              maxCount: widget.maxTagPicks,
+            ),
+          ),
+          SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Ошибка загрузки тегов',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    error.toString(),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

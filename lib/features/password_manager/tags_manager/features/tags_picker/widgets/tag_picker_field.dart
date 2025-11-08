@@ -8,7 +8,7 @@ import 'package:hoplixi/shared/ui/text_field.dart';
 class TagPickerField extends StatefulWidget {
   const TagPickerField({
     super.key,
-    required this.onTagsSelected,
+    this.onTagsSelected,
     this.selectedTagIds = const [],
     this.selectedTagNames = const [],
     this.label = 'Теги',
@@ -22,7 +22,7 @@ class TagPickerField extends StatefulWidget {
   });
 
   /// Коллбэк при выборе тегов
-  final Function(List<String> tagIds, List<String> tagNames) onTagsSelected;
+  final Function(List<String> tagIds, List<String> tagNames)? onTagsSelected;
 
   /// ID выбранных тегов
   final List<String> selectedTagIds;
@@ -84,7 +84,7 @@ class _TagPickerFieldState extends State<TagPickerField> {
 
   void _handleClear() {
     if (!widget.enabled) return;
-    widget.onTagsSelected([], []);
+    widget.onTagsSelected?.call([], []);
     _effectiveFocusNode.requestFocus();
   }
 
@@ -94,7 +94,7 @@ class _TagPickerFieldState extends State<TagPickerField> {
     final updatedNames = List<String>.from(widget.selectedTagNames);
     updatedIds.removeAt(index);
     updatedNames.removeAt(index);
-    widget.onTagsSelected(updatedIds, updatedNames);
+    widget.onTagsSelected?.call(updatedIds, updatedNames);
     _effectiveFocusNode.requestFocus();
   }
 
@@ -105,7 +105,7 @@ class _TagPickerFieldState extends State<TagPickerField> {
       maxTagPicks: widget.maxTagPicks,
       filterByType: widget.filterByType?.value,
       onTagsSelected: (tagIds, tagNames) {
-        widget.onTagsSelected(tagIds, tagNames);
+        widget.onTagsSelected?.call(tagIds, tagNames);
       },
     );
   }

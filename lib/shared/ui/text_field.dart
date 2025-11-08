@@ -470,12 +470,19 @@ class PrimaryTextFormField extends StatelessWidget {
 class PasswordField extends StatefulWidget {
   final String label;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final bool canRequestFocus;
+  final bool autofocus;
   final String? Function(String?)? validator;
 
   const PasswordField({
     super.key,
+
     required this.label,
+    this.focusNode,
     this.controller,
+    this.canRequestFocus = true,
+    this.autofocus = false,
     this.validator,
   });
 
@@ -491,6 +498,9 @@ class _PasswordFieldState extends State<PasswordField> {
     return TextFormField(
       controller: widget.controller,
       obscureText: _obscureText,
+      canRequestFocus: widget.canRequestFocus,
+      autofocus: widget.autofocus,
+      focusNode: widget.focusNode,
       validator: widget.validator,
       decoration: primaryInputDecoration(context, labelText: widget.label)
           .copyWith(

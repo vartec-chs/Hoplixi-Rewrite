@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 
 import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/filter/tags_filter.dart';
@@ -114,6 +115,8 @@ class _TagsManagerScreenState extends ConsumerState<TagsManagerScreen> {
               ),
             ],
           ),
+
+          SliverToBoxAdapter(child: TagPickerField()),
 
           tagState.when(
             data: (state) {
