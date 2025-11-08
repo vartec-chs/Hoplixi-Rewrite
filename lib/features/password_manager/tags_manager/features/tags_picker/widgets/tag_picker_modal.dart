@@ -67,6 +67,7 @@ class TagPickerModal {
     return SliverWoltModalSheetPage(
       heroImage: null,
       hasTopBarLayer: true,
+      forceMaxHeight: true,
       topBarTitle: Text(
         isSingleMode
             ? 'Выберите тег'
@@ -116,6 +117,8 @@ class _TagPickerContent extends StatefulWidget {
 
 class _TagPickerContentState extends State<_TagPickerContent> {
   late List<String> _selectedTagIds;
+  bool _showLoadingIndicator = false;
+  List<dynamic>? _cachedItems; // Кешированные данные
 
   @override
   void initState() {
@@ -181,130 +184,171 @@ class _TagPickerContentState extends State<_TagPickerContent> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Счетчик выбранных тегов (только в режиме множественного выбора)
-        if (!widget.isSingleMode && _selectedTagIds.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    widget.maxTagPicks != null
-                        ? '${_selectedTagIds.length} / ${widget.maxTagPicks}'
-                        : '${_selectedTagIds.length}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
         // Фильтры
-        TagPickerFilters(filterByType: widget.filterByType),
+        TagPickerFilters(
+          filterByType: widget.filterByType,
+          selectedCount: _selectedTagIds.length,
+          maxCount: widget.maxTagPicks,
+        ),
 
         // Список тегов
         Consumer(
           builder: (context, ref, child) {
             final tagsState = ref.watch(tagPickerListProvider);
 
-            return tagsState.when(
-              data: (state) {
-                if (state.items.isEmpty && !state.isLoading) {
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: tagsState.when(
+                data: (state) {
+                  // Сбрасываем индикатор загрузки при получении данных
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _showLoadingIndicator) {
+                      setState(() => _showLoadingIndicator = false);
+                    }
+                  });
+
+                  // Кешируем данные
+                  if (state.items.isNotEmpty) {
+                    _cachedItems = state.items;
+                  }
+
+                  if (state.items.isEmpty && !state.isLoading) {
+                    return SizedBox(
+                      height: 300,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.label_outline,
+                              size: 64,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.3),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Теги не найдены',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...List.generate(state.items.length, (index) {
+                        final tag = state.items[index];
+                        final isSelected = _selectedTagIds.contains(tag.id);
+
+                        return TagPickerItem(
+                          tag: tag,
+                          isSelected: isSelected,
+                          onTap: () =>
+                              _toggleTag(tag.id, tag.name, state.items),
+                        );
+                      }),
+                      if (state.hasMore)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: state.isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : TextButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(tagPickerListProvider.notifier)
+                                        .loadMore();
+                                  },
+                                  child: const Text('Загрузить еще'),
+                                ),
+                        ),
+                    ],
+                  );
+                },
+                loading: () {
+                  // Показываем индикатор загрузки только после 300ms
+                  if (!_showLoadingIndicator) {
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (mounted) {
+                        setState(() => _showLoadingIndicator = true);
+                      }
+                    });
+                  }
+
+                  // Если есть кешированные данные, показываем их
+                  if (_cachedItems != null && _cachedItems!.isNotEmpty) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ...List.generate(_cachedItems!.length, (index) {
+                          final tag = _cachedItems![index];
+                          final isSelected = _selectedTagIds.contains(tag.id);
+
+                          return TagPickerItem(
+                            tag: tag,
+                            isSelected: isSelected,
+                            onTap: () =>
+                                _toggleTag(tag.id, tag.name, _cachedItems!),
+                          );
+                        }),
+                        // Показываем индикатор загрузки внизу списка
+                        if (_showLoadingIndicator)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                      ],
+                    );
+                  }
+
+                  // Если кеша нет, показываем центральный индикатор
                   return SizedBox(
-                    height: 300,
+                    height: 200,
+                    child: Center(
+                      child: _showLoadingIndicator
+                          ? const CircularProgressIndicator()
+                          : const SizedBox.shrink(),
+                    ),
+                  );
+                },
+                error: (error, stack) {
+                  // Сбрасываем индикатор при ошибке
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _showLoadingIndicator) {
+                      setState(() => _showLoadingIndicator = false);
+                    }
+                  });
+
+                  return SizedBox(
+                    height: 200,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.label_outline,
+                            Icons.error_outline,
                             size: 64,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.error,
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Теги не найдены',
+                            'Ошибка загрузки тегов',
                             style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            error.toString(),
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
                   );
-                }
-
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ...List.generate(state.items.length, (index) {
-                      final tag = state.items[index];
-                      final isSelected = _selectedTagIds.contains(tag.id);
-
-                      return TagPickerItem(
-                        tag: tag,
-                        isSelected: isSelected,
-                        onTap: () => _toggleTag(tag.id, tag.name, state.items),
-                      );
-                    }),
-                    if (state.hasMore)
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: state.isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : TextButton(
-                                onPressed: () {
-                                  ref
-                                      .read(tagPickerListProvider.notifier)
-                                      .loadMore();
-                                },
-                                child: const Text('Загрузить еще'),
-                              ),
-                      ),
-                  ],
-                );
-              },
-              loading: () => const SizedBox(
-                height: 200,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (error, stack) => SizedBox(
-                height: 200,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Ошибка загрузки тегов',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+                },
               ),
             );
           },

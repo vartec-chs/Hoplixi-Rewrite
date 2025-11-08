@@ -19,8 +19,7 @@ class CategoryManagerScreen extends ConsumerStatefulWidget {
 }
 
 class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
-  List<String> categoryId = [];
-  List<String> categoryName = [];
+  
   @override
   void initState() {
     super.initState();
@@ -121,20 +120,7 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
               ),
             ],
           ),
-          SliverToBoxAdapter(
-            child: CategoryPickerField(
-              selectedCategoryIds: categoryId,
-              isFilter: true,
-              filterByType: CategoryType.password,
-              selectedCategoryNames: categoryName,
-              onCategoriesSelected: (ids, names) {
-                setState(() {
-                  categoryId = ids;
-                  categoryName = names;
-                });
-              },
-            ),
-          ),
+         
           categoryState.when(
             data: (state) {
               if (state.items.isEmpty) {

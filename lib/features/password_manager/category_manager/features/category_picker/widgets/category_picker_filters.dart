@@ -6,10 +6,17 @@ import 'package:hoplixi/shared/ui/text_field.dart';
 
 /// Панель фильтров для пикера категорий
 class CategoryPickerFilters extends ConsumerWidget {
-  const CategoryPickerFilters({super.key, this.hideTypeFilter = false});
+  const CategoryPickerFilters({
+    super.key,
+    this.hideTypeFilter = false,
+    this.selectedCount = 0,
+  });
 
   /// Скрыть фильтр по типу (используется когда тип уже задан извне)
   final bool hideTypeFilter;
+
+  /// Количество выбранных категорий
+  final int selectedCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,20 +34,48 @@ class CategoryPickerFilters extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Поле поиска
-          TextField(
-            decoration: primaryInputDecoration(
-              context,
-              hintText: 'Поиск категории...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: filter.query.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () => filterNotifier.updateQuery(''),
-                    )
-                  : null,
-            ),
-            onChanged: filterNotifier.updateQuery,
+          // Строка с поиском и счетчиком
+          Row(
+            children: [
+              // Поле поиска
+              Expanded(
+                child: TextField(
+                  decoration: primaryInputDecoration(
+                    context,
+                    hintText: 'Поиск категории...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: filter.query.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => filterNotifier.updateQuery(''),
+                          )
+                        : null,
+                  ),
+                  onChanged: filterNotifier.updateQuery,
+                ),
+              ),
+              // Счетчик выбранных категорий
+              if (selectedCount > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$selectedCount',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
 
           // Фильтр по типу (скрываем если hideTypeFilter = true)
