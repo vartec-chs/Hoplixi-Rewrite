@@ -1,7 +1,8 @@
 /// Category Picker - компонент выбора категории с модальным окном
 ///
 /// Основной виджет: CategoryPickerField
-/// Использование:
+///
+/// Использование (одиночный выбор):
 /// ```dart
 /// CategoryPickerField(
 ///   selectedCategoryId: categoryId,
@@ -10,6 +11,22 @@
 ///     setState(() {
 ///       categoryId = id;
 ///       categoryName = name;
+///     });
+///   },
+/// )
+/// ```
+///
+/// Использование (режим фильтра - множественный выбор):
+/// ```dart
+/// CategoryPickerField(
+///   isFilter: true,
+///   selectedCategoryIds: categoryIds,
+///   selectedCategoryNames: categoryNames,
+///   filterByType: 'login', // опционально: фильтр по типу категорий
+///   onCategoriesSelected: (ids, names) {
+///     setState(() {
+///       categoryIds = ids;
+///       categoryNames = names;
 ///     });
 ///   },
 /// )

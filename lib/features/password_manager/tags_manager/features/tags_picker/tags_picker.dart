@@ -1,12 +1,29 @@
 /// Tags Picker - компонент выбора тегов с модальным окном и множественным выбором
 ///
 /// Основной виджет: TagPickerField
-/// Использование:
+///
+/// Использование (обычный режим - множественный выбор):
 /// ```dart
 /// TagPickerField(
 ///   selectedTagIds: tagIds,
 ///   selectedTagNames: tagNames,
 ///   maxTagPicks: 5, // опционально, ограничение на количество тегов
+///   onTagsSelected: (ids, names) {
+///     setState(() {
+///       tagIds = ids;
+///       tagNames = names;
+///     });
+///   },
+/// )
+/// ```
+///
+/// Использование (режим фильтра с типом):
+/// ```dart
+/// TagPickerField(
+///   isFilter: true, // режим фильтра
+///   selectedTagIds: tagIds,
+///   selectedTagNames: tagNames,
+///   filterByType: 'login', // опционально: фильтр по типу тегов
 ///   onTagsSelected: (ids, names) {
 ///     setState(() {
 ///       tagIds = ids;

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
+import 'package:hoplixi/main_store/models/enums/entity_types.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
 import 'providers/category_filter_provider.dart';
@@ -18,8 +19,8 @@ class CategoryManagerScreen extends ConsumerStatefulWidget {
 }
 
 class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
-  String? categoryId;
-  String? categoryName;
+  List<String> categoryId = [];
+  List<String> categoryName = [];
   @override
   void initState() {
     super.initState();
@@ -122,12 +123,14 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
           ),
           SliverToBoxAdapter(
             child: CategoryPickerField(
-              selectedCategoryId: categoryId,
-              selectedCategoryName: categoryName,
-              onCategorySelected: (id, name) {
+              selectedCategoryIds: categoryId,
+              isFilter: true,
+              filterByType: CategoryType.password,
+              selectedCategoryNames: categoryName,
+              onCategoriesSelected: (ids, names) {
                 setState(() {
-                  categoryId = id;
-                  categoryName = name;
+                  categoryId = ids;
+                  categoryName = names;
                 });
               },
             ),

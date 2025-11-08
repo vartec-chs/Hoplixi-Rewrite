@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/widgets/tag_picker_modal.dart';
+import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 
 /// Текстовое поле для выбора тегов с множественным выбором
@@ -15,7 +16,9 @@ class TagPickerField extends StatefulWidget {
     this.enabled = true,
     this.focusNode,
     this.autofocus = false,
+    this.isFilter = false,
     this.maxTagPicks,
+    this.filterByType,
   });
 
   /// Коллбэк при выборе тегов
@@ -42,8 +45,14 @@ class TagPickerField extends StatefulWidget {
   /// Автоматический фокус
   final bool autofocus;
 
+  /// Режим фильтра (множественный выбор)
+  final bool isFilter;
+
   /// Максимальное количество выбираемых тегов (null = без ограничений)
   final int? maxTagPicks;
+
+  /// Тип тегов для фильтрации (только в режиме фильтра)
+  final TagType? filterByType;
 
   @override
   State<TagPickerField> createState() => _TagPickerFieldState();
@@ -94,6 +103,7 @@ class _TagPickerFieldState extends State<TagPickerField> {
       context: context,
       currentTagIds: widget.selectedTagIds,
       maxTagPicks: widget.maxTagPicks,
+      filterByType: widget.filterByType?.value,
       onTagsSelected: (tagIds, tagNames) {
         widget.onTagsSelected(tagIds, tagNames);
       },
@@ -110,7 +120,9 @@ class _TagPickerFieldState extends State<TagPickerField> {
     return Semantics(
       label: widget.label,
       hint: hasValue
-          ? '${widget.selectedTagNames.length} тегов выбрано'
+          ? (widget.isFilter
+                ? '${widget.selectedTagNames.length} тегов выбрано'
+                : '${widget.selectedTagNames.length} тегов выбрано')
           : widget.hintText,
       button: true,
       enabled: widget.enabled,
@@ -160,7 +172,9 @@ class _TagPickerFieldState extends State<TagPickerField> {
                       IconButton(
                         icon: const Icon(Icons.clear, size: 20),
                         onPressed: widget.enabled ? _handleClear : null,
-                        tooltip: 'Очистить все (Delete/Backspace)',
+                        tooltip: widget.isFilter
+                            ? 'Очистить все (Delete/Backspace)'
+                            : 'Очистить все (Delete/Backspace)',
                       ),
                     Icon(
                       Icons.arrow_drop_down,
@@ -177,7 +191,10 @@ class _TagPickerFieldState extends State<TagPickerField> {
                 focusColor: colorScheme.primary.withOpacity(1),
                 hoverColor: colorScheme.onSurface.withOpacity(0.04),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 2,
+                    horizontal: 4,
+                  ),
                   child: hasValue
                       ? Wrap(
                           spacing: 8,

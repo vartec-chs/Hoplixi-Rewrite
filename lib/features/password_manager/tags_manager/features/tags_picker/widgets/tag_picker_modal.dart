@@ -7,13 +7,14 @@ import 'package:hoplixi/features/password_manager/tags_manager/features/tags_pic
 
 /// Модальное окно выбора тегов
 class TagPickerModal {
-  /// Показать модальное окно выбора тегов
+  /// Показать модальное окно выбора тегов (множественный выбор)
   static Future<void> show({
     required BuildContext context,
     required Function(List<String> tagIds, List<String> tagNames)
     onTagsSelected,
     List<String>? currentTagIds,
     int? maxTagPicks,
+    String? filterByType,
   }) {
     return WoltModalSheet.show(
       context: context,
@@ -22,27 +23,56 @@ class TagPickerModal {
       pageListBuilder: (context) => [
         _buildPickerPage(
           context,
-          onTagsSelected,
-          currentTagIds ?? [],
-          maxTagPicks,
+          onTagsSelected: onTagsSelected,
+          currentTagIds: currentTagIds ?? [],
+          maxTagPicks: maxTagPicks,
+          isSingleMode: false,
+          filterByType: filterByType,
+        ),
+      ],
+    );
+  }
+
+  /// Показать модальное окно выбора тега (одиночный выбор)
+  static Future<void> showSingle({
+    required BuildContext context,
+    required Function(String? tagId, String? tagName) onTagSelected,
+    String? currentTagId,
+  }) {
+    return WoltModalSheet.show(
+      context: context,
+      useSafeArea: true,
+      useRootNavigator: true,
+      pageListBuilder: (context) => [
+        _buildPickerPage(
+          context,
+          onTagSelected: onTagSelected,
+          currentTagIds: currentTagId != null ? [currentTagId] : [],
+          maxTagPicks: 1,
+          isSingleMode: true,
         ),
       ],
     );
   }
 
   static SliverWoltModalSheetPage _buildPickerPage(
-    BuildContext context,
-    Function(List<String> tagIds, List<String> tagNames) onTagsSelected,
-    List<String> currentTagIds,
+    BuildContext context, {
+    Function(List<String> tagIds, List<String> tagNames)? onTagsSelected,
+    Function(String? tagId, String? tagName)? onTagSelected,
+    required List<String> currentTagIds,
     int? maxTagPicks,
-  ) {
+    required bool isSingleMode,
+    String? filterByType,
+  }) {
     return SliverWoltModalSheetPage(
       heroImage: null,
       hasTopBarLayer: true,
       topBarTitle: Text(
-        maxTagPicks != null && maxTagPicks > 0
-            ? 'Выберите теги (макс. $maxTagPicks)'
-            : 'Выберите теги',
+        isSingleMode
+            ? 'Выберите тег'
+            : (maxTagPicks != null && maxTagPicks > 0
+                  ? 'Выберите теги (макс. $maxTagPicks)'
+                  : 'Выберите теги'),
       ),
       isTopBarLayerAlwaysVisible: true,
       mainContentSliversBuilder: (context) => [
@@ -50,8 +80,11 @@ class TagPickerModal {
         SliverToBoxAdapter(
           child: _TagPickerContent(
             onTagsSelected: onTagsSelected,
+            onTagSelected: onTagSelected,
             initialTagIds: currentTagIds,
             maxTagPicks: maxTagPicks,
+            isSingleMode: isSingleMode,
+            filterByType: filterByType,
           ),
         ),
       ],
@@ -62,14 +95,20 @@ class TagPickerModal {
 /// Контент модального окна с состоянием выбранных тегов
 class _TagPickerContent extends StatefulWidget {
   const _TagPickerContent({
-    required this.onTagsSelected,
+    this.onTagsSelected,
+    this.onTagSelected,
     required this.initialTagIds,
     this.maxTagPicks,
+    required this.isSingleMode,
+    this.filterByType,
   });
 
-  final Function(List<String> tagIds, List<String> tagNames) onTagsSelected;
+  final Function(List<String> tagIds, List<String> tagNames)? onTagsSelected;
+  final Function(String? tagId, String? tagName)? onTagSelected;
   final List<String> initialTagIds;
   final int? maxTagPicks;
+  final bool isSingleMode;
+  final String? filterByType;
 
   @override
   State<_TagPickerContent> createState() => _TagPickerContentState();
@@ -85,40 +124,56 @@ class _TagPickerContentState extends State<_TagPickerContent> {
   }
 
   void _toggleTag(String tagId, String tagName, List<dynamic> allTags) {
-    setState(() {
-      if (_selectedTagIds.contains(tagId)) {
-        // Убираем тег из выбранных
-        _selectedTagIds.remove(tagId);
-      } else {
-        // Проверяем лимит
-        if (widget.maxTagPicks != null &&
-            _selectedTagIds.length >= widget.maxTagPicks!) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Можно выбрать максимум ${widget.maxTagPicks} тегов',
-              ),
-            ),
-          );
-          return;
+    if (widget.isSingleMode) {
+      // Режим одиночного выбора
+      setState(() {
+        if (_selectedTagIds.contains(tagId)) {
+          // Снимаем выбор
+          _selectedTagIds.clear();
+          widget.onTagSelected?.call(null, null);
+        } else {
+          // Выбираем новый тег
+          _selectedTagIds = [tagId];
+          widget.onTagSelected?.call(tagId, tagName);
         }
-        _selectedTagIds.add(tagId);
-      }
-    });
+      });
+    } else {
+      // Режим множественного выбора
+      setState(() {
+        if (_selectedTagIds.contains(tagId)) {
+          // Убираем тег из выбранных
+          _selectedTagIds.remove(tagId);
+        } else {
+          // Проверяем лимит
+          if (widget.maxTagPicks != null &&
+              _selectedTagIds.length >= widget.maxTagPicks!) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Можно выбрать максимум ${widget.maxTagPicks} тегов',
+                ),
+              ),
+            );
+            return;
+          }
+          _selectedTagIds.add(tagId);
+        }
+      });
 
-    // Собираем имена для выбранных тегов
-    final selectedTagNames = <String>[];
-    for (final tagId in _selectedTagIds) {
-      try {
-        final selectedTag = allTags.firstWhere((t) => t.id == tagId);
-        selectedTagNames.add(selectedTag.name as String);
-      } catch (e) {
-        // Тег не найден в списке, пропускаем
-        continue;
+      // Собираем имена для выбранных тегов
+      final selectedTagNames = <String>[];
+      for (final tagId in _selectedTagIds) {
+        try {
+          final selectedTag = allTags.firstWhere((t) => t.id == tagId);
+          selectedTagNames.add(selectedTag.name as String);
+        } catch (e) {
+          // Тег не найден в списке, пропускаем
+          continue;
+        }
       }
+
+      widget.onTagsSelected?.call(_selectedTagIds, selectedTagNames);
     }
-
-    widget.onTagsSelected(_selectedTagIds, selectedTagNames);
   }
 
   @override
@@ -126,8 +181,8 @@ class _TagPickerContentState extends State<_TagPickerContent> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Счетчик выбранных тегов
-        if (_selectedTagIds.isNotEmpty)
+        // Счетчик выбранных тегов (только в режиме множественного выбора)
+        if (!widget.isSingleMode && _selectedTagIds.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
@@ -157,7 +212,7 @@ class _TagPickerContentState extends State<_TagPickerContent> {
           ),
 
         // Фильтры
-        const TagPickerFilters(),
+        TagPickerFilters(filterByType: widget.filterByType),
 
         // Список тегов
         Consumer(
