@@ -49,6 +49,8 @@ abstract final class ComponentThemes {
     bottomSheetModalBackgroundColor: SchemeColor.surfaceContainerLow,
     dialogBackgroundSchemeColor: SchemeColor.surfaceContainerLow,
     cardElevation: _cardElevation,
+    menuBarRadius: defaultBorderRadius,
+    menuRadius: defaultBorderRadius,
   );
 
   /// Базовые подтемы для тёмной темы
@@ -87,6 +89,8 @@ abstract final class ComponentThemes {
     bottomSheetModalBackgroundColor: SchemeColor.surfaceContainerLow,
     dialogBackgroundSchemeColor: SchemeColor.surfaceContainerLow,
     cardElevation: _cardElevation,
+    menuBarRadius: defaultBorderRadius,
+    menuRadius: defaultBorderRadius,
   );
 }
 

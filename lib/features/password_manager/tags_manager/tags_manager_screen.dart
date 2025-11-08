@@ -16,8 +16,6 @@ class TagsManagerScreen extends ConsumerStatefulWidget {
 }
 
 class _TagsManagerScreenState extends ConsumerState<TagsManagerScreen> {
-  
-
   @override
   void initState() {
     super.initState();
@@ -32,7 +30,6 @@ class _TagsManagerScreenState extends ConsumerState<TagsManagerScreen> {
 
     return Scaffold(
       body: CustomScrollView(
-
         slivers: [
           SliverAppBar(
             floating: true,
@@ -117,9 +114,6 @@ class _TagsManagerScreenState extends ConsumerState<TagsManagerScreen> {
               ),
             ],
           ),
-          
-
-         
 
           tagState.when(
             data: (state) {

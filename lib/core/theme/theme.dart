@@ -2,6 +2,7 @@ import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:universal_platform/universal_platform.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 import 'button_themes.dart';
@@ -35,15 +36,27 @@ abstract final class AppTheme {
           error: Color(0xFFDE372F),
           errorContainer: Color(0xFFD50000),
         ).copyWith(
-          extensions: const <ThemeExtension>[
+          extensions: <ThemeExtension>[
             WoltModalSheetThemeData(
               backgroundColor: Color(0xFFF5F5F5),
               surfaceTintColor: Colors.transparent,
               useSafeArea: true,
               enableDrag: true,
-              
+              modalTypeBuilder: (context) {
+                if (UniversalPlatform.isDesktop) {
+                  return WoltModalType.dialog();
+                }
+                final width = MediaQuery.sizeOf(context).width;
+                if (width < 523) {
+                  return WoltModalType.bottomSheet();
+                } else if (width < 800) {
+                  return WoltModalType.dialog();
+                } else {
+                  return WoltModalType.sideSheet();
+                }
+              },
+
               mainContentScrollPhysics: ClampingScrollPhysics(),
-              
             ),
           ],
         );
@@ -87,12 +100,25 @@ abstract final class AppTheme {
           error: Color(0xFFE53935),
           errorContainer: Color(0xFFB81D28),
         ).copyWith(
-          extensions: const <ThemeExtension>[
+          extensions: <ThemeExtension>[
             WoltModalSheetThemeData(
               backgroundColor: AppColors.darkSurface,
               surfaceTintColor: Colors.transparent,
               useSafeArea: true,
               enableDrag: true,
+              modalTypeBuilder: (context) {
+                if (UniversalPlatform.isDesktop) {
+                  return WoltModalType.dialog();
+                }
+                final width = MediaQuery.sizeOf(context).width;
+                if (width < 523) {
+                  return WoltModalType.bottomSheet();
+                } else if (width < 800) {
+                  return WoltModalType.dialog();
+                } else {
+                  return WoltModalType.sideSheet();
+                }
+              },
               mainContentScrollPhysics: ClampingScrollPhysics(),
               // dragHandleColor: Colors.white54,
             ),

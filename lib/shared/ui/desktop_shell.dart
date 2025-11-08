@@ -105,6 +105,7 @@ class _RootBarsOverlayState extends State<RootBarsOverlay> {
       builder: (context) {
         return IgnorePointer(
           ignoring: false,
+
           child: Stack(
             children: const [
               // TitleBar сверху
