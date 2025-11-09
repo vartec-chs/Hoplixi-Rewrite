@@ -70,7 +70,25 @@ final tagDaoProvider = FutureProvider<TagDao>(
   (ref) => _ensureDao(ref, (store) => TagDao(store)),
 );
 
-// /// DAO провайдер для работы с паролями
+final passwordFilterDaoProvider = FutureProvider<PasswordFilterDao>(
+  (ref) => _ensureDao(ref, (store) => PasswordFilterDao(store)),
+);
+
+final otpFilterDaoProvider = FutureProvider<OtpFilterDao>(
+  (ref) => _ensureDao(ref, (store) => OtpFilterDao(store)),
+);
+
+final noteFilterDaoProvider = FutureProvider<NoteFilterDao>(
+  (ref) => _ensureDao(ref, (store) => NoteFilterDao(store)),
+);
+
+final bankCardFilterDaoProvider = FutureProvider<BankCardFilterDao>(
+  (ref) => _ensureDao(ref, (store) => BankCardFilterDao(store)),
+);
+
+final fileFilterDaoProvider = FutureProvider<FileFilterDao>(
+  (ref) => _ensureDao(ref, (store) => FileFilterDao(store)),
+);
 // final passwordDaoProvider = FutureProvider<PasswordDao?>((ref) async {
 //   final mainStore = await ref.watch(mainStoreManagerProvider.future);
 //   return mainStore?.currentStore != null

@@ -15,6 +15,7 @@ import 'package:hoplixi/main_store/dao/category_dao.dart';
 import 'package:hoplixi/main_store/dao/icon_dao.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
+import './dao/filters_dao/filters_dao.dart';
 import 'package:uuid/uuid.dart';
 
 part 'main_store.g.dart';
@@ -54,6 +55,11 @@ part 'main_store.g.dart';
     FileHistoryDao,
     CategoryDao,
     IconDao,
+    BankCardFilterDao,
+    FileFilterDao,
+    NoteFilterDao,
+    OtpFilterDao,
+    PasswordFilterDao,
   ],
 )
 class MainStore extends _$MainStore {
