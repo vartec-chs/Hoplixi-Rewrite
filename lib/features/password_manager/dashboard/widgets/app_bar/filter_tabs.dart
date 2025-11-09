@@ -133,11 +133,9 @@ class _FilterTabsState extends ConsumerState<FilterTabs>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isUse =
-        MediaQuery.of(context).size.width < 600 ||
-        MediaQuery.of(context).size.height > 400;
+    final isUse = MediaQuery.of(context).size.width <= 600;
     final isScrollable = isUse && _currentTabs.length > 3;
-    final tabAlignment = TabAlignment.center;
+    final tabAlignment = isUse ? TabAlignment.center : TabAlignment.fill;
     final currentTab = ref.watch(filterTabProvider);
 
     // Слушаем изменения типа сущности
@@ -165,11 +163,11 @@ class _FilterTabsState extends ConsumerState<FilterTabs>
     // Определяем цвет индикатора в зависимости от текущей вкладки
     final indicatorColor = currentTab == FilterTab.delete
         ? theme.colorScheme.errorContainer
-        : theme.colorScheme.primaryContainer;
+        : theme.colorScheme.surfaceContainerHigh;
 
     final labelColor = currentTab == FilterTab.delete
         ? theme.colorScheme.onErrorContainer
-        : theme.colorScheme.onPrimaryContainer;
+        : theme.colorScheme.onSecondary;
 
     return Container(
       decoration: BoxDecoration(
@@ -200,7 +198,7 @@ class _FilterTabsState extends ConsumerState<FilterTabs>
         labelStyle: theme.textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w600,
         ),
-        indicatorPadding: const EdgeInsets.all(2),
+        indicatorPadding: const EdgeInsets.all(3),
         unselectedLabelStyle: theme.textTheme.bodyMedium,
         tabAlignment: tabAlignment,
         labelPadding: widget.labelPadding,

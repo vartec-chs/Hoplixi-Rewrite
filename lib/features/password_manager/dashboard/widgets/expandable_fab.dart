@@ -277,39 +277,71 @@ class _ExpandingActionButton extends StatelessWidget {
         final double? bottom;
 
         if (direction == FABExpandDirection.right) {
-          // Горизонтально вправо - кнопки лесенкой вниз
-          left = fabOffset.dx + 80; // +8 для начального отступа
-          top =
-              fabOffset.dy + (index * 64); // Каждая кнопка чуть ниже предыдущей
+          // Горизонтально вправо - каскадная анимация
+          // Первая кнопка появляется справа, остальные выпадают из неё вниз
+
+          // Задержка для каждой кнопки (первая без задержки)
+          final delay = index * 0.15;
+          final adjustedProgress =
+              (progress.value - delay).clamp(0.0, 1.0) /
+              (1.0 - delay).clamp(0.01, 1.0);
+
+          if (index == 0) {
+            // Первая кнопка - анимированно выдвигается справа от FAB
+            final startLeft =
+                fabOffset.dx + 8; // Начальная позиция (близко к FAB)
+            final endLeft = fabOffset.dx + 80; // Конечная позиция
+            left = startLeft + (endLeft - startLeft) * adjustedProgress;
+            top = fabOffset.dy + 5;
+          } else {
+            final startLeft =
+                fabOffset.dx + 8; // Начальная позиция (близко к FAB)
+            final endLeft = fabOffset.dx + 80; // Конечная позиция
+            left = startLeft + (endLeft - startLeft) * adjustedProgress;
+            // Остальные кнопки - выпадают из первой кнопки вниз
+            // left = fabOffset.dx + 80;
+            // Интерполируем позицию: начинаем с позиции первой кнопки
+            final startTop = fabOffset.dy + 5;
+            final endTop = fabOffset.dy + 5 + (index * 64);
+            top = startTop + (endTop - startTop) * adjustedProgress;
+          }
           bottom = null;
+
+          // Масштабирование с задержкой
+          final scale = adjustedProgress;
+
+          return Positioned(
+            left: left,
+            top: top,
+            bottom: bottom,
+            child: Opacity(
+              opacity: adjustedProgress,
+              child: Transform.scale(scale: scale, child: child!),
+            ),
+          );
         } else {
           // Вертикально вверх - кнопки центрированы относительно FAB
           // fabOffset.dx + 28 - это центр FAB (56/2 = 28)
           left = fabOffset.dx + 28; // Смещаем влево на половину ширины кнопки
           top = fabOffset.dy - 32 - offset; // Вычитаем, чтобы идти вверх
           bottom = null;
-        }
 
-        return Positioned(
-          left: left,
-          top: top,
-          bottom: bottom,
-          child: direction == FABExpandDirection.up
-              ? Transform.translate(
-                  offset: const Offset(
-                    -0.5,
-                    0,
-                  ), // Смещаем влево на половину ширины кнопки
-                  child: FractionalTranslation(
-                    translation: const Offset(-0.5, 0),
-                    child: Transform.scale(
-                      scale: progress.value,
-                      child: child!,
-                    ),
-                  ),
-                )
-              : Transform.scale(scale: progress.value, child: child!),
-        );
+          return Positioned(
+            left: left,
+            top: top,
+            bottom: bottom,
+            child: Transform.translate(
+              offset: const Offset(
+                -0.5,
+                0,
+              ), // Смещаем влево на половину ширины кнопки
+              child: FractionalTranslation(
+                translation: const Offset(-0.5, 0),
+                child: Transform.scale(scale: progress.value, child: child!),
+              ),
+            ),
+          );
+        }
       },
       child: FadeTransition(opacity: progress, child: child),
     );

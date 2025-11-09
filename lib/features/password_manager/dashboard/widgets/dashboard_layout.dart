@@ -32,9 +32,17 @@ class _DashboardLayoutState extends State<DashboardLayout>
 
   // FAB действия
   void _onCreateEntity() {}
-  void _onCreateCategory() {}
-  void _onCreateTag() {}
-  void _onIconCreate() {}
+  void _onCreateCategory() {
+    context.go(AppRoutesPaths.dashboardCategoryManager);
+  }
+
+  void _onCreateTag() {
+    context.go(AppRoutesPaths.dashboardTagManager);
+  }
+
+  void _onIconCreate() {
+    context.go(AppRoutesPaths.dashboardIconManager);
+  }
 
   @override
   void initState() {
@@ -65,9 +73,15 @@ class _DashboardLayoutState extends State<DashboardLayout>
   }
 
   void _onDestinationSelected(BuildContext context, int index) {
+    // Закрываем мобильный FAB при навигации
+    if (_mobileFabIsOpen) {
+      _mobileFabKey.currentState?.toggle();
+    }
+
     switch (index) {
       case 0:
         context.go(AppRoutesPaths.dashboard);
+
         break;
       case 1:
         context.go(AppRoutesPaths.dashboardCategoryManager);
@@ -176,7 +190,9 @@ class _DashboardLayoutState extends State<DashboardLayout>
               children: [
                 widget.child,
                 // Overlay для раскрывающихся кнопок FAB на мобильном
-                if (_mobileFabKey.currentState != null)
+                if (_mobileFabKey.currentState != null &&
+                    selectedIndex == 0 &&
+                    _mobileFabIsOpen)
                   FABActionsOverlay(
                     isOpen: _mobileFabIsOpen,
                     animation: _mobileFabKey.currentState!.expandAnimation,
