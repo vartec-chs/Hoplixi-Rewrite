@@ -14,6 +14,7 @@ sealed class BaseFilter with _$BaseFilter {
     bool? isFavorite,
     bool? isArchived,
     bool? isDeleted,
+    bool? isFrequentlyUsed,
     bool? isPinned,
     bool? hasNotes,
     DateTime? createdAfter,
@@ -36,6 +37,7 @@ sealed class BaseFilter with _$BaseFilter {
     bool? isFavorite,
     bool? isArchived,
     bool? isDeleted,
+    bool? isFrequentlyUsed,
     bool? isPinned,
     bool? hasNotes,
     DateTime? createdAfter,
@@ -68,6 +70,7 @@ sealed class BaseFilter with _$BaseFilter {
       isArchived: isArchived,
       isDeleted: isDeleted,
       isPinned: isPinned,
+      isFrequentlyUsed: isFrequentlyUsed,
       hasNotes: hasNotes,
       createdAfter: createdAfter,
       createdBefore: createdBefore,
@@ -94,6 +97,7 @@ extension BaseFilterHelpers on BaseFilter {
     if (tagIds.isNotEmpty) return true;
     if (isFavorite != null) return true;
     if (isArchived != null) return true;
+    if (isFrequentlyUsed != null) return true;
     if (isDeleted != null) return true;
     if (isPinned != null) return true;
     if (hasNotes != null) return true;

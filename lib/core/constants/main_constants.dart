@@ -15,4 +15,7 @@ class MainConstants {
 
   static const int databaseSchemaVersion = 2;
   static const String dbExtension = '.hplxdb';
+
+  // Минимальное количество использований для считания записи часто используемой
+  static const int frequentlyUsedThreshold = 5;
 }

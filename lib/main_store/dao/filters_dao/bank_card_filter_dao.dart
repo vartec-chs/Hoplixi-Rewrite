@@ -1,0 +1,371 @@
+import 'package:drift/drift.dart';
+import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/dto/bank_card_dto.dart';
+import 'package:hoplixi/main_store/models/enums/index.dart';
+import 'package:hoplixi/main_store/models/filter/bank_cards_filter.dart';
+import 'package:hoplixi/main_store/models/filter/base_filter.dart';
+import 'package:hoplixi/main_store/tables/index.dart';
+
+part 'bank_card_filter_dao.g.dart';
+
+@DriftAccessor(tables: [BankCards, Categories, BankCardsTags])
+class BankCardFilterDao extends DatabaseAccessor<MainStore>
+    with _$BankCardFilterDaoMixin {
+  BankCardFilterDao(MainStore db) : super(db);
+
+  /// Получить отфильтрованные банковские карты
+  Future<List<BankCardCardDto>> getFilteredBankCards(
+    BankCardsFilter filter,
+  ) async {
+    final query = select(bankCards).join([
+      leftOuterJoin(categories, categories.id.equalsExp(bankCards.categoryId)),
+    ]);
+
+    final whereExpression = _buildWhereExpression(filter);
+    if (whereExpression != null) {
+      query.where(whereExpression);
+    }
+
+    query.orderBy(_buildOrderBy(filter));
+
+    if (filter.base.limit != null) {
+      query.limit(filter.base.limit!, offset: filter.base.offset);
+    }
+
+    final results = await query.get();
+
+    return results.map((row) {
+      final card = row.readTable(bankCards);
+      final category = row.readTableOrNull(categories);
+
+      return BankCardCardDto(
+        id: card.id,
+        name: card.name,
+        cardholderName: card.cardholderName,
+        cardType: card.cardType?.value,
+        cardNetwork: card.cardNetwork?.value,
+        bankName: card.bankName,
+        categoryName: category?.name,
+        isFavorite: card.isFavorite,
+        isPinned: card.isPinned,
+        usedCount: card.usedCount,
+        modifiedAt: card.modifiedAt,
+      );
+    }).toList();
+  }
+
+  /// Построить WHERE выражение на основе фильтра
+  Expression<bool>? _buildWhereExpression(BankCardsFilter filter) {
+    final expressions = <Expression<bool>>[];
+
+    // Применяем базовые фильтры
+    _applyBaseFilters(filter.base, expressions);
+
+    // Применяем специфичные для банковских карт фильтры
+    _applyBankCardSpecificFilters(filter, expressions);
+
+    if (expressions.isEmpty) return null;
+
+    return expressions.reduce((a, b) => a & b);
+  }
+
+  /// Применить базовые фильтры из BaseFilter
+  void _applyBaseFilters(BaseFilter base, List<Expression<bool>> expressions) {
+    // Фильтр по поисковому запросу
+    if (base.query.isNotEmpty) {
+      final queryLower = base.query.toLowerCase();
+      expressions.add(
+        bankCards.name.lower().like('%$queryLower%') |
+            bankCards.cardholderName.lower().like('%$queryLower%') |
+            bankCards.bankName.lower().like('%$queryLower%') |
+            bankCards.description.lower().like('%$queryLower%') |
+            bankCards.notes.lower().like('%$queryLower%'),
+      );
+    }
+
+    // Фильтр по категориям
+    if (base.categoryIds.isNotEmpty) {
+      expressions.add(bankCards.categoryId.isIn(base.categoryIds));
+    }
+
+    // Фильтр по тегам (EXISTS subquery)
+    if (base.tagIds.isNotEmpty) {
+      final tagFilter = existsQuery(
+        select(bankCardsTags)..where(
+          (t) => t.cardId.equalsExp(bankCards.id) & t.tagId.isIn(base.tagIds),
+        ),
+      );
+      expressions.add(tagFilter);
+    }
+
+    // Фильтр по дате создания
+    if (base.createdAfter != null) {
+      expressions.add(
+        bankCards.createdAt.isBiggerOrEqualValue(base.createdAfter!),
+      );
+    }
+    if (base.createdBefore != null) {
+      expressions.add(
+        bankCards.createdAt.isSmallerOrEqualValue(base.createdBefore!),
+      );
+    }
+
+    // Фильтр по дате модификации
+    if (base.modifiedAfter != null) {
+      expressions.add(
+        bankCards.modifiedAt.isBiggerOrEqualValue(base.modifiedAfter!),
+      );
+    }
+    if (base.modifiedBefore != null) {
+      expressions.add(
+        bankCards.modifiedAt.isSmallerOrEqualValue(base.modifiedBefore!),
+      );
+    }
+
+    // Фильтр по дате последнего доступа
+    if (base.lastAccessedAfter != null) {
+      expressions.add(
+        bankCards.lastAccessedAt.isBiggerOrEqualValue(base.lastAccessedAfter!) |
+            bankCards.lastAccessedAt.isNull(),
+      );
+    }
+    if (base.lastAccessedBefore != null) {
+      expressions.add(
+        bankCards.lastAccessedAt.isSmallerOrEqualValue(
+              base.lastAccessedBefore!,
+            ) |
+            bankCards.lastAccessedAt.isNull(),
+      );
+    }
+
+    // Фильтр по избранным
+    if (base.isFavorite != null) {
+      expressions.add(bankCards.isFavorite.equals(base.isFavorite!));
+    }
+
+    // Фильтр по закрепленным
+    if (base.isPinned != null) {
+      expressions.add(bankCards.isPinned.equals(base.isPinned!));
+    }
+
+    // Фильтр по архивным
+    if (base.isArchived != null) {
+      expressions.add(bankCards.isArchived.equals(base.isArchived!));
+    }
+
+    // Фильтр по часто используемым
+    if (base.isFrequentlyUsed != null) {
+      if (base.isFrequentlyUsed!) {
+        expressions.add(
+          bankCards.usedCount.isBiggerOrEqualValue(
+            MainConstants.frequentlyUsedThreshold,
+          ),
+        );
+      } else {
+        expressions.add(
+          bankCards.usedCount.isSmallerThanValue(
+            MainConstants.frequentlyUsedThreshold,
+          ),
+        );
+      }
+    }
+
+    // Фильтр по удаленным
+    if (base.isDeleted != null) {
+      expressions.add(bankCards.isDeleted.equals(base.isDeleted!));
+    } else {
+      // По умолчанию исключаем удаленные
+      expressions.add(bankCards.isDeleted.equals(false));
+    }
+  }
+
+  /// Применить фильтры, специфичные для банковских карт
+  void _applyBankCardSpecificFilters(
+    BankCardsFilter filter,
+    List<Expression<bool>> expressions,
+  ) {
+    // Фильтр по типам карт
+    if (filter.cardTypes.isNotEmpty) {
+      Expression<bool>? typeExpression;
+      for (final type in filter.cardTypes) {
+        final condition = bankCards.cardType.equalsValue(type);
+        typeExpression = typeExpression == null
+            ? condition
+            : (typeExpression | condition);
+      }
+      if (typeExpression != null) {
+        expressions.add(typeExpression);
+      }
+    }
+
+    // Фильтр по сетям карт
+    if (filter.cardNetworks.isNotEmpty) {
+      Expression<bool>? networkExpression;
+      for (final network in filter.cardNetworks) {
+        final condition = bankCards.cardNetwork.equalsValue(network);
+        networkExpression = networkExpression == null
+            ? condition
+            : (networkExpression | condition);
+      }
+      if (networkExpression != null) {
+        expressions.add(networkExpression);
+      }
+    }
+
+    // Фильтр по названию банка
+    if (filter.bankName != null && filter.bankName!.isNotEmpty) {
+      final bankNameLower = filter.bankName!.toLowerCase();
+      expressions.add(bankCards.bankName.lower().contains(bankNameLower));
+    }
+
+    // Фильтр по имени держателя карты
+    if (filter.cardholderName != null && filter.cardholderName!.isNotEmpty) {
+      final cardholderLower = filter.cardholderName!.toLowerCase();
+      expressions.add(
+        bankCards.cardholderName.lower().contains(cardholderLower),
+      );
+    }
+
+    // Фильтр по истекшему сроку действия
+    if (filter.hasExpiryDatePassed != null) {
+      final now = DateTime.now();
+      final currentYear = now.year.toString();
+      final currentMonth = now.month.toString().padLeft(2, '0');
+
+      if (filter.hasExpiryDatePassed!) {
+        // Карты с истекшим сроком: год < текущего ИЛИ (год = текущему И месяц < текущего)
+        expressions.add(
+          bankCards.expiryYear.isSmallerThanValue(currentYear) |
+              (bankCards.expiryYear.equals(currentYear) &
+                  bankCards.expiryMonth.isSmallerThanValue(currentMonth)),
+        );
+      } else {
+        // Карты с активным сроком: год > текущего ИЛИ (год = текущему И месяц >= текущего)
+        expressions.add(
+          bankCards.expiryYear.isBiggerThanValue(currentYear) |
+              (bankCards.expiryYear.equals(currentYear) &
+                  bankCards.expiryMonth.isBiggerOrEqualValue(currentMonth)),
+        );
+      }
+    }
+
+    // Фильтр по истекающим скоро картам (в течение 3 месяцев)
+    if (filter.isExpiringSoon != null && filter.isExpiringSoon!) {
+      final now = DateTime.now();
+      final threeMonthsLater = now.add(const Duration(days: 90));
+      final futureYear = threeMonthsLater.year.toString();
+      final futureMonth = threeMonthsLater.month.toString().padLeft(2, '0');
+      final currentYear = now.year.toString();
+      final currentMonth = now.month.toString().padLeft(2, '0');
+
+      // Карты истекают скоро: не истекли И (год < будущего ИЛИ (год = будущему И месяц <= будущего))
+      expressions.add(
+        (bankCards.expiryYear.isBiggerThanValue(currentYear) |
+                (bankCards.expiryYear.equals(currentYear) &
+                    bankCards.expiryMonth.isBiggerOrEqualValue(currentMonth))) &
+            (bankCards.expiryYear.isSmallerThanValue(futureYear) |
+                (bankCards.expiryYear.equals(futureYear) &
+                    bankCards.expiryMonth.isSmallerOrEqualValue(futureMonth))),
+      );
+    }
+  }
+
+  /// Построить ORDER BY выражение
+  List<OrderingTerm> _buildOrderBy(BankCardsFilter filter) {
+    final orderTerms = <OrderingTerm>[];
+
+    // Закрепленные записи всегда сверху
+    orderTerms.add(
+      OrderingTerm(expression: bankCards.isPinned, mode: OrderingMode.desc),
+    );
+
+    // Сортировка по указанному полю
+    final sortField = filter.sortField ?? BankCardsSortField.modifiedAt;
+    final sortDirection = filter.base.sortDirection;
+
+    switch (sortField) {
+      case BankCardsSortField.name:
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.name,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+      case BankCardsSortField.cardholderName:
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.cardholderName,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+      case BankCardsSortField.bankName:
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.bankName,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+      case BankCardsSortField.expiryDate:
+        // Сортировка по дате истечения (год, затем месяц)
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.expiryYear,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.expiryMonth,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+      case BankCardsSortField.createdAt:
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.createdAt,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+      case BankCardsSortField.modifiedAt:
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.modifiedAt,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+      case BankCardsSortField.lastAccessed:
+        orderTerms.add(
+          OrderingTerm(
+            expression: bankCards.lastAccessedAt,
+            mode: sortDirection == SortDirection.asc
+                ? OrderingMode.asc
+                : OrderingMode.desc,
+          ),
+        );
+        break;
+    }
+
+    return orderTerms;
+  }
+}
