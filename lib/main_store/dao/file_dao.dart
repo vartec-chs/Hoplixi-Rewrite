@@ -39,6 +39,14 @@ class FileDao extends DatabaseAccessor<MainStore> with _$FileDaoMixin {
         .get();
   }
 
+  /// Переключить избранное
+  Future<bool> toggleFavorite(String id, bool isFavorite) async {
+    final result = await (update(files)..where((f) => f.id.equals(id)))
+        .write(FilesCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
   /// Смотреть все файлы с автообновлением
   Stream<List<FilesData>> watchAllFiles() {
     return (select(
@@ -117,66 +125,12 @@ class FileDao extends DatabaseAccessor<MainStore> with _$FileDaoMixin {
   }
 
   /// Мягкое удаление файла
-  Future<bool> softDeleteFile(String id) async {
+  Future<bool> softDelete(String id) async {
     final query = (update(files)..where((f) => f.id.equals(id)));
     return query.write(
       const FilesCompanion(isDeleted: Value(true)),
     ).then((rowsAffected) => rowsAffected > 0);
   }
 
-  /// Получить файлы по категории
-  Stream<List<FileCardDto>> watchFilesByCategory(String? categoryId) {
-    var query = select(files);
-    if (categoryId != null) {
-      query = query..where((f) => f.categoryId.equals(categoryId));
-    } else {
-      query = query..where((f) => f.categoryId.isNull());
-    }
-    return (query..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)]))
-        .watch()
-        .map(
-          (files) => files
-              .map(
-                (f) => FileCardDto(
-                  id: f.id,
-                  name: f.name,
-                  fileName: f.fileName,
-                  fileExtension: f.fileExtension,
-                  fileSize: f.fileSize,
-                  categoryName: null,
-                  isFavorite: f.isFavorite,
-                  isPinned: f.isPinned,
-                  usedCount: f.usedCount,
-                  modifiedAt: f.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  /// Получить избранные файлы
-  Stream<List<FileCardDto>> watchFavoriteFiles() {
-    return (select(files)
-          ..where((f) => f.isFavorite.equals(true))
-          ..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)]))
-        .watch()
-        .map(
-          (files) => files
-              .map(
-                (f) => FileCardDto(
-                  id: f.id,
-                  name: f.name,
-                  fileName: f.fileName,
-                  fileExtension: f.fileExtension,
-                  fileSize: f.fileSize,
-                  categoryName: null,
-                  isFavorite: f.isFavorite,
-                  isPinned: f.isPinned,
-                  usedCount: f.usedCount,
-                  modifiedAt: f.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
+  
 }

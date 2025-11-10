@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
@@ -10,13 +11,13 @@ part 'password_filter_dao.g.dart';
 
 @DriftAccessor(tables: [Passwords, Categories, PasswordsTags])
 class PasswordFilterDao extends DatabaseAccessor<MainStore>
-    with _$PasswordFilterDaoMixin {
+    with _$PasswordFilterDaoMixin
+    implements FilterDao<PasswordsFilter, PasswordCardDto> {
   PasswordFilterDao(super.db);
 
   /// Основной метод для получения отфильтрованных паролей
-  Future<List<PasswordCardDto>> getFilteredPasswords(
-    PasswordsFilter filter,
-  ) async {
+  @override
+  Future<List<PasswordCardDto>> getFiltered(PasswordsFilter filter) async {
     // Создаем базовый запрос с join к категориям
     final query = select(passwords).join([
       leftOuterJoin(categories, categories.id.equalsExp(passwords.categoryId)),
@@ -53,6 +54,20 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
         modifiedAt: password.modifiedAt,
       );
     }).toList();
+  }
+
+  /// Подсчитывает количество отфильтрованных паролей
+  @override
+  Future<int> countFiltered(PasswordsFilter filter) async {
+    // Создаем запрос для подсчета
+    final query = selectOnly(passwords)..addColumns([passwords.id.count()]);
+
+    // Применяем те же фильтры
+    query.where(_buildWhereExpression(filter));
+
+    // Выполняем запрос
+    final result = await query.getSingle();
+    return result.read(passwords.id.count()) ?? 0;
   }
 
   /// Строит WHERE выражение на основе всех фильтров

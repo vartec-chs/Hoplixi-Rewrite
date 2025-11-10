@@ -42,6 +42,14 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
         .get();
   }
 
+  // toggle favorite
+  Future<bool> toggleFavorite(String id, bool isFavorite) async {
+    final result = await (update(passwords)..where((p) => p.id.equals(id)))
+        .write(PasswordsCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
   /// Смотреть все пароли с автообновлением
   Stream<List<PasswordsData>> watchAllPasswords() {
     return (select(
@@ -130,65 +138,11 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
   }
 
   /// Удалить пароль (мягкое удаление)
-  Future<bool> softDeletePassword(String id) async {
+  Future<bool> softDelete(String id) async {
     final result = await (update(passwords)..where((p) => p.id.equals(id)))
         .write(const PasswordsCompanion(isDeleted: Value(true)));
     return result > 0;
   }
 
-  /// Получить пароли по категории
-  Stream<List<PasswordCardDto>> watchPasswordsByCategory(String? categoryId) {
-    var query = select(passwords);
-    if (categoryId != null) {
-      query = query..where((p) => p.categoryId.equals(categoryId));
-    } else {
-      query = query..where((p) => p.categoryId.isNull());
-    }
-    return (query..orderBy([(p) => OrderingTerm.desc(p.modifiedAt)]))
-        .watch()
-        .map(
-          (passwords) => passwords
-              .map(
-                (p) => PasswordCardDto(
-                  id: p.id,
-                  name: p.name,
-                  login: p.login,
-                  email: p.email,
-                  url: p.url,
-                  categoryName: null,
-                  isFavorite: p.isFavorite,
-                  isPinned: p.isPinned,
-                  usedCount: p.usedCount,
-                  modifiedAt: p.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  /// Получить избранные пароли
-  Stream<List<PasswordCardDto>> watchFavoritePasswords() {
-    return (select(passwords)
-          ..where((p) => p.isFavorite.equals(true))
-          ..orderBy([(p) => OrderingTerm.desc(p.modifiedAt)]))
-        .watch()
-        .map(
-          (passwords) => passwords
-              .map(
-                (p) => PasswordCardDto(
-                  id: p.id,
-                  name: p.name,
-                  login: p.login,
-                  email: p.email,
-                  url: p.url,
-                  categoryName: null,
-                  isFavorite: p.isFavorite,
-                  isPinned: p.isPinned,
-                  usedCount: p.usedCount,
-                  modifiedAt: p.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
+  
 }

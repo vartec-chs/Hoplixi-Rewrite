@@ -37,6 +37,14 @@ class NoteDao extends DatabaseAccessor<MainStore> with _$NoteDaoMixin {
         .get();
   }
 
+  /// Переключить избранное
+  Future<bool> toggleFavorite(String id, bool isFavorite) async {
+    final result = await (update(notes)..where((n) => n.id.equals(id)))
+        .write(NotesCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
   /// Смотреть все заметки с автообновлением
   Stream<List<NotesData>> watchAllNotes() {
     return (select(
@@ -114,61 +122,11 @@ class NoteDao extends DatabaseAccessor<MainStore> with _$NoteDaoMixin {
   }
 
   /// Мягкое удаление заметки
-  Future<bool> softDeleteNote(String id) async {
+  Future<bool> softDelete(String id) async {
     final rowsAffected = await (update(notes)..where((n) => n.id.equals(id)))
         .write(const NotesCompanion(isDeleted: Value(true)));
     return rowsAffected > 0;
   }
 
-  /// Получить заметки по категории
-  Stream<List<NoteCardDto>> watchNotesByCategory(String? categoryId) {
-    var query = select(notes);
-    if (categoryId != null) {
-      query = query..where((n) => n.categoryId.equals(categoryId));
-    } else {
-      query = query..where((n) => n.categoryId.isNull());
-    }
-    return (query..orderBy([(n) => OrderingTerm.desc(n.modifiedAt)]))
-        .watch()
-        .map(
-          (notes) => notes
-              .map(
-                (n) => NoteCardDto(
-                  id: n.id,
-                  title: n.title,
-                  description: n.description,
-                  categoryName: null,
-                  isFavorite: n.isFavorite,
-                  isPinned: n.isPinned,
-                  usedCount: n.usedCount,
-                  modifiedAt: n.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  /// Получить избранные заметки
-  Stream<List<NoteCardDto>> watchFavoriteNotes() {
-    return (select(notes)
-          ..where((n) => n.isFavorite.equals(true))
-          ..orderBy([(n) => OrderingTerm.desc(n.modifiedAt)]))
-        .watch()
-        .map(
-          (notes) => notes
-              .map(
-                (n) => NoteCardDto(
-                  id: n.id,
-                  title: n.title,
-                  description: n.description,
-                  categoryName: null,
-                  isFavorite: n.isFavorite,
-                  isPinned: n.isPinned,
-                  usedCount: n.usedCount,
-                  modifiedAt: n.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
+  
 }

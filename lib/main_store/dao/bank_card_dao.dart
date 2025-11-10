@@ -44,6 +44,14 @@ class BankCardDao extends DatabaseAccessor<MainStore> with _$BankCardDaoMixin {
         .get();
   }
 
+  /// Переключить избранное
+  Future<bool> toggleFavorite(String id, bool isFavorite) async {
+    final result = await (update(bankCards)..where((bc) => bc.id.equals(id)))
+        .write(BankCardsCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
   /// Смотреть все карты с автообновлением
   Stream<List<BankCardsData>> watchAllBankCards() {
     return (select(
@@ -164,69 +172,11 @@ class BankCardDao extends DatabaseAccessor<MainStore> with _$BankCardDaoMixin {
   }
 
   /// Мягкое удаление карты
-  Future<bool> softDeleteBankCard(String id) async {
+  Future<bool> softDelete(String id) async {
     final rowsAffected =
         await (update(bankCards)..where((bc) => bc.id.equals(id))).write(
           const BankCardsCompanion(isDeleted: Value(true)),
         );
     return rowsAffected > 0;
-  }
-
-  /// Получить карты по категории
-  Stream<List<BankCardCardDto>> watchBankCardsByCategory(String? categoryId) {
-    var query = select(bankCards);
-    if (categoryId != null) {
-      query = query..where((bc) => bc.categoryId.equals(categoryId));
-    } else {
-      query = query..where((bc) => bc.categoryId.isNull());
-    }
-    return (query..orderBy([(bc) => OrderingTerm.desc(bc.modifiedAt)]))
-        .watch()
-        .map(
-          (bankCards) => bankCards
-              .map(
-                (bc) => BankCardCardDto(
-                  id: bc.id,
-                  name: bc.name,
-                  cardholderName: bc.cardholderName,
-                  cardType: bc.cardType?.value,
-                  cardNetwork: bc.cardNetwork?.value,
-                  bankName: bc.bankName,
-                  categoryName: null,
-                  isFavorite: bc.isFavorite,
-                  isPinned: bc.isPinned,
-                  usedCount: bc.usedCount,
-                  modifiedAt: bc.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  /// Получить избранные карты
-  Stream<List<BankCardCardDto>> watchFavoriteBankCards() {
-    return (select(bankCards)
-          ..where((bc) => bc.isFavorite.equals(true))
-          ..orderBy([(bc) => OrderingTerm.desc(bc.modifiedAt)]))
-        .watch()
-        .map(
-          (bankCards) => bankCards
-              .map(
-                (bc) => BankCardCardDto(
-                  id: bc.id,
-                  name: bc.name,
-                  cardholderName: bc.cardholderName,
-                  cardType: bc.cardType?.value,
-                  cardNetwork: bc.cardNetwork?.value,
-                  bankName: bc.bankName,
-                  categoryName: null,
-                  isFavorite: bc.isFavorite,
-                  isPinned: bc.isPinned,
-                  usedCount: bc.usedCount,
-                  modifiedAt: bc.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
   }
 }

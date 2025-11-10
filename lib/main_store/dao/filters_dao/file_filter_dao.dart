@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
@@ -10,11 +11,13 @@ part 'file_filter_dao.g.dart';
 
 @DriftAccessor(tables: [Files, Categories, FilesTags])
 class FileFilterDao extends DatabaseAccessor<MainStore>
-    with _$FileFilterDaoMixin {
+    with _$FileFilterDaoMixin
+    implements FilterDao<FilesFilter, FileCardDto> {
   FileFilterDao(super.db);
 
   /// Получить отфильтрованные файлы
-  Future<List<FileCardDto>> getFilteredFiles(FilesFilter filter) async {
+  @override
+  Future<List<FileCardDto>> getFiltered(FilesFilter filter) async {
     final query = select(files).join([
       leftOuterJoin(categories, categories.id.equalsExp(files.categoryId)),
     ]);
@@ -49,6 +52,23 @@ class FileFilterDao extends DatabaseAccessor<MainStore>
         modifiedAt: file.modifiedAt,
       );
     }).toList();
+  }
+
+  /// Подсчитывает количество отфильтрованных заметок
+  /// Подсчитывает количество отфильтрованных файлов
+  @override
+  Future<int> countFiltered(FilesFilter filter) async {
+    // Создаем запрос для подсчета
+    final query = selectOnly(files)..addColumns([files.id.count()]);
+
+    // Применяем те же фильтры
+    if (_buildWhereExpression(filter) != null) {
+      query.where(_buildWhereExpression(filter)!);
+    }
+
+    // Выполняем запрос
+    final result = await query.getSingle();
+    return result.read(files.id.count()) ?? 0;
   }
 
   /// Построить WHERE выражение на основе фильтра

@@ -41,6 +41,13 @@ class OtpDao extends DatabaseAccessor<MainStore> with _$OtpDaoMixin {
         .get();
   }
 
+  Future<bool> toggleFavorite(String id, bool isFavorite) async {
+    final result = await (update(otps)..where((o) => o.id.equals(id)))
+        .write(OtpsCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
   /// Смотреть все OTP с автообновлением
   Stream<List<OtpsData>> watchAllOtps() {
     return (select(
@@ -71,6 +78,13 @@ class OtpDao extends DatabaseAccessor<MainStore> with _$OtpDaoMixin {
           )
           .toList(),
     );
+  }
+
+  /// Удалить OTP (мягкое удаление)
+  Future<bool> softDelete(String id) async {
+    final result = await (update(otps)..where((o) => o.id.equals(id)))
+        .write(const OtpsCompanion(isDeleted: Value(true)));
+    return result > 0;
   }
 
   /// Создать новый OTP
@@ -127,63 +141,5 @@ class OtpDao extends DatabaseAccessor<MainStore> with _$OtpDaoMixin {
     return (update(otps)..where((o) => o.id.equals(id)))
         .write(companion)
         .then((count) => count > 0);
-  }
-
-  /// Получить OTP по категории
-  Stream<List<OtpCardDto>> watchOtpsByCategory(String? categoryId) {
-    var query = select(otps);
-    if (categoryId != null) {
-      query = query..where((o) => o.categoryId.equals(categoryId));
-    } else {
-      query = query..where((o) => o.categoryId.isNull());
-    }
-    return (query..orderBy([(o) => OrderingTerm.desc(o.modifiedAt)]))
-        .watch()
-        .map(
-          (otps) => otps
-              .map(
-                (o) => OtpCardDto(
-                  id: o.id,
-                  issuer: o.issuer,
-                  accountName: o.accountName,
-                  type: o.type.value,
-                  digits: o.digits,
-                  period: o.period,
-                  categoryName: null,
-                  isFavorite: o.isFavorite,
-                  isPinned: o.isPinned,
-                  usedCount: o.usedCount,
-                  modifiedAt: o.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  /// Получить избранные OTP
-  Stream<List<OtpCardDto>> watchFavoriteOtps() {
-    return (select(otps)
-          ..where((o) => o.isFavorite.equals(true))
-          ..orderBy([(o) => OrderingTerm.desc(o.modifiedAt)]))
-        .watch()
-        .map(
-          (otps) => otps
-              .map(
-                (o) => OtpCardDto(
-                  id: o.id,
-                  issuer: o.issuer,
-                  accountName: o.accountName,
-                  type: o.type.value,
-                  digits: o.digits,
-                  period: o.period,
-                  categoryName: null,
-                  isFavorite: o.isFavorite,
-                  isPinned: o.isPinned,
-                  usedCount: o.usedCount,
-                  modifiedAt: o.modifiedAt,
-                ),
-              )
-              .toList(),
-        );
   }
 }

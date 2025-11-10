@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
@@ -10,11 +11,13 @@ part 'otp_filter_dao.g.dart';
 
 @DriftAccessor(tables: [Otps, Categories, OtpsTags])
 class OtpFilterDao extends DatabaseAccessor<MainStore>
-    with _$OtpFilterDaoMixin {
+    with _$OtpFilterDaoMixin
+    implements FilterDao<OtpsFilter, OtpCardDto> {
   OtpFilterDao(super.db);
 
   /// Основной метод для получения отфильтрованных OTP записей
-  Future<List<OtpCardDto>> getFilteredOtps(OtpsFilter filter) async {
+  @override
+  Future<List<OtpCardDto>> getFiltered(OtpsFilter filter) async {
     // Создаем базовый запрос с join к категориям
     final query = select(otps).join([
       leftOuterJoin(categories, categories.id.equalsExp(otps.categoryId)),
@@ -52,6 +55,20 @@ class OtpFilterDao extends DatabaseAccessor<MainStore>
         modifiedAt: otp.modifiedAt,
       );
     }).toList();
+  }
+
+  /// Подсчитывает количество отфильтрованных паролей
+  @override
+  Future<int> countFiltered(OtpsFilter filter) async {
+    // Создаем запрос для подсчета
+    final query = selectOnly(otps)..addColumns([otps.id.count()]);
+
+    // Применяем те же фильтры
+    query.where(_buildWhereExpression(filter));
+
+    // Выполняем запрос
+    final result = await query.getSingle();
+    return result.read(otps.id.count()) ?? 0;
   }
 
   /// Строит WHERE выражение на основе всех фильтров

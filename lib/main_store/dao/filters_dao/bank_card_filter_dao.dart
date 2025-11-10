@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/bank_card_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
@@ -11,13 +12,13 @@ part 'bank_card_filter_dao.g.dart';
 
 @DriftAccessor(tables: [BankCards, Categories, BankCardsTags])
 class BankCardFilterDao extends DatabaseAccessor<MainStore>
-    with _$BankCardFilterDaoMixin {
+    with _$BankCardFilterDaoMixin
+    implements FilterDao<BankCardsFilter, BankCardCardDto> {
   BankCardFilterDao(MainStore db) : super(db);
 
   /// Получить отфильтрованные банковские карты
-  Future<List<BankCardCardDto>> getFilteredBankCards(
-    BankCardsFilter filter,
-  ) async {
+  @override
+  Future<List<BankCardCardDto>> getFiltered(BankCardsFilter filter) async {
     final query = select(bankCards).join([
       leftOuterJoin(categories, categories.id.equalsExp(bankCards.categoryId)),
     ]);
@@ -53,6 +54,20 @@ class BankCardFilterDao extends DatabaseAccessor<MainStore>
         modifiedAt: card.modifiedAt,
       );
     }).toList();
+  }
+
+  /// Подсчитать количество отфильтрованных банковских карт
+  @override
+  Future<int> countFiltered(BankCardsFilter filter) async {
+    final query = selectOnly(bankCards)..addColumns([bankCards.id.count()]);
+
+    final whereExpression = _buildWhereExpression(filter);
+    if (whereExpression != null) {
+      query.where(whereExpression);
+    }
+
+    final result = await query.getSingle();
+    return result.read(bankCards.id.count()) ?? 0;
   }
 
   /// Построить WHERE выражение на основе фильтра

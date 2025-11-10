@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/note_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
@@ -10,11 +11,13 @@ part 'note_filter_dao.g.dart';
 
 @DriftAccessor(tables: [Notes, Categories, NotesTags])
 class NoteFilterDao extends DatabaseAccessor<MainStore>
-    with _$NoteFilterDaoMixin {
+    with _$NoteFilterDaoMixin
+    implements FilterDao<NotesFilter, NoteCardDto> {
   NoteFilterDao(super.db);
 
   /// Основной метод для получения отфильтрованных заметок
-  Future<List<NoteCardDto>> getFilteredNotes(NotesFilter filter) async {
+  @override
+  Future<List<NoteCardDto>> getFiltered(NotesFilter filter) async {
     // Создаем базовый запрос с join к категориям
     final query = select(notes).join([
       leftOuterJoin(categories, categories.id.equalsExp(notes.categoryId)),
@@ -49,6 +52,19 @@ class NoteFilterDao extends DatabaseAccessor<MainStore>
         modifiedAt: note.modifiedAt,
       );
     }).toList();
+  }
+
+  /// Подсчитывает количество отфильтрованных заметок
+  @override
+  Future<int> countFiltered(NotesFilter filter) async {
+    final query = selectOnly(notes)..addColumns([notes.id.count()]);
+
+    // Применяем все фильтры
+    query.where(_buildWhereExpression(filter));
+
+    // Выполняем запрос
+    final result = await query.getSingle();
+    return result.read(notes.id.count()) ?? 0;
   }
 
   /// Строит WHERE выражение на основе всех фильтров
