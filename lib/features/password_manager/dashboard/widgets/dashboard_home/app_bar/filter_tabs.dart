@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 
-import '../../models/entity_type_state.dart';
-import '../../models/filter_tab.dart';
-import '../../providers/entity_type_provider.dart';
-import '../../providers/filter_tab_provider.dart';
+import '../../../models/entity_type_state.dart';
+import '../../../models/filter_tab.dart';
+import '../../../providers/entity_type_provider.dart';
+import '../../../providers/filter_tab_provider.dart';
 
 /// Виджет для отображения вкладок фильтров
 /// Управляет состоянием активной вкладки через провайдер

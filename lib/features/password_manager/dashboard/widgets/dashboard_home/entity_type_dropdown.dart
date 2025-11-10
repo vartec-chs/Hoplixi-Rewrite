@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
-import '../models/entity_type.dart';
-import '../providers/entity_type_provider.dart';
+import '../../models/entity_type.dart';
+import '../../providers/entity_type_provider.dart';
 
 /// Компактный выпадающий список для выбора типа сущности
 /// Используется в AppBar для переключения между типами

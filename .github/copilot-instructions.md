@@ -41,11 +41,10 @@
 
 ```dart
 import 'dart:io';
-
 import 'package:result_dart/result_dart.dart';
 
 void main(List<String> args) {
-  final result = getTerminalInput() //
+  final result = getTerminalInput()
       .map(removeSpecialCharacteres)
       .flatMap(parseNumbers)
       .map(validateCPF);
@@ -116,7 +115,6 @@ class ValidatorException implements Exception {
   const ValidatorException(this.message);
 }
 ```
-
 Async operations example:
 
 ```dart
@@ -138,9 +136,8 @@ final state = await fetch()
     .mapLeft((failure) => ErrorState(failure))
 ```
 
-
+- For custom error type use AsyncResultDart<T, E> and ResultDart<T, E>
 - For more information on how to use `result_dart`, please refer to the [official documentation](https://pub.dev/packages/result_dart).
-
 - For modules, write your own errors, for example:
 
 ```dart
@@ -161,15 +158,11 @@ abstract class DatabaseError with _$DatabaseError implements Exception {
   }) = InvalidPasswordError;
 }
 ```
-
 ## MCP Servers and Advanced Scenarios
-
 - Library documentation: query via the context7 MCP server (get up-to-date signatures and usage patterns).
 - Multi-step tasks (migrations, service refactoring): use SequentialThinking MCP – it captures the plan and provides progress metrics.
 - Dart/Flutter mcp: use DartMCP for code analysis and suggestions.
-
 ## Additional notes about freezed
-
 Use the @freezed surface of an abstract sealed class.
 Don't create instances of private implementations through constructors—only in the factory.
 After adding, run a build (otherwise, you'll get a missing parts error).

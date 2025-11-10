@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
-import '../../models/entity_type.dart';
-import '../../providers/entity_type_provider.dart';
-import '../../providers/filter_providers/base_filter_provider.dart';
+import '../../../models/entity_type.dart';
+import '../../../providers/entity_type_provider.dart';
+import '../../../providers/filter_providers/base_filter_provider.dart';
 import '../entity_type_dropdown.dart';
 import 'app_bar_widgets.dart';
 

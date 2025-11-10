@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/app_bar/app_bar_widgets.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 
 class DashboardHomeScreen extends ConsumerWidget {
   const DashboardHomeScreen({super.key});
