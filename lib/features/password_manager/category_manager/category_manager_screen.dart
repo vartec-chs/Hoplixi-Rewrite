@@ -120,7 +120,7 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
             ],
           ),
 
-          SliverToBoxAdapter(child: CategoryPickerField(isFilter: true)),
+          // SliverToBoxAdapter(child: CategoryPickerField(isFilter: true)),
 
           categoryState.when(
             data: (state) {

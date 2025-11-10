@@ -164,6 +164,9 @@ class SmoothButton extends StatelessWidget {
         case SmoothButtonType.text:
           styledWithVariant = effectiveStyle.copyWith(
             foregroundColor: WidgetStateProperty.all(variantColor),
+            overlayColor: WidgetStateProperty.all(
+              variantColor.withOpacity(0.1),
+            ),
           );
           break;
       }

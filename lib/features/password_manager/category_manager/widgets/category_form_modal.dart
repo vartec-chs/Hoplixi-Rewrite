@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -20,6 +21,7 @@ void showCategoryModal(
     context: context,
     useRootNavigator: true,
     barrierDismissible: true,
+    useSafeArea: true,
     pageListBuilder: (modalContext) {
       final theme = Theme.of(modalContext);
       return [
@@ -45,7 +47,7 @@ void showCategoryModal(
           ),
           child: Builder(
             builder: (context) => Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(12),
               child: _CategoryForm(
                 category: category,
                 onSuccess: () {
@@ -150,18 +152,22 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
             ),
           ),
           actions: [
-            TextButton(
+            SmoothButton(
+              type: SmoothButtonType.text,
+              variant: SmoothButtonVariant.error,
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Отмена'),
+              label: 'Отмена',
             ),
-            FilledButton(
+            SmoothButton(
               onPressed: () {
                 setState(() {
                   _selectedColor = pickerColor;
                 });
                 Navigator.of(context).pop();
               },
-              child: const Text('Выбрать'),
+              label: 'Выбрать',
+              type: SmoothButtonType.filled,
+              variant: SmoothButtonVariant.normal,
             ),
           ],
         );

@@ -116,7 +116,7 @@ class _TagsManagerScreenState extends ConsumerState<TagsManagerScreen> {
             ],
           ),
 
-          SliverToBoxAdapter(child: TagPickerField()),
+          // SliverToBoxAdapter(child: TagPickerField()),
 
           tagState.when(
             data: (state) {

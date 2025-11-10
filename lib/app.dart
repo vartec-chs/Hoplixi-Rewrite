@@ -113,7 +113,10 @@ class _AppState extends ConsumerState<App> with TrayListener {
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
           return animated_theme.ThemeSwitchingArea(
-            child: RootBarsOverlay(child: child!),
+            child: 
+                RootBarsOverlay(child: child!),
+              
+            
           );
         },
       ),

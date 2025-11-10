@@ -155,6 +155,7 @@ class _CreateStoreScreenState extends ConsumerState<CreateStoreScreen>
   void _handleClose(BuildContext context, CreateStoreFormNotifier notifier) {
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (context) => AlertDialog(
         title: const Text('Отменить создание?'),
         content: const Text('Все введенные данные будут потеряны. Вы уверены?'),
