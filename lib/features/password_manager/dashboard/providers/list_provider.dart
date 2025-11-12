@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/list_state.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
@@ -51,6 +52,13 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
 
     ref.listen(entityTypeProvider, (prev, next) {
       if (prev?.currentType != next.currentType) {
+        _resetAndLoad();
+      }
+    });
+
+    ref.listen(dataRefreshTriggerProvider, (previous, next) {
+      if (previous != next) {
+        logDebug('PaginatedNotesNotifier: Триггер обновления данных');
         _resetAndLoad();
       }
     });
@@ -352,6 +360,14 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
         // откат
         updated[index] = item;
         state = AsyncValue.data(cur.copyWith(items: updated));
+      } else {
+        // Триггерим обновление данных
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerRefreshWithInfo(
+              'Избранное изменено',
+              data: {'id': id, 'isFavorite': newFav},
+            );
       }
     } catch (e) {
       // откат
@@ -386,6 +402,14 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
         state = AsyncValue.data(
           cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
         );
+      } else {
+        // Триггерим обновление данных
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerRefreshWithInfo(
+              'Элемент удален',
+              data: {'id': id, 'action': 'delete'},
+            );
       }
     } catch (e) {
       // откат

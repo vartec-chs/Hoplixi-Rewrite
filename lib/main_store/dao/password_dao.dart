@@ -99,8 +99,7 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
         categoryId: Value(dto.categoryId),
       );
 
-      final insertedId = await into(passwords).insert(companion);
-      final passwordId = insertedId.toString();
+      await into(passwords).insert(companion);
 
       // 2. Добавляем связи с тегами, если они указаны
       if (dto.tagsIds != null && dto.tagsIds!.isNotEmpty) {
@@ -108,15 +107,12 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
           await db
               .into(db.passwordsTags)
               .insert(
-                PasswordsTagsCompanion.insert(
-                  passwordId: passwordId,
-                  tagId: tagId,
-                ),
+                PasswordsTagsCompanion.insert(passwordId: uuid, tagId: tagId),
               );
         }
       }
 
-      return passwordId;
+      return uuid;
     });
   }
 

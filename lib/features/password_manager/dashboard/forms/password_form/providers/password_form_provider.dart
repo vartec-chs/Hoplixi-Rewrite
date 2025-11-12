@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
 import '../models/password_form_state.dart';
@@ -250,6 +251,18 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
 
           logInfo('Password updated: ${state.editingPasswordId}', tag: _logTag);
           state = state.copyWith(isSaving: false, isSaved: true);
+
+          // Триггерим обновление списка паролей
+          ref
+              .read(dataRefreshTriggerProvider.notifier)
+              .triggerRefreshWithInfo(
+                'Пароль обновлен',
+                data: {
+                  'passwordId': state.editingPasswordId,
+                  'action': 'update',
+                },
+              );
+
           return true;
         } else {
           logWarning(
@@ -279,6 +292,15 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
 
         logInfo('Password created: $passwordId', tag: _logTag);
         state = state.copyWith(isSaving: false, isSaved: true);
+
+        // Триггерим обновление списка паролей
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerRefreshWithInfo(
+              'Пароль создан',
+              data: {'passwordId': passwordId, 'action': 'create'},
+            );
+
         return true;
       }
     } catch (e, stack) {

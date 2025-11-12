@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
-import 'package:hoplixi/global_key.dart';
 
 /// Пример кнопки для закрытия sidebar из любого места приложения
 class CloseSidebarButton extends StatelessWidget {
