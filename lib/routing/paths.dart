@@ -19,4 +19,12 @@ class AppRoutesPaths {
   static const String dashboardIconManager = '/dashboard/icon-manager';
   static const String dashboardCategoryManager = '/dashboard/category-manager';
   static const String dashboardTagManager = '/dashboard/tag-manager';
+
+  // Password forms
+  static const String dashboardPasswordCreate = '/dashboard/password/create';
+  static const String dashboardPasswordEdit = '/dashboard/password/edit/:id';
+
+  /// Генерирует путь для редактирования пароля с конкретным ID
+  static String dashboardPasswordEditWithId(String id) =>
+      '/dashboard/password/edit/$id';
 }

@@ -7,6 +7,7 @@ import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_ho
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/password_form/screens/password_form_screen.dart';
 import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
@@ -300,6 +301,28 @@ final List<RouteBase> appRoutes = [
                     child: FadeTransition(opacity: animation, child: child),
                   );
                 },
+          );
+        },
+      ),
+
+      // Password forms
+      GoRoute(
+        path: AppRoutesPaths.dashboardPasswordCreate,
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const PasswordFormScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardPasswordEdit,
+        pageBuilder: (context, state) {
+          final passwordId = state.pathParameters['id'];
+          return MaterialPage(
+            key: state.pageKey,
+            child: PasswordFormScreen(passwordId: passwordId),
           );
         },
       ),

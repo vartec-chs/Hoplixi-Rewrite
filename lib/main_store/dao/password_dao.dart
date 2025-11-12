@@ -82,22 +82,38 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
   }
 
   /// Создать новый пароль
-  Future<String> createPassword(CreatePasswordDto dto) {
-    final companion = PasswordsCompanion.insert(
-      name: dto.name,
-      password: dto.password,
-      login: Value(dto.login),
-      email: Value(dto.email),
-      url: Value(dto.url),
-      description: Value(dto.description),
-      notes: Value(dto.notes),
-      categoryId: Value(dto.categoryId),
-    );
-    return into(passwords).insert(companion).then((id) {
-      // id уже UUID, возвращаем его строкой
-      return (select(
-        passwords,
-      )..where((p) => p.id.equals(id.toString()))).map((p) => p.id).getSingle();
+  Future<String> createPassword(CreatePasswordDto dto) async {
+    return await db.transaction(() async {
+      // 1. Создаем запись пароля
+      final companion = PasswordsCompanion.insert(
+        name: dto.name,
+        password: dto.password,
+        login: Value(dto.login),
+        email: Value(dto.email),
+        url: Value(dto.url),
+        description: Value(dto.description),
+        notes: Value(dto.notes),
+        categoryId: Value(dto.categoryId),
+      );
+
+      final insertedId = await into(passwords).insert(companion);
+      final passwordId = insertedId.toString();
+
+      // 2. Добавляем связи с тегами, если они указаны
+      if (dto.tagsIds != null && dto.tagsIds!.isNotEmpty) {
+        for (final tagId in dto.tagsIds!) {
+          await db
+              .into(db.passwordsTags)
+              .insert(
+                PasswordsTagsCompanion.insert(
+                  passwordId: passwordId,
+                  tagId: tagId,
+                ),
+              );
+        }
+      }
+
+      return passwordId;
     });
   }
 
@@ -143,6 +159,4 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
         .write(const PasswordsCompanion(isDeleted: Value(true)));
     return result > 0;
   }
-
-  
 }

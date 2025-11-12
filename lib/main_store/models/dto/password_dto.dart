@@ -15,6 +15,7 @@ sealed class CreatePasswordDto with _$CreatePasswordDto {
     String? description,
     String? notes,
     String? categoryId,
+    List<String>? tagsIds,
   }) = _CreatePasswordDto;
 
   factory CreatePasswordDto.fromJson(Map<String, dynamic> json) =>

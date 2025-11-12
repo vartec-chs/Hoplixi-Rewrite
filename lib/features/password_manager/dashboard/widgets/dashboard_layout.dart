@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
+import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'smooth_rounded_notched_rectangle.dart';
 
 /// Адаптивный layout для dashboard с использованием ShellRoute
 /// На больших экранах: NavigationRail слева + main content + sidebar справа (child)
 /// На маленьких экранах: BottomNavigationBar + main content, sidebar открывается по отдельным роутам
-class DashboardLayout extends StatefulWidget {
+class DashboardLayout extends ConsumerStatefulWidget {
   final Widget child;
 
   const DashboardLayout({super.key, required this.child});
 
   @override
-  State<DashboardLayout> createState() => _DashboardLayoutState();
+  ConsumerState<DashboardLayout> createState() => _DashboardLayoutState();
 }
 
-class _DashboardLayoutState extends State<DashboardLayout>
+class _DashboardLayoutState extends ConsumerState<DashboardLayout>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _sidebarAnimation;
@@ -31,7 +34,32 @@ class _DashboardLayoutState extends State<DashboardLayout>
   String _entityName = 'Пароль';
 
   // FAB действия
-  void _onCreateEntity() {}
+  void _onCreateEntity() {
+    final entityTypeState = ref.read(entityTypeProvider);
+
+    switch (entityTypeState.currentType) {
+      case EntityType.password:
+        context.go(AppRoutesPaths.dashboardPasswordCreate);
+        break;
+      case EntityType.note:
+        // TODO: Реализовать создание заметки
+        // context.go(AppRoutesPaths.dashboardNoteCreate);
+        break;
+      case EntityType.bankCard:
+        // TODO: Реализовать создание банковской карты
+        // context.go(AppRoutesPaths.dashboardBankCardCreate);
+        break;
+      case EntityType.file:
+        // TODO: Реализовать загрузку файла
+        // context.go(AppRoutesPaths.dashboardFileCreate);
+        break;
+      case EntityType.otp:
+        // TODO: Реализовать создание OTP
+        // context.go(AppRoutesPaths.dashboardOtpCreate);
+        break;
+    }
+  }
+
   void _onCreateCategory() {
     context.go(AppRoutesPaths.dashboardCategoryManager);
   }
@@ -81,7 +109,6 @@ class _DashboardLayoutState extends State<DashboardLayout>
     switch (index) {
       case 0:
         context.go(AppRoutesPaths.dashboard);
-
         break;
       case 1:
         context.go(AppRoutesPaths.dashboardCategoryManager);
@@ -97,6 +124,10 @@ class _DashboardLayoutState extends State<DashboardLayout>
 
   @override
   Widget build(BuildContext context) {
+    // Следим за изменением текущего типа сущности
+    final entityTypeState = ref.watch(entityTypeProvider);
+    _entityName = entityTypeState.currentType.label;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
