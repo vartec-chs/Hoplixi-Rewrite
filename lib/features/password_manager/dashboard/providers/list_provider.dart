@@ -6,6 +6,7 @@ import 'package:hoplixi/features/password_manager/dashboard/providers/filter_pro
 import 'package:hoplixi/features/password_manager/dashboard/providers/filter_tab_provider.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
+import 'package:hoplixi/main_store/models/filter/index.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
 
 import 'filter_providers/password_filter_provider.dart';
@@ -26,6 +27,12 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     // можно иметь разный pageSize для разных типов, если нужно
     return kDefaultPageSize;
   }
+
+  late final ProviderSubscription<PasswordsFilter> _passwordFilterSubscription;
+  late final ProviderSubscription<NotesFilter> _noteFilterSubscription;
+  late final ProviderSubscription<BankCardsFilter> _bankCardFilterSubscription;
+  late final ProviderSubscription<FilesFilter> _fileFilterSubscription;
+  late final ProviderSubscription<OtpsFilter> _otpFilterSubscription;
 
   @override
   Future<DashboardListState<dynamic>> build() async {
@@ -57,7 +64,14 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
   void _subscribeToTypeSpecificProviders() {
     switch (ref.read(entityTypeProvider).currentType) {
       case EntityType.password:
-        ref.listen(passwordsFilterProvider, (prev, next) {
+        // _fileFilterSubscription.close();
+        // _noteFilterSubscription.close();
+        // _bankCardFilterSubscription.close();
+        // _otpFilterSubscription.close();
+        _passwordFilterSubscription = ref.listen(passwordsFilterProvider, (
+          prev,
+          next,
+        ) {
           if (prev != next) {
             _resetAndLoad();
           }
@@ -65,28 +79,50 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
 
         break;
       case EntityType.note:
-        ref.listen(notesFilterProvider, (prev, next) {
+        // _fileFilterSubscription.close();
+        // _passwordFilterSubscription.close();
+        // _bankCardFilterSubscription.close();
+        // _otpFilterSubscription.close();
+        _noteFilterSubscription = ref.listen(notesFilterProvider, (prev, next) {
           if (prev != next) {
             _resetAndLoad();
           }
         });
         break;
       case EntityType.bankCard:
-        ref.listen(bankCardsFilterProvider, (prev, next) {
+        // _otpFilterSubscription.close();
+        // _passwordFilterSubscription.close();
+        // _noteFilterSubscription.close();
+        // _fileFilterSubscription.close();
+
+        _bankCardFilterSubscription = ref.listen(bankCardsFilterProvider, (
+          prev,
+          next,
+        ) {
           if (prev != next) {
             _resetAndLoad();
           }
         });
         break;
       case EntityType.file:
-        ref.listen(filesFilterProvider, (prev, next) {
+        // _otpFilterSubscription.close();
+        // _passwordFilterSubscription.close();
+        // _noteFilterSubscription.close();
+        // _bankCardFilterSubscription.close();
+
+        _fileFilterSubscription = ref.listen(filesFilterProvider, (prev, next) {
           if (prev != next) {
             _resetAndLoad();
           }
         });
         break;
       case EntityType.otp:
-        ref.listen(otpsFilterProvider, (prev, next) {
+        // _passwordFilterSubscription.close();
+        // _noteFilterSubscription.close();
+        // _bankCardFilterSubscription.close();
+        // _fileFilterSubscription.close();
+
+        _otpFilterSubscription = ref.listen(otpsFilterProvider, (prev, next) {
           if (prev != next) {
             _resetAndLoad();
           }
