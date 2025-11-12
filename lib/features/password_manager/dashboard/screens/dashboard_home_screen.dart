@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/list_state.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/current_view_mode_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
@@ -81,7 +82,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
             ),
 
             // Тулбар со списком
-            SliverToBoxAdapter(child: _buildToolbar(entityType, viewMode)),
+            SliverToBoxAdapter(
+              child: _buildToolbar(entityType, viewMode, asyncValue),
+            ),
 
             // Контент списка
             asyncValue.when(
@@ -263,18 +266,45 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   }
 
   /// Тулбар с переключателем режима отображения
-  Widget _buildToolbar(EntityType entityType, ViewMode viewMode) {
+  Widget _buildToolbar(
+    EntityType entityType,
+    ViewMode viewMode,
+    AsyncValue<DashboardListState<dynamic>> listState,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Text(
-              entityType.label,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+          Row(
+            children: [
+              Text(
+                entityType.label,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(width: 8),
+              // Показать количество элементов
+              listState.when(
+                data: (state) => Text(
+                  '(${state.totalCount})',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                ),
+                loading: () => const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+            ],
           ),
           ToggleButtons(
+            borderRadius: BorderRadius.circular(8),
+            borderColor: Theme.of(context).dividerColor,
+            fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            selectedBorderColor: Theme.of(context).colorScheme.primary,
             isSelected: [viewMode == ViewMode.list, viewMode == ViewMode.grid],
             onPressed: (i) {
               ref

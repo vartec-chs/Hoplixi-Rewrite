@@ -8,12 +8,17 @@ import 'package:hoplixi/features/password_manager/dashboard/screens/categories_s
 import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/forms/password_form/screens/password_form_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/note_form/screens/note_form_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/bank_card_form/screens/bank_card_form_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/file_form/screens/file_form_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/otp_form/screens/otp_form_screen.dart';
 import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
+import 'package:hoplixi/global_key.dart';
 import 'package:hoplixi/routing/paths.dart';
 
 /// Флаг для отключения/включения кастомных анимаций при переходах между экранами dashboard
@@ -48,10 +53,11 @@ final List<RouteBase> appRoutes = [
 
   // Dashboard с вложенными роутами через ShellRoute
   ShellRoute(
-    builder: (context, state, child) => DashboardLayout(child: child),
+    builder: (context, state, child) =>
+        DashboardLayout(key: dashboardSidebarKey, child: child),
     routes: [
       GoRoute(
-        path: AppRoutesPaths.dashboardHome,
+        path: AppRoutesPaths.dashboardHome ,
         pageBuilder: (context, state) {
           if (!_enableDashboardTransitions) {
             return MaterialPage(
@@ -323,6 +329,91 @@ final List<RouteBase> appRoutes = [
           return MaterialPage(
             key: state.pageKey,
             child: PasswordFormScreen(passwordId: passwordId),
+          );
+        },
+      ),
+
+      // Note forms
+      GoRoute(
+        path: AppRoutesPaths.dashboardNoteCreate,
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const NoteFormScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardNoteEdit,
+        pageBuilder: (context, state) {
+          final noteId = state.pathParameters['id'];
+          return MaterialPage(
+            key: state.pageKey,
+            child: NoteFormScreen(noteId: noteId),
+          );
+        },
+      ),
+
+      // Bank Card forms
+      GoRoute(
+        path: AppRoutesPaths.dashboardBankCardCreate,
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const BankCardFormScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardBankCardEdit,
+        pageBuilder: (context, state) {
+          final bankCardId = state.pathParameters['id'];
+          return MaterialPage(
+            key: state.pageKey,
+            child: BankCardFormScreen(bankCardId: bankCardId),
+          );
+        },
+      ),
+
+      // File forms
+      GoRoute(
+        path: AppRoutesPaths.dashboardFileCreate,
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const FileFormScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardFileEdit,
+        pageBuilder: (context, state) {
+          final fileId = state.pathParameters['id'];
+          return MaterialPage(
+            key: state.pageKey,
+            child: FileFormScreen(fileId: fileId),
+          );
+        },
+      ),
+
+      // OTP forms
+      GoRoute(
+        path: AppRoutesPaths.dashboardOtpCreate,
+        pageBuilder: (context, state) {
+          return MaterialPage(key: state.pageKey, child: const OtpFormScreen());
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardOtpEdit,
+        pageBuilder: (context, state) {
+          final otpId = state.pathParameters['id'];
+          return MaterialPage(
+            key: state.pageKey,
+            child: OtpFormScreen(otpId: otpId),
           );
         },
       ),

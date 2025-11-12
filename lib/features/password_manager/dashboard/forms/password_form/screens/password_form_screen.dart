@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
@@ -124,7 +126,22 @@ class _PasswordFormScreenState extends ConsumerState<PasswordFormScreen> {
               ),
             ),
         ],
+        leading: IconButton(
+          icon: context.canPop()
+              ? const Icon(Icons.arrow_back)
+              : const Icon(Icons.close),
+          onPressed: () {
+            final state =
+                dashboardSidebarKey.currentState?.asDashboardLayoutState;
+            if (context.canPop()) {
+              context.pop();
+            } else if (state != null && state.isSidebarOpen == true) {
+              state.closeSidebar();
+            }
+          },
+        ),
       ),
+
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : Form(

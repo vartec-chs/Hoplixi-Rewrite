@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
 import 'package:hoplixi/main_store/tables/passwords.dart';
+import 'package:uuid/uuid.dart';
 
 part 'password_dao.g.dart';
 
@@ -83,9 +84,11 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
 
   /// Создать новый пароль
   Future<String> createPassword(CreatePasswordDto dto) async {
+    final uuid = const Uuid().v4();
     return await db.transaction(() async {
       // 1. Создаем запись пароля
       final companion = PasswordsCompanion.insert(
+        id: Value(uuid),
         name: dto.name,
         password: dto.password,
         login: Value(dto.login),

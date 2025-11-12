@@ -5,22 +5,47 @@ import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_ho
 import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
+
 import 'package:hoplixi/routing/paths.dart';
 import 'smooth_rounded_notched_rectangle.dart';
+
+// dashboard sidebar key - позволяет управлять sidebar из любого места приложения
+// Используйте dashboardSidebarKey.currentState для доступа к методам:
+// - closeSidebar() - закрыть sidebar
+// - openSidebar() - открыть sidebar
+// - toggleSidebar() - переключить состояние sidebar
+// - isSidebarOpen - проверить, открыт ли sidebar
+final GlobalKey<State<StatefulWidget>> dashboardSidebarKey =
+    GlobalKey<State<StatefulWidget>>();
 
 /// Адаптивный layout для dashboard с использованием ShellRoute
 /// На больших экранах: NavigationRail слева + main content + sidebar справа (child)
 /// На маленьких экранах: BottomNavigationBar + main content, sidebar открывается по отдельным роутам
+///
+/// Используйте dashboardSidebarKey для управления sidebar из любого места:
+/// ```dart
+/// // Закрыть sidebar
+/// dashboardSidebarKey.currentState?.closeSidebar();
+///
+/// // Открыть sidebar
+/// dashboardSidebarKey.currentState?.openSidebar();
+///
+/// // Переключить состояние sidebar
+/// dashboardSidebarKey.currentState?.toggleSidebar();
+///
+/// // Проверить, открыт ли sidebar
+/// final isOpen = dashboardSidebarKey.currentState?.isSidebarOpen ?? false;
+/// ```
 class DashboardLayout extends ConsumerStatefulWidget {
   final Widget child;
 
   const DashboardLayout({super.key, required this.child});
 
   @override
-  ConsumerState<DashboardLayout> createState() => _DashboardLayoutState();
+  ConsumerState<DashboardLayout> createState() => DashboardLayoutState();
 }
 
-class _DashboardLayoutState extends ConsumerState<DashboardLayout>
+class DashboardLayoutState extends ConsumerState<DashboardLayout>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _sidebarAnimation;
@@ -30,8 +55,11 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
   final GlobalKey<ExpandableFABState> _mobileFabKey = GlobalKey();
   bool _mobileFabIsOpen = false;
 
+  // Отслеживание предыдущего состояния формы
+  bool _wasFormRoute = false;
+
   // FAB параметры
-  String _entityName = 'Пароль';
+  String? _entityName;
 
   // FAB действия
   void _onCreateEntity() {
@@ -39,37 +67,33 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
 
     switch (entityTypeState.currentType) {
       case EntityType.password:
-        context.go(AppRoutesPaths.dashboardPasswordCreate);
+        context.push(AppRoutesPaths.dashboardPasswordCreate);
         break;
       case EntityType.note:
-        // TODO: Реализовать создание заметки
-        // context.go(AppRoutesPaths.dashboardNoteCreate);
+        context.push(AppRoutesPaths.dashboardNoteCreate);
         break;
       case EntityType.bankCard:
-        // TODO: Реализовать создание банковской карты
-        // context.go(AppRoutesPaths.dashboardBankCardCreate);
+        context.push(AppRoutesPaths.dashboardBankCardCreate);
         break;
       case EntityType.file:
-        // TODO: Реализовать загрузку файла
-        // context.go(AppRoutesPaths.dashboardFileCreate);
+        context.push(AppRoutesPaths.dashboardFileCreate);
         break;
       case EntityType.otp:
-        // TODO: Реализовать создание OTP
-        // context.go(AppRoutesPaths.dashboardOtpCreate);
+        context.push(AppRoutesPaths.dashboardOtpCreate);
         break;
     }
   }
 
   void _onCreateCategory() {
-    context.go(AppRoutesPaths.dashboardCategoryManager);
+    context.push(AppRoutesPaths.dashboardCategoryManager);
   }
 
   void _onCreateTag() {
-    context.go(AppRoutesPaths.dashboardTagManager);
+    context.push(AppRoutesPaths.dashboardTagManager);
   }
 
   void _onIconCreate() {
-    context.go(AppRoutesPaths.dashboardIconManager);
+    context.push(AppRoutesPaths.dashboardIconManager);
   }
 
   @override
@@ -97,8 +121,50 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
     if (location.startsWith(AppRoutesPaths.dashboardCategoryManager)) return 1;
     if (location.startsWith(AppRoutesPaths.dashboardIconManager)) return 2;
     if (location.startsWith(AppRoutesPaths.dashboardTagManager)) return 3;
+
+    // Проверяем, открыта ли какая-либо форма - тогда показываем её в sidebar
+    // но не меняем selectedIndex (остается 0 - home)
+    if (_isFormRoute(location)) return 0;
+
     return 0; // home
   }
+
+  /// Проверяет, является ли путь маршрутом формы
+  bool _isFormRoute(String location) {
+    return location.contains('/password/') ||
+        location.contains('/note/') ||
+        location.contains('/bank-card/') ||
+        location.contains('/file/') ||
+        location.contains('/otp/');
+  }
+
+  /// Публичный метод для закрытия sidebar
+  /// Может быть вызван из любого места через dashboardSidebarKey
+  void closeSidebar() {
+    if (_animationController.value != 0.0) {
+      _animationController.reverse();
+    }
+  }
+
+  /// Публичный метод для открытия sidebar
+  /// Может быть вызван из любого места через dashboardSidebarKey
+  void openSidebar() {
+    if (_animationController.value != 1.0) {
+      _animationController.forward();
+    }
+  }
+
+  /// Публичный метод для переключения состояния sidebar (открыт/закрыт)
+  void toggleSidebar() {
+    if (_animationController.value == 1.0) {
+      _animationController.reverse();
+    } else {
+      _animationController.forward();
+    }
+  }
+
+  /// Проверяет, открыт ли sidebar в данный момент
+  bool get isSidebarOpen => _animationController.value == 1.0;
 
   void _onDestinationSelected(BuildContext context, int index) {
     // Закрываем мобильный FAB при навигации
@@ -106,9 +172,15 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
       _mobileFabKey.currentState?.toggle();
     }
 
+    // Если нажали на "Главная" (index 0), принудительно закрываем sidebar
+    // чтобы он не открывался автоматически при навигации
+    if (index == 0) {
+      closeSidebar();
+    }
+
     switch (index) {
       case 0:
-        context.go(AppRoutesPaths.dashboard);
+        context.go(AppRoutesPaths.dashboardHome);
         break;
       case 1:
         context.go(AppRoutesPaths.dashboardCategoryManager);
@@ -132,19 +204,36 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 900;
         final selectedIndex = _getSelectedIndex(context);
+        final location = GoRouterState.of(context).uri.toString();
+        final isFormRoute = _isFormRoute(location);
 
-        // Управление анимацией при изменении выбранного индекса
+        // Управление анимацией при изменении выбранного индекса или маршрута
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_previousIndex != selectedIndex) {
-            if (selectedIndex == 0) {
-              // Закрываем sidebar
-              _animationController.reverse();
-            } else if (_previousIndex == 0) {
-              // Открываем sidebar
+          // Открываем sidebar если:
+          // 1. selectedIndex > 0 (категории, иконки, теги)
+          // 2. isFormRoute == true (любая форма создания/редактирования)
+          final shouldOpenSidebar = selectedIndex > 0 || isFormRoute;
+
+          // Проверяем, изменилось ли состояние
+          final stateChanged = _previousIndex != selectedIndex;
+
+          // Проверяем, закрылась ли форма (был isFormRoute, а теперь нет)
+          final formClosed =
+              _wasFormRoute && !isFormRoute && selectedIndex == 0;
+
+          if (stateChanged || isFormRoute || formClosed) {
+            if (shouldOpenSidebar && _animationController.value != 1.0) {
               _animationController.forward();
+            } else if (!shouldOpenSidebar &&
+                _animationController.value != 0.0) {
+              _animationController.reverse();
             }
+
             _previousIndex = selectedIndex;
           }
+
+          // Сохраняем текущее состояние формы для следующего кадра
+          _wasFormRoute = isFormRoute;
         });
 
         if (isDesktop) {
@@ -182,7 +271,10 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
                                     ),
                                   ),
                                 ),
-                                child: selectedIndex != 0
+                                // Показываем контент если:
+                                // 1. selectedIndex != 0 (категории, иконки, теги)
+                                // 2. isFormRoute == true (любая форма)
+                                child: (selectedIndex != 0 || isFormRoute)
                                     ? widget.child
                                     : const SizedBox.shrink(),
                               ),
@@ -242,11 +334,12 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
                   ),
               ],
             ),
-            bottomNavigationBar: _buildBottomNavigationBar(
-              context,
-              selectedIndex,
-            ),
-            floatingActionButton: selectedIndex == 0
+            // Скрываем BottomNavigationBar когда открыта форма
+            bottomNavigationBar: isFormRoute
+                ? null
+                : _buildBottomNavigationBar(context, selectedIndex),
+            // Скрываем FAB когда открыта форма
+            floatingActionButton: (selectedIndex == 0 && !isFormRoute)
                 ? ExpandableFAB(
                     key: _mobileFabKey,
                     expandDirection: FABExpandDirection.up,
@@ -257,7 +350,7 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
                       });
                     },
                     onCreateEntity: _onCreateEntity,
-                    entityName: _entityName,
+                    entityName: _entityName ?? '',
                     onCreateCategory: _onCreateCategory,
                     onCreateTag: _onCreateTag,
                     onIconCreate: _onIconCreate,
@@ -295,7 +388,7 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout>
               });
             },
             onCreateEntity: _onCreateEntity,
-            entityName: _entityName,
+            entityName: _entityName ?? '',
             onCreateCategory: _onCreateCategory,
             onCreateTag: _onCreateTag,
             onIconCreate: _onIconCreate,
