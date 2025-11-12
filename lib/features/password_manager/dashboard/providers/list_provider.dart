@@ -28,11 +28,11 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     return kDefaultPageSize;
   }
 
-  late final ProviderSubscription<PasswordsFilter> _passwordFilterSubscription;
-  late final ProviderSubscription<NotesFilter> _noteFilterSubscription;
-  late final ProviderSubscription<BankCardsFilter> _bankCardFilterSubscription;
-  late final ProviderSubscription<FilesFilter> _fileFilterSubscription;
-  late final ProviderSubscription<OtpsFilter> _otpFilterSubscription;
+  late ProviderSubscription<PasswordsFilter> _passwordFilterSubscription;
+  late ProviderSubscription<NotesFilter> _noteFilterSubscription;
+  late ProviderSubscription<BankCardsFilter> _bankCardFilterSubscription;
+  late ProviderSubscription<FilesFilter> _fileFilterSubscription;
+  late ProviderSubscription<OtpsFilter> _otpFilterSubscription;
 
   @override
   Future<DashboardListState<dynamic>> build() async {
