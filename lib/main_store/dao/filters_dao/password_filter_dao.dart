@@ -163,9 +163,7 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
       expression = expression & passwords.isDeleted.equals(base.isDeleted!);
     }
 
-    if (base.isPinned != null) {
-      expression = expression & passwords.isPinned.equals(base.isPinned!);
-    }
+    // isPinned фильтр игнорируется - закрепленные записи всегда показываются первыми
 
     if (base.hasNotes != null) {
       expression =
