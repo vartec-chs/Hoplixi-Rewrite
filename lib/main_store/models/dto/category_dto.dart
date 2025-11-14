@@ -54,6 +54,20 @@ sealed class CategoryCardDto with _$CategoryCardDto {
       _$CategoryCardDtoFromJson(json);
 }
 
+@freezed
+sealed class CategoryInCardDto with _$CategoryInCardDto {
+  const factory CategoryInCardDto({
+    required String id,
+    required String name,
+    required String type,
+    String? color,
+    String? iconId,
+  }) = _CategoryInCardDto;
+
+  factory CategoryInCardDto.fromJson(Map<String, dynamic> json) =>
+      _$CategoryInCardDtoFromJson(json);
+}
+
 /// DTO для обновления категории
 @freezed
 sealed class UpdateCategoryDto with _$UpdateCategoryDto {

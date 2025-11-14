@@ -1,12 +1,15 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/note_dto.dart';
 import 'package:hoplixi/main_store/tables/notes.dart';
 
 part 'note_dao.g.dart';
 
 @DriftAccessor(tables: [Notes])
-class NoteDao extends DatabaseAccessor<MainStore> with _$NoteDaoMixin {
+class NoteDao extends DatabaseAccessor<MainStore>
+    with _$NoteDaoMixin
+    implements BaseMainEntityDao {
   NoteDao(super.db);
 
   /// Получить все заметки
@@ -38,9 +41,21 @@ class NoteDao extends DatabaseAccessor<MainStore> with _$NoteDaoMixin {
   }
 
   /// Переключить избранное
+  @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
-    final result = await (update(notes)..where((n) => n.id.equals(id)))
-        .write(NotesCompanion(isFavorite: Value(isFavorite)));
+    final result = await (update(notes)..where((n) => n.id.equals(id))).write(
+      NotesCompanion(isFavorite: Value(isFavorite)),
+    );
+
+    return result > 0;
+  }
+
+  /// Переключить закрепление
+  @override
+  Future<bool> togglePin(String id, bool isPinned) async {
+    final result = await (update(notes)..where((n) => n.id.equals(id))).write(
+      NotesCompanion(isPinned: Value(isPinned)),
+    );
 
     return result > 0;
   }
@@ -122,11 +137,27 @@ class NoteDao extends DatabaseAccessor<MainStore> with _$NoteDaoMixin {
   }
 
   /// Мягкое удаление заметки
+  @override
   Future<bool> softDelete(String id) async {
     final rowsAffected = await (update(notes)..where((n) => n.id.equals(id)))
         .write(const NotesCompanion(isDeleted: Value(true)));
     return rowsAffected > 0;
   }
 
-  
+  /// Восстановить заметку из удалённых
+  @override
+  Future<bool> restoreFromDeleted(String id) async {
+    final rowsAffected = await (update(notes)..where((n) => n.id.equals(id)))
+        .write(const NotesCompanion(isDeleted: Value(false)));
+    return rowsAffected > 0;
+  }
+
+  /// Полное удаление заметки
+  @override
+  Future<bool> permanentDelete(String id) async {
+    final rowsAffected = await (delete(
+      notes,
+    )..where((n) => n.id.equals(id))).go();
+    return rowsAffected > 0;
+  }
 }

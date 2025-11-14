@@ -1,12 +1,15 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/tables/files.dart';
 
 part 'file_dao.g.dart';
 
 @DriftAccessor(tables: [Files])
-class FileDao extends DatabaseAccessor<MainStore> with _$FileDaoMixin {
+class FileDao extends DatabaseAccessor<MainStore>
+    with _$FileDaoMixin
+    implements BaseMainEntityDao {
   FileDao(super.db);
 
   /// Получить все файлы
@@ -40,9 +43,21 @@ class FileDao extends DatabaseAccessor<MainStore> with _$FileDaoMixin {
   }
 
   /// Переключить избранное
+  @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
-    final result = await (update(files)..where((f) => f.id.equals(id)))
-        .write(FilesCompanion(isFavorite: Value(isFavorite)));
+    final result = await (update(files)..where((f) => f.id.equals(id))).write(
+      FilesCompanion(isFavorite: Value(isFavorite)),
+    );
+
+    return result > 0;
+  }
+
+  /// Переключить закрепление
+  @override
+  Future<bool> togglePin(String id, bool isPinned) async {
+    final result = await (update(files)..where((f) => f.id.equals(id))).write(
+      FilesCompanion(isPinned: Value(isPinned)),
+    );
 
     return result > 0;
   }
@@ -125,12 +140,28 @@ class FileDao extends DatabaseAccessor<MainStore> with _$FileDaoMixin {
   }
 
   /// Мягкое удаление файла
+  @override
   Future<bool> softDelete(String id) async {
     final query = (update(files)..where((f) => f.id.equals(id)));
-    return query.write(
-      const FilesCompanion(isDeleted: Value(true)),
-    ).then((rowsAffected) => rowsAffected > 0);
+    return query
+        .write(const FilesCompanion(isDeleted: Value(true)))
+        .then((rowsAffected) => rowsAffected > 0);
   }
 
-  
+  /// Восстановить файл из удалённых
+  @override
+  Future<bool> restoreFromDeleted(String id) async {
+    final rowsAffected = await (update(files)..where((f) => f.id.equals(id)))
+        .write(const FilesCompanion(isDeleted: Value(false)));
+    return rowsAffected > 0;
+  }
+
+  /// Полное удаление файл
+  @override
+  Future<bool> permanentDelete(String id) async {
+    final rowsAffected = await (delete(
+      files,
+    )..where((f) => f.id.equals(id))).go();
+    return rowsAffected > 0;
+  }
 }

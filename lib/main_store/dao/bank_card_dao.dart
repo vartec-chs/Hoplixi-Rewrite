@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/bank_card_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/bank_cards.dart';
@@ -7,7 +8,9 @@ import 'package:hoplixi/main_store/tables/bank_cards.dart';
 part 'bank_card_dao.g.dart';
 
 @DriftAccessor(tables: [BankCards])
-class BankCardDao extends DatabaseAccessor<MainStore> with _$BankCardDaoMixin {
+class BankCardDao extends DatabaseAccessor<MainStore>
+    with _$BankCardDaoMixin
+    implements BaseMainEntityDao {
   BankCardDao(super.db);
 
   /// Получить все банковские карты
@@ -45,9 +48,19 @@ class BankCardDao extends DatabaseAccessor<MainStore> with _$BankCardDaoMixin {
   }
 
   /// Переключить избранное
+  @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
-    final result = await (update(bankCards)..where((bc) => bc.id.equals(id)))
+    final result = await (update(bankCards)..where((b) => b.id.equals(id)))
         .write(BankCardsCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
+  /// Переключить закрепление
+  @override
+  Future<bool> togglePin(String id, bool isPinned) async {
+    final result = await (update(bankCards)..where((b) => b.id.equals(id)))
+        .write(BankCardsCompanion(isPinned: Value(isPinned)));
 
     return result > 0;
   }
@@ -172,11 +185,31 @@ class BankCardDao extends DatabaseAccessor<MainStore> with _$BankCardDaoMixin {
   }
 
   /// Мягкое удаление карты
+  @override
   Future<bool> softDelete(String id) async {
     final rowsAffected =
         await (update(bankCards)..where((bc) => bc.id.equals(id))).write(
           const BankCardsCompanion(isDeleted: Value(true)),
         );
+    return rowsAffected > 0;
+  }
+
+  /// Восстановить банковскую карту из удалённых
+  @override
+  Future<bool> restoreFromDeleted(String id) async {
+    final rowsAffected =
+        await (update(bankCards)..where((bc) => bc.id.equals(id))).write(
+          const BankCardsCompanion(isDeleted: Value(false)),
+        );
+    return rowsAffected > 0;
+  }
+
+  /// Полное удаление банковскую карту
+  @override
+  Future<bool> permanentDelete(String id) async {
+    final rowsAffected = await (delete(
+      bankCards,
+    )..where((bc) => bc.id.equals(id))).go();
     return rowsAffected > 0;
   }
 }

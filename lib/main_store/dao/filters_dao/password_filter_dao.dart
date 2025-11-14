@@ -2,14 +2,16 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
 import 'package:hoplixi/main_store/models/filter/passwords_filter.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 
 part 'password_filter_dao.g.dart';
 
-@DriftAccessor(tables: [Passwords, Categories, PasswordsTags])
+@DriftAccessor(tables: [Passwords, Categories, Tags, PasswordsTags])
 class PasswordFilterDao extends DatabaseAccessor<MainStore>
     with _$PasswordFilterDaoMixin
     implements FilterDao<PasswordsFilter, PasswordCardDto> {
@@ -37,9 +39,20 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
     // Выполняем запрос и маппим результаты
     final results = await query.get();
 
+    // Собираем ID всех паролей для загрузки тегов
+    final passwordIds = results
+        .map((row) => row.readTable(passwords).id)
+        .toList();
+
+    // Загружаем теги для всех паролей (максимум 10 на пароль)
+    final tagsMap = await _loadTagsForPasswords(passwordIds);
+
     return results.map((row) {
       final password = row.readTable(passwords);
       final category = row.readTableOrNull(categories);
+
+      // Получаем теги для текущего пароля (максимум 10)
+      final passwordTags = tagsMap[password.id] ?? [];
 
       return PasswordCardDto(
         id: password.id,
@@ -47,11 +60,24 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
         login: password.login,
         email: password.email,
         url: password.url,
-        categoryName: category?.name,
+        isArchived: password.isArchived,
+        description: password.description,
+        isDeleted: password.isDeleted,
+        category: category != null
+            ? CategoryInCardDto(
+                id: category.id,
+                name: category.name,
+                type: category.type.name,
+                color: category.color,
+                iconId: category.iconId,
+              )
+            : null,
         isFavorite: password.isFavorite,
         isPinned: password.isPinned,
         usedCount: password.usedCount,
         modifiedAt: password.modifiedAt,
+        createdAt: password.createdAt,
+        tags: passwordTags,
       );
     }).toList();
   }
@@ -86,6 +112,11 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
   /// Применяет базовые фильтры из BaseFilter
   Expression<bool> _applyBaseFilters(BaseFilter base) {
     Expression<bool> expression = const Constant(true);
+
+    // Если не указан явный фильтр по isDeleted, исключаем удалённые
+    if (base.isDeleted == null) {
+      expression = expression & passwords.isDeleted.equals(false);
+    }
 
     // Поисковый запрос по нескольким полям
     if (base.query.isNotEmpty) {
@@ -359,5 +390,43 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
     }
 
     return orderingTerms;
+  }
+
+  /// Загружает теги для списка паролей (максимум 10 тегов на пароль)
+  Future<Map<String, List<TagInCardDto>>> _loadTagsForPasswords(
+    List<String> passwordIds,
+  ) async {
+    if (passwordIds.isEmpty) return {};
+
+    // Запрос для получения тегов со связями с LIMIT 10 на пароль
+    final query = select(passwordsTags).join([
+      innerJoin(tags, tags.id.equalsExp(passwordsTags.tagId)),
+    ])..where(passwordsTags.passwordId.isIn(passwordIds));
+
+    // Группируем теги по passwordId
+    final tagsMap = <String, List<TagInCardDto>>{};
+
+    // Обрабатываем результаты с учетом лимита
+    final results = await query.get();
+
+    for (final row in results) {
+      final passwordTag = row.readTable(passwordsTags);
+      final tag = row.readTable(tags);
+
+      final passwordId = passwordTag.passwordId;
+
+      if (!tagsMap.containsKey(passwordId)) {
+        tagsMap[passwordId] = [];
+      }
+
+      // Ограничиваем максимум 10 тегами
+      if (tagsMap[passwordId]!.length < 10) {
+        tagsMap[passwordId]!.add(
+          TagInCardDto(id: tag.id, name: tag.name, color: tag.color),
+        );
+      }
+    }
+
+    return tagsMap;
   }
 }

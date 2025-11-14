@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/otps.dart';
@@ -7,7 +8,9 @@ import 'package:hoplixi/main_store/tables/otps.dart';
 part 'otp_dao.g.dart';
 
 @DriftAccessor(tables: [Otps])
-class OtpDao extends DatabaseAccessor<MainStore> with _$OtpDaoMixin {
+class OtpDao extends DatabaseAccessor<MainStore>
+    with _$OtpDaoMixin
+    implements BaseMainEntityDao {
   OtpDao(super.db);
 
   /// Получить все OTP
@@ -41,9 +44,22 @@ class OtpDao extends DatabaseAccessor<MainStore> with _$OtpDaoMixin {
         .get();
   }
 
+  // toggle favorite
+  @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
-    final result = await (update(otps)..where((o) => o.id.equals(id)))
-        .write(OtpsCompanion(isFavorite: Value(isFavorite)));
+    final result = await (update(otps)..where((o) => o.id.equals(id))).write(
+      OtpsCompanion(isFavorite: Value(isFavorite)),
+    );
+
+    return result > 0;
+  }
+
+  // toggle pin
+  @override
+  Future<bool> togglePin(String id, bool isPinned) async {
+    final result = await (update(otps)..where((o) => o.id.equals(id))).write(
+      OtpsCompanion(isPinned: Value(isPinned)),
+    );
 
     return result > 0;
   }
@@ -81,10 +97,29 @@ class OtpDao extends DatabaseAccessor<MainStore> with _$OtpDaoMixin {
   }
 
   /// Удалить OTP (мягкое удаление)
+  @override
   Future<bool> softDelete(String id) async {
-    final result = await (update(otps)..where((o) => o.id.equals(id)))
-        .write(const OtpsCompanion(isDeleted: Value(true)));
+    final result = await (update(otps)..where((o) => o.id.equals(id))).write(
+      const OtpsCompanion(isDeleted: Value(true)),
+    );
     return result > 0;
+  }
+
+  /// Восстановить OTP из удалённых
+  @override
+  Future<bool> restoreFromDeleted(String id) async {
+    final rowsAffected = await (update(otps)..where((o) => o.id.equals(id)))
+        .write(const OtpsCompanion(isDeleted: Value(false)));
+    return rowsAffected > 0;
+  }
+
+  /// Полное удаление OTP
+  @override
+  Future<bool> permanentDelete(String id) async {
+    final rowsAffected = await (delete(
+      otps,
+    )..where((o) => o.id.equals(id))).go();
+    return rowsAffected > 0;
   }
 
   /// Создать новый OTP

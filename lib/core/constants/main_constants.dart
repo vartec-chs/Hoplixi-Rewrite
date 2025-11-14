@@ -18,4 +18,7 @@ class MainConstants {
 
   // Минимальное количество использований для считания записи часто используемой
   static const int frequentlyUsedThreshold = 5;
+
+  // Минимальное количество использований для считания записи популярной
+  static const int popularItemThreshold = 100;
 }

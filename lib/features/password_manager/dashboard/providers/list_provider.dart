@@ -7,6 +7,7 @@ import 'package:hoplixi/features/password_manager/dashboard/providers/entity_typ
 import 'package:hoplixi/features/password_manager/dashboard/providers/filter_providers/index.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/filter_tab_provider.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
+import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
@@ -207,7 +208,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
   }
 
   /// Выбор CRUD DAO по type для обновлений
-  Future<dynamic> _crudDaoForType() {
+  Future<BaseMainEntityDao> _crudDaoForType() {
     switch (ref.read(entityTypeProvider).currentType) {
       case EntityType.password:
         return ref.read(passwordDaoProvider.future);
@@ -427,6 +428,46 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     }
   }
 
+  Future<void> togglePin(String id) async {
+    final cur = state.value;
+    if (cur == null) return;
+
+    final index = cur.items.indexWhere((e) => e.id == id);
+    if (index == -1) return;
+
+    final item = cur.items[index];
+    final newPin = !(item.isPinned ?? false);
+
+    final updated = [...cur.items];
+    updated[index] = item.copyWith(isPinned: newPin);
+
+    state = AsyncValue.data(cur.copyWith(items: updated));
+
+    try {
+      final dao = await _crudDaoForType();
+      bool success = false;
+      success = await dao.togglePin(id, newPin);
+
+      if (!success) {
+        // откат
+        updated[index] = item;
+        state = AsyncValue.data(cur.copyWith(items: updated));
+      } else {
+        // Триггерим обновление данных
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerRefreshWithInfo(
+              'Закрепление изменено',
+              data: {'id': id, 'isPinned': newPin},
+            );
+      }
+    } catch (e) {
+      // откат
+      updated[index] = item;
+      state = AsyncValue.data(cur.copyWith(items: updated));
+    }
+  }
+
   Future<void> delete(String id) async {
     final cur = state.value;
     if (cur == null) return;
@@ -460,6 +501,94 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
             .triggerRefreshWithInfo(
               'Элемент удален',
               data: {'id': id, 'action': 'delete'},
+            );
+      }
+    } catch (e) {
+      // откат
+      updated.insert(index, item);
+      state = AsyncValue.data(
+        cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
+      );
+    }
+  }
+
+  Future<void> restoreFromDeleted(String id) async {
+    final cur = state.value;
+    if (cur == null) return;
+
+    final index = cur.items.indexWhere((e) => e.id == id);
+    if (index == -1) return;
+
+    final item = cur.items[index];
+    final updated = [...cur.items];
+    updated.removeAt(index);
+
+    state = AsyncValue.data(
+      cur.copyWith(items: updated, totalCount: cur.totalCount - 1),
+    );
+
+    try {
+      final dao = await _crudDaoForType();
+      bool success = false;
+      success = await dao.restoreFromDeleted(id);
+
+      if (!success) {
+        // откат
+        updated.insert(index, item);
+        state = AsyncValue.data(
+          cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
+        );
+      } else {
+        // Триггерим обновление данных
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerRefreshWithInfo(
+              'Элемент восстановлен',
+              data: {'id': id, 'action': 'restore'},
+            );
+      }
+    } catch (e) {
+      // откат
+      updated.insert(index, item);
+      state = AsyncValue.data(
+        cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
+      );
+    }
+  }
+
+  Future<void> permanentDelete(String id) async {
+    final cur = state.value;
+    if (cur == null) return;
+
+    final index = cur.items.indexWhere((e) => e.id == id);
+    if (index == -1) return;
+
+    final item = cur.items[index];
+    final updated = [...cur.items];
+    updated.removeAt(index);
+
+    state = AsyncValue.data(
+      cur.copyWith(items: updated, totalCount: cur.totalCount - 1),
+    );
+
+    try {
+      final dao = await _crudDaoForType();
+      bool success = false;
+      success = await dao.permanentDelete(id);
+
+      if (!success) {
+        // откат
+        updated.insert(index, item);
+        state = AsyncValue.data(
+          cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
+        );
+      } else {
+        // Триггерим обновление данных
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerRefreshWithInfo(
+              'Элемент удалён навсегда',
+              data: {'id': id, 'action': 'permanent_delete'},
             );
       }
     } catch (e) {

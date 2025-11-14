@@ -35,6 +35,8 @@
 - **Build/test** Typical cycle: `flutter pub get`, `flutter analyze`, `flutter test`, `flutter run -d windows`; `build_ranner.bat` wraps `flutter pub run build_runner build --delete-conflicting-outputs` for codegen.
 - **Platform limits** Web is unsupported—mirroring `main.dart`, gate platform-specific code with `UniversalPlatform` and early exits.
 - **Secrets** Persist sensitive values inside `SecureStorageService`; never log raw passwords or attachment keys.
+- **ref.listen** Use `ref.listen` in UI widgets only in build methods not use in initState, dispose, or outside widgets to avoid missing updates. 
+- **Riverpod Notifiers** Use `AsyncNotifier` and `AsyncNotifierProvider`  for async operations instead of `Notifier` to get built-in loading/error states. and use Notifier in other cases if there is a state. StateNotifier, StateNotifierProvider, ChangeNotifier are deprecated.
 # Error Handling
 
 - The project utilizes the `result_dart: ^2.1.1` package for robust error handling. Exemples: 

@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 
 part 'password_dto.freezed.dart';
 part 'password_dto.g.dart';
@@ -57,14 +59,20 @@ sealed class PasswordCardDto with _$PasswordCardDto {
   const factory PasswordCardDto({
     required String id,
     required String name,
+    String? description,
     String? login,
     String? email,
     String? url,
-    String? categoryName,
+    CategoryInCardDto? category,
     required bool isFavorite,
     required bool isPinned,
+
+    required bool isArchived,
+    required bool isDeleted,
     required int usedCount,
     required DateTime modifiedAt,
+    required DateTime createdAt,
+    List<TagInCardDto>? tags,
   }) = _PasswordCardDto;
 
   factory PasswordCardDto.fromJson(Map<String, dynamic> json) =>

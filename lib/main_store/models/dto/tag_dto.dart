@@ -48,6 +48,19 @@ sealed class TagCardDto with _$TagCardDto {
       _$TagCardDtoFromJson(json);
 }
 
+/// DTO для рендеринга в каточках других сущностей
+@freezed
+sealed class TagInCardDto with _$TagInCardDto {
+  const factory TagInCardDto({
+    required String id,
+    required String name,
+    String? color,
+  }) = _TagInCardDto;
+
+  factory TagInCardDto.fromJson(Map<String, dynamic> json) =>
+      _$TagInCardDtoFromJson(json);
+}
+
 /// DTO для обновления тега
 @freezed
 sealed class UpdateTagDto with _$UpdateTagDto {

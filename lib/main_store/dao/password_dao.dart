@@ -1,14 +1,16 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
-import 'package:hoplixi/main_store/tables/password_tags.dart';
 import 'package:hoplixi/main_store/tables/passwords.dart';
 import 'package:uuid/uuid.dart';
 
 part 'password_dao.g.dart';
 
 @DriftAccessor(tables: [Passwords])
-class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
+class PasswordDao extends DatabaseAccessor<MainStore>
+    with _$PasswordDaoMixin
+    implements BaseMainEntityDao {
   PasswordDao(super.db);
 
   /// Получить все пароли
@@ -23,31 +25,20 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
     return (select(passwords)..where((p) => p.id.equals(id))).getSingleOrNull();
   }
 
-  /// Получить пароли в виде карточек (для списка)
-  Future<List<PasswordCardDto>> getAllPasswordCards() {
-    return (select(passwords)
-          ..orderBy([(p) => OrderingTerm.desc(p.modifiedAt)]))
-        .map(
-          (p) => PasswordCardDto(
-            id: p.id,
-            name: p.name,
-            login: p.login,
-            email: p.email,
-            url: p.url,
-            categoryName: null, // TODO: join with categories
-            isFavorite: p.isFavorite,
-            isPinned: p.isPinned,
-            usedCount: p.usedCount,
-            modifiedAt: p.modifiedAt,
-          ),
-        )
-        .get();
-  }
-
   // toggle favorite
+  @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
     final result = await (update(passwords)..where((p) => p.id.equals(id)))
         .write(PasswordsCompanion(isFavorite: Value(isFavorite)));
+
+    return result > 0;
+  }
+
+  // toggle pin
+  @override
+  Future<bool> togglePin(String id, bool isPinned) async {
+    final result = await (update(passwords)..where((p) => p.id.equals(id)))
+        .write(PasswordsCompanion(isPinned: Value(isPinned)));
 
     return result > 0;
   }
@@ -57,30 +48,6 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
     return (select(
       passwords,
     )..orderBy([(p) => OrderingTerm.desc(p.modifiedAt)])).watch();
-  }
-
-  /// Смотреть карточки паролей с автообновлением
-  Stream<List<PasswordCardDto>> watchPasswordCards() {
-    return (select(
-      passwords,
-    )..orderBy([(p) => OrderingTerm.desc(p.modifiedAt)])).watch().map(
-      (passwords) => passwords
-          .map(
-            (p) => PasswordCardDto(
-              id: p.id,
-              name: p.name,
-              login: p.login,
-              email: p.email,
-              url: p.url,
-              categoryName: null, // TODO: join with categories
-              isFavorite: p.isFavorite,
-              isPinned: p.isPinned,
-              usedCount: p.usedCount,
-              modifiedAt: p.modifiedAt,
-            ),
-          )
-          .toList(),
-    );
   }
 
   /// Создать новый пароль
@@ -194,10 +161,37 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
     });
   }
 
+  /// get only password filed
+  Future<String?> getPasswordFieldById(String id) async {
+    final query = selectOnly(passwords)
+      ..addColumns([passwords.password])
+      ..where(passwords.id.equals(id));
+    final result = await query.getSingleOrNull();
+    return result?.read(passwords.password);
+  }
+
   /// Удалить пароль (мягкое удаление)
+  @override
   Future<bool> softDelete(String id) async {
     final result = await (update(passwords)..where((p) => p.id.equals(id)))
         .write(const PasswordsCompanion(isDeleted: Value(true)));
+    return result > 0;
+  }
+
+  /// Восстановить пароль из удалённых
+  @override
+  Future<bool> restoreFromDeleted(String id) async {
+    final result = await (update(passwords)..where((p) => p.id.equals(id)))
+        .write(const PasswordsCompanion(isDeleted: Value(false)));
+    return result > 0;
+  }
+
+  /// Полное удаление пароля
+  @override
+  Future<bool> permanentDelete(String id) async {
+    final result = await (delete(
+      passwords,
+    )..where((p) => p.id.equals(id))).go();
     return result > 0;
   }
 }
