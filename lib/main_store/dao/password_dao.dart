@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
+import 'package:hoplixi/main_store/tables/password_tags.dart';
 import 'package:hoplixi/main_store/tables/passwords.dart';
 import 'package:uuid/uuid.dart';
 
@@ -100,20 +101,24 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
       );
 
       await into(passwords).insert(companion);
-
-      // 2. Добавляем связи с тегами, если они указаны
-      if (dto.tagsIds != null && dto.tagsIds!.isNotEmpty) {
-        for (final tagId in dto.tagsIds!) {
-          await db
-              .into(db.passwordsTags)
-              .insert(
-                PasswordsTagsCompanion.insert(passwordId: uuid, tagId: tagId),
-              );
-        }
-      }
+      await _insertPasswordTags(uuid, dto.tagsIds);
 
       return uuid;
     });
+  }
+
+  Future<void> _insertPasswordTags(
+    String passwordId,
+    List<String>? tagIds,
+  ) async {
+    if (tagIds == null || tagIds.isEmpty) return;
+    for (final tagId in tagIds) {
+      await db
+          .into(db.passwordsTags)
+          .insert(
+            PasswordsTagsCompanion.insert(passwordId: passwordId, tagId: tagId),
+          );
+    }
   }
 
   /// Обновить пароль
@@ -150,6 +155,43 @@ class PasswordDao extends DatabaseAccessor<MainStore> with _$PasswordDaoMixin {
     )..where((p) => p.id.equals(id))).write(companion);
 
     return result > 0;
+  }
+
+  Future<List<String>> getPasswordTagIds(String passwordId) async {
+    final rows = await (select(
+      db.passwordsTags,
+    )..where((t) => t.passwordId.equals(passwordId))).get();
+    return rows.map((row) => row.tagId).toList();
+  }
+
+  Future<void> syncPasswordTags(String passwordId, List<String> tagIds) async {
+    await db.transaction(() async {
+      final existing = await (select(
+        db.passwordsTags,
+      )..where((t) => t.passwordId.equals(passwordId))).get();
+      final existingIds = existing.map((row) => row.tagId).toSet();
+      final newIds = tagIds.toSet();
+
+      final toDelete = existingIds.difference(newIds);
+      if (toDelete.isNotEmpty) {
+        await (delete(db.passwordsTags)..where(
+              (t) => t.passwordId.equals(passwordId) & t.tagId.isIn(toDelete),
+            ))
+            .go();
+      }
+
+      final toInsert = newIds.difference(existingIds);
+      for (final tagId in toInsert) {
+        await db
+            .into(db.passwordsTags)
+            .insert(
+              PasswordsTagsCompanion.insert(
+                passwordId: passwordId,
+                tagId: tagId,
+              ),
+            );
+      }
+    });
   }
 
   /// Удалить пароль (мягкое удаление)

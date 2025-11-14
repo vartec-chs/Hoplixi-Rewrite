@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
@@ -39,8 +40,9 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
         return;
       }
 
-      // TODO: Загрузить теги пароля
-      // final tags = await dao.getPasswordTags(passwordId);
+      final tagIds = await dao.getPasswordTagIds(passwordId);
+      final tagDao = await ref.read(tagDaoProvider.future);
+      final tagRecords = await tagDao.getTagsByIds(tagIds);
 
       state = PasswordFormState(
         isEditMode: true,
@@ -54,8 +56,8 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
         notes: password.notes ?? '',
         categoryId: password.categoryId,
         // categoryName: ..., // TODO: Получить имя категории
-        tagIds: [], // TODO: Загрузить теги
-        tagNames: [], // TODO: Загрузить имена тегов
+        tagIds: tagIds,
+        tagNames: tagRecords.map((tag) => tag.name).toList(),
         isLoading: false,
       );
     } catch (e, stack) {
@@ -247,7 +249,7 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
         final success = await dao.updatePassword(state.editingPasswordId!, dto);
 
         if (success) {
-          // TODO: Обновить связи с тегами
+          await dao.syncPasswordTags(state.editingPasswordId!, state.tagIds);
 
           logInfo('Password updated: ${state.editingPasswordId}', tag: _logTag);
           state = state.copyWith(isSaving: false, isSaved: true);
@@ -255,12 +257,9 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
           // Триггерим обновление списка паролей
           ref
               .read(dataRefreshTriggerProvider.notifier)
-              .triggerRefreshWithInfo(
-                'Пароль обновлен',
-                data: {
-                  'passwordId': state.editingPasswordId,
-                  'action': 'update',
-                },
+              .triggerEntityUpdate(
+                EntityType.password,
+                entityId: state.editingPasswordId,
               );
 
           return true;
@@ -296,10 +295,7 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
         // Триггерим обновление списка паролей
         ref
             .read(dataRefreshTriggerProvider.notifier)
-            .triggerRefreshWithInfo(
-              'Пароль создан',
-              data: {'passwordId': passwordId, 'action': 'create'},
-            );
+            .triggerEntityAdd(EntityType.password, entityId: passwordId);
 
         return true;
       }

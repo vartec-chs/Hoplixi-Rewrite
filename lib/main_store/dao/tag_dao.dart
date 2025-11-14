@@ -185,6 +185,12 @@ class TagDao extends DatabaseAccessor<MainStore> with _$TagDaoMixin {
     return query.get();
   }
 
+  /// Получить теги по списку ID
+  Future<List<TagsData>> getTagsByIds(List<String> ids) {
+    if (ids.isEmpty) return Future.value([]);
+    return (select(tags)..where((t) => t.id.isIn(ids))).get();
+  }
+
   /// Смотреть отфильтрованные теги с автообновлением
   Stream<List<TagsData>> watchTagsFiltered(TagsFilter filter) {
     var query = select(tags);
