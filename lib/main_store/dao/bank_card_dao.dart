@@ -65,6 +65,15 @@ class BankCardDao extends DatabaseAccessor<MainStore>
     return result > 0;
   }
 
+  /// Переключить архивирование
+  @override
+  Future<bool> toggleArchive(String id, bool isArchived) async {
+    final result = await (update(bankCards)..where((b) => b.id.equals(id)))
+        .write(BankCardsCompanion(isArchived: Value(isArchived)));
+
+    return result > 0;
+  }
+
   /// Смотреть все карты с автообновлением
   Stream<List<BankCardsData>> watchAllBankCards() {
     return (select(

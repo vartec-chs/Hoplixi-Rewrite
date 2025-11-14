@@ -313,11 +313,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
       case EntityType.password:
         return PasswordListCard(
           password: item as PasswordCardDto,
-          onTap: () => _onPasswordTap(item),
-          onEdit: () => _onPasswordEdit(item),
-          onCopyPassword: () => _onPasswordCopy(item),
           onToggleFavorite: () => _onPasswordToggleFavorite(item),
           onTogglePin: () => _onPasswordTogglePin(item),
+          onToggleArchive: () => _onPasswordToggleArchive(item),
           onDelete: () => _onPasswordDelete(item),
           onRestore: () => _onPasswordRestore(item),
         );
@@ -338,11 +336,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
       case EntityType.password:
         return PasswordGridCard(
           password: item as PasswordCardDto,
-          onTap: () => _onPasswordTap(item),
-          onEdit: () => _onPasswordEdit(item),
-          onCopyPassword: () => _onPasswordCopy(item),
           onToggleFavorite: () => _onPasswordToggleFavorite(item),
           onTogglePin: () => _onPasswordTogglePin(item),
+          onToggleArchive: () => _onPasswordToggleArchive(item),
           onDelete: () => _onPasswordDelete(item),
           onRestore: () => _onPasswordRestore(item),
         );
@@ -357,28 +353,16 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     }
   }
 
-  /// Callbacks для работы с паролями
-  void _onPasswordTap(PasswordCardDto password) {
-    // TODO: открыть детальный просмотр
-    debugPrint('Open password: ${password.name}');
-  }
-
-  void _onPasswordEdit(PasswordCardDto password) {
-    // TODO: открыть форму редактирования
-    debugPrint('Edit password: ${password.name}');
-  }
-
-  void _onPasswordCopy(PasswordCardDto password) {
-    // TODO: скопировать пароль в буфер обмена
-    debugPrint('Copy password: ${password.name}');
-  }
-
   void _onPasswordToggleFavorite(PasswordCardDto password) {
     ref.read(paginatedListProvider.notifier).toggleFavorite(password.id);
   }
 
   void _onPasswordTogglePin(PasswordCardDto password) {
     ref.read(paginatedListProvider.notifier).togglePin(password.id);
+  }
+
+  void _onPasswordToggleArchive(PasswordCardDto password) {
+    ref.read(paginatedListProvider.notifier).toggleArchive(password.id);
   }
 
   void _onPasswordDelete(PasswordCardDto password) {

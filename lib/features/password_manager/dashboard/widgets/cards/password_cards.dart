@@ -3,20 +3,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
+import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 
 /// Карточка пароля для режима списка
 class PasswordListCard extends ConsumerStatefulWidget {
   final PasswordCardDto password;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onCopyPassword;
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onTogglePin;
+  final VoidCallback? onToggleArchive;
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
 
@@ -24,10 +25,9 @@ class PasswordListCard extends ConsumerStatefulWidget {
     super.key,
     required this.password,
     this.onTap,
-    this.onEdit,
-    this.onCopyPassword,
     this.onToggleFavorite,
     this.onTogglePin,
+    this.onToggleArchive,
     this.onDelete,
     this.onRestore,
   });
@@ -37,13 +37,16 @@ class PasswordListCard extends ConsumerStatefulWidget {
 }
 
 class _PasswordListCardState extends ConsumerState<PasswordListCard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _isExpanded = false;
+  bool _isHovered = false;
   bool _passwordCopied = false;
   bool _loginCopied = false;
   bool _urlCopied = false;
   late AnimationController _expandController;
   late Animation<double> _expandAnimation;
+  late AnimationController _iconsController;
+  late Animation<double> _iconsAnimation;
 
   @override
   void initState() {
@@ -55,11 +58,20 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
     _expandAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _expandController, curve: Curves.easeInOut),
     );
+
+    _iconsController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _iconsAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _iconsController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
     _expandController.dispose();
+    _iconsController.dispose();
     super.dispose();
   }
 
@@ -67,8 +79,21 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
     setState(() => _isExpanded = !_isExpanded);
     if (_isExpanded) {
       _expandController.forward();
+      _iconsController.forward();
     } else {
       _expandController.reverse();
+      if (!_isHovered) {
+        _iconsController.reverse();
+      }
+    }
+  }
+
+  void _onHoverChanged(bool isHovered) {
+    setState(() => _isHovered = isHovered);
+    if (isHovered) {
+      _iconsController.forward();
+    } else if (!_isExpanded) {
+      _iconsController.reverse();
     }
   }
 
@@ -147,178 +172,226 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Column(
         children: [
-          InkWell(
-            onTap: _toggleExpanded,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  // Иконка
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
+          MouseRegion(
+            onEnter: (_) => _onHoverChanged(true),
+            onExit: (_) => _onHoverChanged(false),
+            child: InkWell(
+              onTap: _toggleExpanded,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    // Иконка
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        // color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.lock,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.lock,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Основная информация
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (widget.password.category != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _parseColor(
-                                widget.password.category!.color,
-                              ).withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _parseColor(
-                                  widget.password.category!.color,
-                                ).withOpacity(0.4),
+                    const SizedBox(width: 6),
+                    // Основная информация
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (widget.password.category != null) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
                               ),
-                            ),
-                            child: Text(
-                              widget.password.category!.name,
-                              style: theme.textTheme.bodySmall?.copyWith(
+                              decoration: BoxDecoration(
                                 color: _parseColor(
                                   widget.password.category!.color,
+                                ).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _parseColor(
+                                    widget.password.category!.color,
+                                  ).withOpacity(0.4),
                                 ),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        // Категория и название
-                        Row(
-                          children: [
-                            Expanded(
                               child: Text(
-                                widget.password.name,
-                                style: theme.textTheme.titleMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                widget.password.category!.name,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: _parseColor(
+                                    widget.password.category!.color,
+                                  ),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                        if (displayLogin != null || hostUrl.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          // Категория и название
                           Row(
                             children: [
-                              if (displayLogin != null) ...[
-                                Expanded(
-                                  child: Text(
-                                    displayLogin,
+                              Expanded(
+                                child: Text(
+                                  widget.password.name,
+                                  style: theme.textTheme.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (displayLogin != null || hostUrl.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                if (displayLogin != null) ...[
+                                  Expanded(
+                                    child: Text(
+                                      displayLogin,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(color: Colors.grey),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (hostUrl.isNotEmpty)
+                                    const SizedBox(width: 4),
+                                ],
+                                if (hostUrl.isNotEmpty)
+                                  Text(
+                                    hostUrl,
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: Colors.grey,
+                                      color: Colors.grey.shade600,
+                                      fontSize: 10,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                if (hostUrl.isNotEmpty)
-                                  const SizedBox(width: 4),
                               ],
-                              if (hostUrl.isNotEmpty)
-                                Text(
-                                  hostUrl,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 10,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    // Действия
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!widget.password.isDeleted) ...[
+                          // Иконки состояния с анимацией
+                          AnimatedBuilder(
+                            animation: _iconsAnimation,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _iconsAnimation.value,
+                                child: Transform.scale(
+                                  scale: 0.8 + (_iconsAnimation.value * 0.2),
+                                  alignment: Alignment.centerRight,
+                                  child: child,
                                 ),
-                            ],
+                              );
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (widget.password.isArchived)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 4),
+                                    child: Icon(
+                                      Icons.archive,
+                                      size: 16,
+                                      color: Colors.blueGrey,
+                                    ),
+                                  ),
+                                if (widget.password.usedCount >=
+                                    MainConstants.popularItemThreshold)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 4),
+                                    child: Icon(
+                                      Icons.local_fire_department,
+                                      size: 16,
+                                      color: Colors.deepOrange,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          // Кнопки действия с анимацией
+                          AnimatedBuilder(
+                            animation: _iconsAnimation,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _iconsAnimation.value,
+                                child: Transform.scale(
+                                  scale: 0.8 + (_iconsAnimation.value * 0.2),
+                                  alignment: Alignment.centerRight,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    widget.password.isPinned
+                                        ? Icons.push_pin
+                                        : Icons.push_pin_outlined,
+                                    size: 18,
+                                    color: widget.password.isPinned
+                                        ? Colors.orange
+                                        : null,
+                                  ),
+                                  onPressed: widget.onTogglePin,
+                                  tooltip: widget.password.isPinned
+                                      ? 'Открепить'
+                                      : 'Закрепить',
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    widget.password.isFavorite
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: widget.password.isFavorite
+                                        ? Colors.amber
+                                        : null,
+                                  ),
+                                  onPressed: widget.onToggleFavorite,
+                                  tooltip: 'Избранное',
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    context.push(
+                                      AppRoutesPaths.dashboardPasswordEditWithId(
+                                        widget.password.id,
+                                      ),
+                                    );
+                                  },
+                                  tooltip: 'Редактировать',
+                                ),
+                              ],
+                            ),
                           ),
                         ],
+                        IconButton(
+                          icon: Icon(
+                            _isExpanded
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                          ),
+                          onPressed: _toggleExpanded,
+                        ),
                       ],
                     ),
-                  ),
-                  // Действия
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!widget.password.isDeleted) ...[
-                        // Для обычных записей показываем все элементы
-                        if (widget.password.isArchived)
-                          const Padding(
-                            padding: EdgeInsets.only(right: 4),
-                            child: Icon(
-                              Icons.archive,
-                              size: 16,
-                              color: Colors.blueGrey,
-                            ),
-                          ),
-                        if (widget.password.usedCount >=
-                            MainConstants.popularItemThreshold)
-                          const Padding(
-                            padding: EdgeInsets.only(right: 4),
-                            child: Icon(
-                              Icons.local_fire_department,
-                              size: 16,
-                              color: Colors.deepOrange,
-                            ),
-                          ),
-                        IconButton(
-                          icon: Icon(
-                            widget.password.isPinned
-                                ? Icons.push_pin
-                                : Icons.push_pin_outlined,
-                            size: 18,
-                            color: widget.password.isPinned
-                                ? Colors.orange
-                                : null,
-                          ),
-                          onPressed: widget.onTogglePin,
-                          tooltip: widget.password.isPinned
-                              ? 'Открепить'
-                              : 'Закрепить',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            widget.password.isFavorite
-                                ? Icons.star
-                                : Icons.star_border,
-                            color: widget.password.isFavorite
-                                ? Colors.amber
-                                : null,
-                          ),
-                          onPressed: widget.onToggleFavorite,
-                          tooltip: 'Избранное',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          onPressed: widget.onEdit,
-                          tooltip: 'Редактировать',
-                        ),
-                      ],
-                      IconButton(
-                        icon: Icon(
-                          _isExpanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                        ),
-                        onPressed: _toggleExpanded,
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -355,7 +428,7 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
                             color: _parseColor(
                               widget.password.category!.color,
                             ).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _parseColor(
                                 widget.password.category!.color,
@@ -565,7 +638,26 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
                             iconPosition: SmoothButtonIconPosition.start,
                           ),
                         ),
-                      ] else
+                      ] else ...[
+                        Expanded(
+                          child: SmoothButton(
+                            label: widget.password.isArchived
+                                ? 'Разархивировать'
+                                : 'Архивировать',
+                            onPressed: widget.onToggleArchive,
+                            size: SmoothButtonSize.small,
+                            type: SmoothButtonType.text,
+                            variant: SmoothButtonVariant.info,
+                            icon: Icon(
+                              widget.password.isArchived
+                                  ? Icons.unarchive
+                                  : Icons.archive,
+                              size: 16,
+                            ),
+                            iconPosition: SmoothButtonIconPosition.start,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: SmoothButton(
                             label: 'Удалить',
@@ -577,6 +669,7 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
                             iconPosition: SmoothButtonIconPosition.start,
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ],
@@ -609,10 +702,10 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
 class PasswordGridCard extends ConsumerStatefulWidget {
   final PasswordCardDto password;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onCopyPassword;
+
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onTogglePin;
+  final VoidCallback? onToggleArchive;
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
 
@@ -620,10 +713,10 @@ class PasswordGridCard extends ConsumerStatefulWidget {
     super.key,
     required this.password,
     this.onTap,
-    this.onEdit,
-    this.onCopyPassword,
+
     this.onToggleFavorite,
     this.onTogglePin,
+    this.onToggleArchive,
     this.onDelete,
     this.onRestore,
   });
@@ -632,8 +725,39 @@ class PasswordGridCard extends ConsumerStatefulWidget {
   ConsumerState<PasswordGridCard> createState() => _PasswordGridCardState();
 }
 
-class _PasswordGridCardState extends ConsumerState<PasswordGridCard> {
+class _PasswordGridCardState extends ConsumerState<PasswordGridCard>
+    with TickerProviderStateMixin {
   bool _passwordCopied = false;
+  bool _isHovered = false;
+  late AnimationController _iconsController;
+  late Animation<double> _iconsAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _iconsController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _iconsAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _iconsController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _iconsController.dispose();
+    super.dispose();
+  }
+
+  void _onHoverChanged(bool isHovered) {
+    setState(() => _isHovered = isHovered);
+    if (isHovered) {
+      _iconsController.forward();
+    } else {
+      _iconsController.reverse();
+    }
+  }
 
   Color _parseColor(String? colorHex) {
     if (colorHex == null || colorHex.isEmpty) return Colors.grey;
@@ -681,224 +805,275 @@ class _PasswordGridCardState extends ConsumerState<PasswordGridCard> {
     final hostUrl = _extractHost(widget.password.url);
 
     return Card(
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Заголовок
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
+      child: MouseRegion(
+        onEnter: (_) => _onHoverChanged(true),
+        onExit: (_) => _onHoverChanged(false),
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Заголовок
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.lock,
+                        size: 18,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.lock,
-                      size: 18,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (!widget.password.isDeleted) ...[
-                    // Для обычных записей показываем все элементы
-                    if (widget.password.isArchived)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 2),
-                        child: Icon(
-                          Icons.archive,
-                          size: 12,
-                          color: Colors.blueGrey,
+                    const Spacer(),
+                    if (!widget.password.isDeleted) ...[
+                      // Иконки состояния с анимацией
+                      AnimatedBuilder(
+                        animation: _iconsAnimation,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _iconsAnimation.value,
+                            child: Transform.scale(
+                              scale: 0.8 + (_iconsAnimation.value * 0.2),
+                              alignment: Alignment.centerRight,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.password.isArchived)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 2),
+                                child: Icon(
+                                  Icons.archive,
+                                  size: 12,
+                                  color: Colors.blueGrey,
+                                ),
+                              ),
+                            if (widget.password.usedCount >=
+                                MainConstants.popularItemThreshold)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 2),
+                                child: Icon(
+                                  Icons.local_fire_department,
+                                  size: 12,
+                                  color: Colors.deepOrange,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    if (widget.password.usedCount >=
-                        MainConstants.popularItemThreshold)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 2),
-                        child: Icon(
-                          Icons.local_fire_department,
-                          size: 12,
-                          color: Colors.deepOrange,
+                      // Кнопки действия с анимацией
+                      AnimatedBuilder(
+                        animation: _iconsAnimation,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _iconsAnimation.value,
+                            child: Transform.scale(
+                              scale: 0.8 + (_iconsAnimation.value * 0.2),
+                              alignment: Alignment.centerRight,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                widget.password.isPinned
+                                    ? Icons.push_pin
+                                    : Icons.push_pin_outlined,
+                                size: 14,
+                                color: widget.password.isPinned
+                                    ? Colors.orange
+                                    : null,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: widget.onTogglePin,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                widget.password.isFavorite
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color: widget.password.isFavorite
+                                    ? Colors.amber
+                                    : null,
+                                size: 14,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: widget.onToggleFavorite,
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 14),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                context.push(
+                                  AppRoutesPaths.dashboardPasswordEditWithId(
+                                    widget.password.id,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                    IconButton(
-                      icon: Icon(
-                        widget.password.isPinned
-                            ? Icons.push_pin
-                            : Icons.push_pin_outlined,
-                        size: 14,
-                        color: widget.password.isPinned ? Colors.orange : null,
+                    ] else ...[
+                      // Для удалённых записей показываем кнопки восстановления и удаления
+                      IconButton(
+                        icon: const Icon(Icons.restore, size: 12),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: widget.onRestore,
+                        tooltip: 'Восстановить',
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onTogglePin,
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        widget.password.isFavorite
-                            ? Icons.star
-                            : Icons.star_border,
-                        color: widget.password.isFavorite ? Colors.amber : null,
-                        size: 14,
+                      const SizedBox(width: 4),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete_forever,
+                          size: 12,
+                          color: Colors.red,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: widget.onDelete,
+                        tooltip: 'Удалить навсегда',
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onToggleFavorite,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 14),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onEdit,
-                    ),
-                  ] else ...[
-                    // Для удалённых записей показываем кнопки восстановления и удаления
-                    IconButton(
-                      icon: const Icon(Icons.restore, size: 12),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onRestore,
-                      tooltip: 'Восстановить',
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_forever,
-                        size: 12,
-                        color: Colors.red,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onDelete,
-                      tooltip: 'Удалить навсегда',
-                    ),
+                    ],
                   ],
-                ],
-              ),
-              const SizedBox(height: 8),
+                ),
+                const SizedBox(height: 8),
 
-              // Категория
-              if (widget.password.category != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+                // Категория
+                if (widget.password.category != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _parseColor(
+                        widget.password.category!.color,
+                      ).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      widget.password.category!.name,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: _parseColor(widget.password.category!.color),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: _parseColor(
-                      widget.password.category!.color,
-                    ).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    widget.password.category!.name,
+                  const SizedBox(height: 6),
+                ],
+
+                // Название
+                Text(
+                  widget.password.name,
+                  style: theme.textTheme.titleSmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+
+                // Логин/email
+                if (displayLogin != null)
+                  Text(
+                    displayLogin,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: _parseColor(widget.password.category!.color),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(height: 6),
-              ],
 
-              // Название
-              Text(
-                widget.password.name,
-                style: theme.textTheme.titleSmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-
-              // Логин/email
-              if (displayLogin != null)
-                Text(
-                  displayLogin,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
+                // URL
+                if (hostUrl.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    hostUrl,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                      fontSize: 10,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
 
-              // URL
-              if (hostUrl.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  hostUrl,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                    fontSize: 10,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                const Spacer(),
 
-              const Spacer(),
-
-              // Теги (горизонтальная прокрутка)
-              if (widget.password.tags != null &&
-                  widget.password.tags!.isNotEmpty) ...[
-                SizedBox(
-                  height: 20,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: widget.password.tags!.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 4),
-                    itemBuilder: (context, index) {
-                      final tag = widget.password.tags![index];
-                      final tagColor = _parseColor(tag.color);
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tagColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          tag.name,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: tagColor,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w500,
+                // Теги (горизонтальная прокрутка)
+                if (widget.password.tags != null &&
+                    widget.password.tags!.isNotEmpty) ...[
+                  SizedBox(
+                    height: 20,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: widget.password.tags!.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 4),
+                      itemBuilder: (context, index) {
+                        final tag = widget.password.tags![index];
+                        final tagColor = _parseColor(tag.color);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
                           ),
-                        ),
-                      );
-                    },
+                          decoration: BoxDecoration(
+                            color: tagColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            tag.name,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: tagColor,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 8),
+                ],
 
-              // Кнопка копирования пароля
-              SizedBox(
-                width: double.infinity,
-                child: SmoothButton(
-                  label: _passwordCopied ? 'Скопировано' : 'Копировать',
-                  onPressed: _copyPassword,
-                  type: SmoothButtonType.outlined,
-                  variant: SmoothButtonVariant.normal,
-                  icon: Icon(
-                    _passwordCopied ? Icons.check : Icons.copy,
-                    size: 14,
+                // Кнопка копирования пароля
+                SizedBox(
+                  width: double.infinity,
+                  child: SmoothButton(
+                    label: _passwordCopied ? 'Скопировано' : 'Копировать',
+                    onPressed: _copyPassword,
+                    type: SmoothButtonType.outlined,
+                    variant: SmoothButtonVariant.normal,
+                    icon: Icon(
+                      _passwordCopied ? Icons.check : Icons.copy,
+                      size: 14,
+                    ),
+                    iconPosition: SmoothButtonIconPosition.start,
+                    size: SmoothButtonSize.small,
                   ),
-                  iconPosition: SmoothButtonIconPosition.start,
-                  size: SmoothButtonSize.small,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -64,6 +64,16 @@ class OtpDao extends DatabaseAccessor<MainStore>
     return result > 0;
   }
 
+  // toggle archive
+  @override
+  Future<bool> toggleArchive(String id, bool isArchived) async {
+    final result = await (update(otps)..where((o) => o.id.equals(id))).write(
+      OtpsCompanion(isArchived: Value(isArchived)),
+    );
+
+    return result > 0;
+  }
+
   /// Смотреть все OTP с автообновлением
   Stream<List<OtpsData>> watchAllOtps() {
     return (select(

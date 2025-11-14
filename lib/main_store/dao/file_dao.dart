@@ -62,6 +62,16 @@ class FileDao extends DatabaseAccessor<MainStore>
     return result > 0;
   }
 
+  /// Переключить архивирование
+  @override
+  Future<bool> toggleArchive(String id, bool isArchived) async {
+    final result = await (update(files)..where((f) => f.id.equals(id))).write(
+      FilesCompanion(isArchived: Value(isArchived)),
+    );
+
+    return result > 0;
+  }
+
   /// Смотреть все файлы с автообновлением
   Stream<List<FilesData>> watchAllFiles() {
     return (select(

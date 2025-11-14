@@ -43,6 +43,15 @@ class PasswordDao extends DatabaseAccessor<MainStore>
     return result > 0;
   }
 
+  // toggle archive
+  @override
+  Future<bool> toggleArchive(String id, bool isArchived) async {
+    final result = await (update(passwords)..where((p) => p.id.equals(id)))
+        .write(PasswordsCompanion(isArchived: Value(isArchived)));
+
+    return result > 0;
+  }
+
   /// Смотреть все пароли с автообновлением
   Stream<List<PasswordsData>> watchAllPasswords() {
     return (select(

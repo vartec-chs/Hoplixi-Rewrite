@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/data_refresh_state.dart';
@@ -413,13 +415,13 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
         updated[index] = item;
         state = AsyncValue.data(cur.copyWith(items: updated));
       } else {
-        // Триггерим обновление данных
-        ref
-            .read(dataRefreshTriggerProvider.notifier)
-            .triggerRefreshWithInfo(
-              'Избранное изменено',
-              data: {'id': id, 'isFavorite': newFav},
-            );
+        if (ref.read(filterTabProvider) == FilterTab.favorites && !newFav) {
+          // Если мы на вкладке "Избранное" и элемент снят с избранного — удаляем его из списка
+          updated.removeAt(index);
+          state = AsyncValue.data(
+            cur.copyWith(items: updated, totalCount: cur.totalCount - 1),
+          );
+        }
       }
     } catch (e) {
       // откат
@@ -453,13 +455,44 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
         updated[index] = item;
         state = AsyncValue.data(cur.copyWith(items: updated));
       } else {
-        // Триггерим обновление данных
         ref
             .read(dataRefreshTriggerProvider.notifier)
-            .triggerRefreshWithInfo(
-              'Закрепление изменено',
-              data: {'id': id, 'isPinned': newPin},
+            .triggerEntityUpdate(
+              ref.read(entityTypeProvider).currentType,
+              entityId: id,
             );
+      }
+    } catch (e) {
+      // откат
+      updated[index] = item;
+      state = AsyncValue.data(cur.copyWith(items: updated));
+    }
+  }
+
+  Future<void> toggleArchive(String id) async {
+    final cur = state.value;
+    if (cur == null) return;
+
+    final index = cur.items.indexWhere((e) => e.id == id);
+    if (index == -1) return;
+
+    final item = cur.items[index];
+    final newArchive = !(item.isArchived ?? false);
+
+    final updated = [...cur.items];
+    updated[index] = item.copyWith(isArchived: newArchive);
+
+    state = AsyncValue.data(cur.copyWith(items: updated));
+
+    try {
+      final dao = await _crudDaoForType();
+      bool success = false;
+      success = await dao.toggleArchive(id, newArchive);
+
+      if (!success) {
+        // откат
+        updated[index] = item;
+        state = AsyncValue.data(cur.copyWith(items: updated));
       }
     } catch (e) {
       // откат
@@ -498,9 +531,9 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
         // Триггерим обновление данных
         ref
             .read(dataRefreshTriggerProvider.notifier)
-            .triggerRefreshWithInfo(
-              'Элемент удален',
-              data: {'id': id, 'action': 'delete'},
+            .triggerEntityUpdate(
+              ref.read(entityTypeProvider).currentType,
+              entityId: id,
             );
       }
     } catch (e) {
@@ -539,12 +572,11 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
           cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
         );
       } else {
-        // Триггерим обновление данных
         ref
             .read(dataRefreshTriggerProvider.notifier)
-            .triggerRefreshWithInfo(
-              'Элемент восстановлен',
-              data: {'id': id, 'action': 'restore'},
+            .triggerEntityUpdate(
+              ref.read(entityTypeProvider).currentType,
+              entityId: id,
             );
       }
     } catch (e) {
@@ -583,12 +615,11 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
           cur.copyWith(items: updated, totalCount: cur.totalCount + 1),
         );
       } else {
-        // Триггерим обновление данных
         ref
             .read(dataRefreshTriggerProvider.notifier)
-            .triggerRefreshWithInfo(
-              'Элемент удалён навсегда',
-              data: {'id': id, 'action': 'permanent_delete'},
+            .triggerEntityDelete(
+              ref.read(entityTypeProvider).currentType,
+              entityId: id,
             );
       }
     } catch (e) {

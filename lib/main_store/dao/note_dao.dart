@@ -60,6 +60,16 @@ class NoteDao extends DatabaseAccessor<MainStore>
     return result > 0;
   }
 
+  /// Переключить архивирование
+  @override
+  Future<bool> toggleArchive(String id, bool isArchived) async {
+    final result = await (update(notes)..where((n) => n.id.equals(id))).write(
+      NotesCompanion(isArchived: Value(isArchived)),
+    );
+
+    return result > 0;
+  }
+
   /// Смотреть все заметки с автообновлением
   Stream<List<NotesData>> watchAllNotes() {
     return (select(
