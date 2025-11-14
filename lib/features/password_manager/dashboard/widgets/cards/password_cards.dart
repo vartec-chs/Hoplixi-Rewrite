@@ -7,6 +7,7 @@ import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
+import 'package:hoplixi/shared/ui/button.dart';
 
 /// Карточка пароля для режима списка
 class PasswordListCard extends ConsumerStatefulWidget {
@@ -35,11 +36,41 @@ class PasswordListCard extends ConsumerStatefulWidget {
   ConsumerState<PasswordListCard> createState() => _PasswordListCardState();
 }
 
-class _PasswordListCardState extends ConsumerState<PasswordListCard> {
+class _PasswordListCardState extends ConsumerState<PasswordListCard>
+    with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   bool _passwordCopied = false;
   bool _loginCopied = false;
   bool _urlCopied = false;
+  late AnimationController _expandController;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _expandController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _expandAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _expandController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _expandController.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() => _isExpanded = !_isExpanded);
+    if (_isExpanded) {
+      _expandController.forward();
+    } else {
+      _expandController.reverse();
+    }
+  }
 
   String _extractHost(String? url) {
     if (url == null || url.isEmpty) return '';
@@ -117,7 +148,7 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard> {
       child: Column(
         children: [
           InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            onTap: _toggleExpanded,
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -223,19 +254,7 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (widget.password.isDeleted) ...[
-                        // Для удалённых записей показываем кнопку восстановления и удаления
-                        IconButton(
-                          icon: const Icon(Icons.restore, size: 18),
-                          onPressed: widget.onRestore,
-                          tooltip: 'Восстановить',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_forever, size: 18),
-                          onPressed: widget.onDelete,
-                          tooltip: 'Удалить навсегда',
-                        ),
-                      ] else ...[
+                      if (!widget.password.isDeleted) ...[
                         // Для обычных записей показываем все элементы
                         if (widget.password.isArchived)
                           const Padding(
@@ -284,29 +303,38 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard> {
                           tooltip: 'Избранное',
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          onPressed: widget.onDelete,
-                          tooltip: 'Удалить',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            _isExpanded
-                                ? Icons.keyboard_arrow_up
-                                : Icons.keyboard_arrow_down,
-                          ),
-                          onPressed: () =>
-                              setState(() => _isExpanded = !_isExpanded),
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          onPressed: widget.onEdit,
+                          tooltip: 'Редактировать',
                         ),
                       ],
+                      IconButton(
+                        icon: Icon(
+                          _isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                        ),
+                        onPressed: _toggleExpanded,
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-          // Развернутый контент
-          if (_isExpanded)
-            Container(
+          // Развернутый контент с анимацией
+          AnimatedBuilder(
+            animation: _expandAnimation,
+            builder: (context, child) {
+              return ClipRect(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  heightFactor: _expandAnimation.value,
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,31 +412,33 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard> {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: SmoothButton(
+                          label: 'Пароль',
                           onPressed: _copyPassword,
+                          type: SmoothButtonType.outlined,
+                          size: SmoothButtonSize.small,
+                          variant: SmoothButtonVariant.normal,
                           icon: Icon(
                             _passwordCopied ? Icons.check : Icons.lock,
                             size: 16,
                           ),
-                          label: const Text('Пароль'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
+                          iconPosition: SmoothButtonIconPosition.start,
                         ),
                       ),
                       if (displayLogin != null) ...[
                         const SizedBox(width: 8),
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: SmoothButton(
+                            label: 'Логин',
                             onPressed: _copyLogin,
+                            type: SmoothButtonType.outlined,
+                            size: SmoothButtonSize.small,
+                            variant: SmoothButtonVariant.normal,
                             icon: Icon(
                               _loginCopied ? Icons.check : Icons.person,
                               size: 16,
                             ),
-                            label: const Text('Логин'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                            ),
+                            iconPosition: SmoothButtonIconPosition.start,
                           ),
                         ),
                       ],
@@ -416,16 +446,17 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard> {
                           widget.password.url!.isNotEmpty) ...[
                         const SizedBox(width: 8),
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: SmoothButton(
+                            label: 'URL',
                             onPressed: _copyUrl,
+                            type: SmoothButtonType.outlined,
+                            size: SmoothButtonSize.small,
+                            variant: SmoothButtonVariant.normal,
                             icon: Icon(
                               _urlCopied ? Icons.check : Icons.link,
                               size: 16,
                             ),
-                            label: const Text('URL'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                            ),
+                            iconPosition: SmoothButtonIconPosition.start,
                           ),
                         ),
                       ],
@@ -506,9 +537,52 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  // Кнопки удаления и восстановления
+                  Row(
+                    children: [
+                      if (widget.password.isDeleted) ...[
+                        Expanded(
+                          child: SmoothButton(
+                            label: 'Восстановить',
+                            onPressed: widget.onRestore,
+                            type: SmoothButtonType.text,
+                            size: SmoothButtonSize.small,
+                            variant: SmoothButtonVariant.success,
+                            icon: const Icon(Icons.restore, size: 16),
+                            iconPosition: SmoothButtonIconPosition.start,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: SmoothButton(
+                            label: 'Удалить навсегда',
+                            onPressed: widget.onDelete,
+                            type: SmoothButtonType.text,
+                            size: SmoothButtonSize.small,
+                            variant: SmoothButtonVariant.error,
+                            icon: const Icon(Icons.delete_forever, size: 16),
+                            iconPosition: SmoothButtonIconPosition.start,
+                          ),
+                        ),
+                      ] else
+                        Expanded(
+                          child: SmoothButton(
+                            label: 'Удалить',
+                            onPressed: widget.onDelete,
+                            size: SmoothButtonSize.small,
+                            type: SmoothButtonType.text,
+                            variant: SmoothButtonVariant.error,
+                            icon: const Icon(Icons.delete_outline, size: 16),
+                            iconPosition: SmoothButtonIconPosition.start,
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
+          ),
         ],
       ),
     );
@@ -632,28 +706,7 @@ class _PasswordGridCardState extends ConsumerState<PasswordGridCard> {
                     ),
                   ),
                   const Spacer(),
-                  if (widget.password.isDeleted) ...[
-                    // Для удалённых записей показываем кнопки восстановления и удаления
-                    IconButton(
-                      icon: const Icon(Icons.restore, size: 12),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onRestore,
-                      tooltip: 'Восстановить',
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_forever,
-                        size: 12,
-                        color: Colors.red,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onDelete,
-                      tooltip: 'Удалить навсегда',
-                    ),
-                  ] else ...[
+                  if (!widget.password.isDeleted) ...[
                     // Для обычных записей показываем все элементы
                     if (widget.password.isArchived)
                       const Padding(
@@ -697,6 +750,33 @@ class _PasswordGridCardState extends ConsumerState<PasswordGridCard> {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       onPressed: widget.onToggleFavorite,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 14),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: widget.onEdit,
+                    ),
+                  ] else ...[
+                    // Для удалённых записей показываем кнопки восстановления и удаления
+                    IconButton(
+                      icon: const Icon(Icons.restore, size: 12),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: widget.onRestore,
+                      tooltip: 'Восстановить',
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_forever,
+                        size: 12,
+                        color: Colors.red,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: widget.onDelete,
+                      tooltip: 'Удалить навсегда',
                     ),
                   ],
                 ],
@@ -805,19 +885,17 @@ class _PasswordGridCardState extends ConsumerState<PasswordGridCard> {
               // Кнопка копирования пароля
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
+                child: SmoothButton(
+                  label: _passwordCopied ? 'Скопировано' : 'Копировать',
                   onPressed: _copyPassword,
+                  type: SmoothButtonType.outlined,
+                  variant: SmoothButtonVariant.normal,
                   icon: Icon(
                     _passwordCopied ? Icons.check : Icons.copy,
                     size: 14,
                   ),
-                  label: Text(
-                    _passwordCopied ? 'Скопировано' : 'Копировать',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                  ),
+                  iconPosition: SmoothButtonIconPosition.start,
+                  size: SmoothButtonSize.small,
                 ),
               ),
             ],
