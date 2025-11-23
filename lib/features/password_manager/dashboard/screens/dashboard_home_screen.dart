@@ -312,19 +312,13 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   Widget _buildListCardFor(EntityType type, dynamic item) {
     switch (type) {
       case EntityType.password:
-        return Dismissible(
-          key: ValueKey(item.id),
-          onDismissed: (direction) {
-            _onPasswordDelete(item);
-          },
-          child: PasswordListCard(
-            password: item as PasswordCardDto,
-            onToggleFavorite: () => _onPasswordToggleFavorite(item),
-            onTogglePin: () => _onPasswordTogglePin(item),
-            onToggleArchive: () => _onPasswordToggleArchive(item),
-            onDelete: () => _onPasswordDelete(item),
-            onRestore: () => _onPasswordRestore(item),
-          ),
+        return PasswordListCard(
+          password: item as PasswordCardDto,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
         );
       case EntityType.note:
         return const Center(child: Text('Note card TODO'));
@@ -341,19 +335,13 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   Widget _buildGridCardFor(EntityType type, dynamic item) {
     switch (type) {
       case EntityType.password:
-        return Dismissible(
-          key: ValueKey(item.id),
-          onDismissed: (direction) {
-            _onPasswordDelete(item);
-          },
-          child: PasswordGridCard(
-            password: item as PasswordCardDto,
-            onToggleFavorite: () => _onPasswordToggleFavorite(item),
-            onTogglePin: () => _onPasswordTogglePin(item),
-            onToggleArchive: () => _onPasswordToggleArchive(item),
-            onDelete: () => _onPasswordDelete(item),
-            onRestore: () => _onPasswordRestore(item),
-          ),
+        return PasswordGridCard(
+          password: item as PasswordCardDto,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
         );
       case EntityType.note:
         return const Center(child: Text('Note grid TODO'));
@@ -366,29 +354,41 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     }
   }
 
-  void _onPasswordToggleFavorite(PasswordCardDto password) {
-    ref.read(paginatedListProvider.notifier).toggleFavorite(password.id);
+
+
+
+
+
+
+
+
+
+
+  
+
+  void _onToggleFavorite(String id) {
+    ref.read(paginatedListProvider.notifier).toggleFavorite(id);
   }
 
-  void _onPasswordTogglePin(PasswordCardDto password) {
-    ref.read(paginatedListProvider.notifier).togglePin(password.id);
+  void _onTogglePin(String id) {
+    ref.read(paginatedListProvider.notifier).togglePin(id);
   }
 
-  void _onPasswordToggleArchive(PasswordCardDto password) {
-    ref.read(paginatedListProvider.notifier).toggleArchive(password.id);
+  void _onToggleArchive(String id) {
+    ref.read(paginatedListProvider.notifier).toggleArchive(id);
   }
 
-  void _onPasswordDelete(PasswordCardDto password) {
-    if (password.isDeleted) {
+  void _onDelete(String id, bool isDeleted) {
+    if (isDeleted) {
       // Если запись уже удалена, выполняем окончательное удаление
-      ref.read(paginatedListProvider.notifier).permanentDelete(password.id);
+      ref.read(paginatedListProvider.notifier).permanentDelete(id);
     } else {
       // Иначе выполняем мягкое удаление
-      ref.read(paginatedListProvider.notifier).delete(password.id);
+      ref.read(paginatedListProvider.notifier).delete(id);
     }
   }
 
-  void _onPasswordRestore(PasswordCardDto password) {
-    ref.read(paginatedListProvider.notifier).restoreFromDeleted(password.id);
+  void _onRestore(String id) {
+    ref.read(paginatedListProvider.notifier).restoreFromDeleted(id);
   }
 }

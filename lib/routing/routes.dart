@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
@@ -57,17 +58,17 @@ final List<RouteBase> appRoutes = [
         DashboardLayout(key: dashboardSidebarKey, child: child),
     routes: [
       GoRoute(
-        path: AppRoutesPaths.dashboardHome ,
+        path: AppRoutesPaths.dashboardHome,
         pageBuilder: (context, state) {
           if (!_enableDashboardTransitions) {
             return MaterialPage(
               key: state.pageKey,
-              child: const DashboardHomeScreen(),
+              child: const DashboardHomeScreenV2(),
             );
           }
           return CustomTransitionPage(
             key: state.pageKey,
-            child: const DashboardHomeScreen(),
+            child: const DashboardHomeScreenV2(),
             transitionDuration: const Duration(milliseconds: 200),
             reverseTransitionDuration: const Duration(milliseconds: 150),
             transitionsBuilder:

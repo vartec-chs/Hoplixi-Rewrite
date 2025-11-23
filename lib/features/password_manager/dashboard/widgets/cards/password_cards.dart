@@ -169,6 +169,8 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
     final hostUrl = _extractHost(widget.password.url);
 
     return Card(
+      clipBehavior: Clip.hardEdge,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Column(
         children: [
@@ -177,7 +179,7 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
             onExit: (_) => _onHoverChanged(false),
             child: InkWell(
               onTap: _toggleExpanded,
-              borderRadius: BorderRadius.circular(12),
+
               child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: Row(

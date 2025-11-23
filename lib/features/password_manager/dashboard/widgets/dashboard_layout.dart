@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
@@ -247,7 +248,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
                     _buildNavigationRail(context, selectedIndex),
 
                     // Home контент (всегда присутствует)
-                    const Expanded(flex: 1, child: DashboardHomeScreen()),
+                    const Expanded(flex: 1, child: DashboardHomeScreenV2()),
 
                     // Анимированный Sidebar справа
                     AnimatedBuilder(
