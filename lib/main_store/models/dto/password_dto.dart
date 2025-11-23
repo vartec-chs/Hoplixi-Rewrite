@@ -55,7 +55,7 @@ sealed class GetPasswordDto with _$GetPasswordDto {
 
 /// DTO для карточки пароля (основная информация для отображения)
 @freezed
-sealed class PasswordCardDto with _$PasswordCardDto {
+sealed class PasswordCardDto with _$PasswordCardDto implements BaseCardDto {
   const factory PasswordCardDto({
     required String id,
     required String name,

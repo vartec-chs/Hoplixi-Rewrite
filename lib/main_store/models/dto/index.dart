@@ -1,6 +1,8 @@
 library;
 
 export 'main_store_dto.dart';
+export 'base_card_dto.dart';
+export 'base_card_extensions.dart';
 export 'password_dto.dart';
 export 'password_history_dto.dart';
 export 'otp_dto.dart';

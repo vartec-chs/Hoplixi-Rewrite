@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
 
 part 'file_dto.freezed.dart';
 part 'file_dto.g.dart';
@@ -54,7 +55,7 @@ sealed class GetFileDto with _$GetFileDto {
 
 /// DTO для карточки файла (основная информация для отображения)
 @freezed
-sealed class FileCardDto with _$FileCardDto {
+sealed class FileCardDto with _$FileCardDto implements BaseCardDto {
   const factory FileCardDto({
     required String id,
     required String name,

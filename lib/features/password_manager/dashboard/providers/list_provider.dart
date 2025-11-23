@@ -10,6 +10,7 @@ import 'package:hoplixi/features/password_manager/dashboard/providers/filter_pro
 import 'package:hoplixi/features/password_manager/dashboard/providers/filter_tab_provider.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
@@ -23,11 +24,13 @@ const int kDefaultPageSize = 20;
 
 /// Провайдер family: для каждого EntityType — свой экземпляр Notifier
 final paginatedListProvider =
-    AsyncNotifierProvider<PaginatedListNotifier, DashboardListState<dynamic>>(
-      PaginatedListNotifier.new,
-    );
+    AsyncNotifierProvider<
+      PaginatedListNotifier,
+      DashboardListState<BaseCardDto>
+    >(PaginatedListNotifier.new);
 
-class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
+class PaginatedListNotifier
+    extends AsyncNotifier<DashboardListState<BaseCardDto>> {
   int get pageSize {
     // можно иметь разный pageSize для разных типов, если нужно
     return kDefaultPageSize;
@@ -45,7 +48,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
   ProviderSubscription<DataRefreshState>? _otpRefreshSubscription;
 
   @override
-  Future<DashboardListState<dynamic>> build() async {
+  Future<DashboardListState<BaseCardDto>> build() async {
     ref.listen(filterTabProvider, (prev, next) {
       if (prev != next) {
         _resetAndLoad();
@@ -194,7 +197,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
   }
 
   /// Выбор DAO по type — вынеси в отдельную функцию/мапу
-  Future<FilterDao<dynamic, dynamic>> _daoForType() {
+  Future<FilterDao<dynamic, BaseCardDto>> _daoForType() {
     switch (ref.read(entityTypeProvider).currentType) {
       case EntityType.password:
         return ref.read(passwordFilterDaoProvider.future);
@@ -314,7 +317,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     }
   }
 
-  Future<DashboardListState<dynamic>> _loadInitialData() async {
+  Future<DashboardListState<BaseCardDto>> _loadInitialData() async {
     try {
       // Получаем DAO и делаем тестовую проверку (по аналогии с твоим кодом)
       final dao = await _daoForType();
@@ -327,7 +330,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
       final items = await dao.getFiltered(filter);
       final totalCount = await dao.countFiltered(filter);
 
-      return DashboardListState<dynamic>(
+      return DashboardListState<BaseCardDto>(
         items: items,
         isLoading: false,
         hasMore: items.length >= pageSize && items.length < totalCount,
@@ -401,7 +404,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     final newFav = !(item.isFavorite ?? false);
 
     final updated = [...cur.items];
-    updated[index] = item.copyWith(isFavorite: newFav);
+    updated[index] = item.copyWithBase(isFavorite: newFav);
 
     state = AsyncValue.data(cur.copyWith(items: updated));
 
@@ -441,7 +444,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     final newPin = !(item.isPinned ?? false);
 
     final updated = [...cur.items];
-    updated[index] = item.copyWith(isPinned: newPin);
+    updated[index] = item.copyWithBase(isPinned: newPin);
 
     state = AsyncValue.data(cur.copyWith(items: updated));
 
@@ -480,7 +483,7 @@ class PaginatedListNotifier extends AsyncNotifier<DashboardListState<dynamic>> {
     final newArchive = !(item.isArchived ?? false);
 
     final updated = [...cur.items];
-    updated[index] = item.copyWith(isArchived: newArchive);
+    updated[index] = item.copyWithBase(isArchived: newArchive);
 
     state = AsyncValue.data(cur.copyWith(items: updated));
 

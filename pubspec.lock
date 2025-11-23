@@ -45,10 +45,10 @@ packages:
     dependency: "direct main"
     description:
       name: animations
-      sha256: a8031b276f0a7986ac907195f10ca7cd04ecf2a8a566bd6dbe03018a9b02b427
+      sha256: "18938cefd7dcc04e1ecac0db78973761a01e4bc2d6bfae0cfa596bfeac9e96ab"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "2.1.1"
   archive:
     dependency: "direct main"
     description:
@@ -109,10 +109,10 @@ packages:
     dependency: "direct dev"
     description:
       name: build_runner
-      sha256: "7b5b569f3df370590a85029148d6fc66c7d0201fc6f1847c07dd85d365ae9fcd"
+      sha256: "110c56ef29b5eb367b4d17fc79375fa8c18a6cd7acd92c05bb3986c17a079057"
       url: "https://pub.dev"
     source: hosted
-    version: "2.10.3"
+    version: "2.10.4"
   built_collection:
     dependency: transitive
     description:
@@ -322,7 +322,7 @@ packages:
     source: hosted
     version: "2.29.0"
   drift_dev:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: drift_dev
       sha256: "6019f827544e77524ffd5134ae0cb75dfd92ef5ef3e269872af92840c929cd43"
@@ -365,10 +365,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: f8f4ea435f791ab1f817b4e338ed958cb3d04ba43d6736ffc39958d950754967
+      sha256: "7872545770c277236fd32b022767576c562ba28366204ff1a5628853cf8f2200"
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.6"
+    version: "10.3.7"
   file_selector_linux:
     dependency: transitive
     description:
@@ -546,10 +546,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_svg
-      sha256: "055de8921be7b8e8b98a233c7a5ef84b3a6fcc32f46f1ebf5b9bb3576d108355"
+      sha256: "87fbd7c534435b6c5d9d98b01e1fd527812b82e68ddd8bd35fc45ed0fa8f0a95"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.2"
+    version: "2.2.3"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -604,10 +604,10 @@ packages:
     dependency: "direct main"
     description:
       name: get_it
-      sha256: "84792561b731b6463d053e9761a5236da967c369da10b134b8585a5e18429956"
+      sha256: "368c1abda38084fb5c0c280bfdd5e4ddb010eaa022ff3e953e8b503f7b334b7d"
       url: "https://pub.dev"
     source: hosted
-    version: "9.0.5"
+    version: "9.1.0"
   glob:
     dependency: transitive
     description:
@@ -1116,10 +1116,10 @@ packages:
     dependency: "direct main"
     description:
       name: pinput
-      sha256: c41f42ee301505ae2375ec32871c985d3717bf8aee845620465b286e0140aad2
+      sha256: bffcad45f97e372660ed512f5d87fb3253d54ae9f79e5e8085854e28f15aae5d
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.2"
+    version: "6.0.0"
   platform:
     dependency: transitive
     description:

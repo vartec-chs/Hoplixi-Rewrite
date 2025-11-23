@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
 
 part 'otp_dto.freezed.dart';
 part 'otp_dto.g.dart';
@@ -58,7 +59,7 @@ sealed class GetOtpDto with _$GetOtpDto {
 
 /// DTO для карточки OTP (основная информация для отображения)
 @freezed
-sealed class OtpCardDto with _$OtpCardDto {
+sealed class OtpCardDto with _$OtpCardDto implements BaseCardDto {
   const factory OtpCardDto({
     required String id,
     String? issuer,

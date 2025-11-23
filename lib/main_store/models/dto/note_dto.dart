@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
 
 part 'note_dto.freezed.dart';
 part 'note_dto.g.dart';
@@ -46,7 +47,7 @@ sealed class GetNoteDto with _$GetNoteDto {
 
 /// DTO для карточки заметки (основная информация для отображения)
 @freezed
-sealed class NoteCardDto with _$NoteCardDto {
+sealed class NoteCardDto with _$NoteCardDto implements BaseCardDto {
   const factory NoteCardDto({
     required String id,
     required String title,

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
 
 part 'bank_card_dto.freezed.dart';
 part 'bank_card_dto.g.dart';
@@ -64,7 +65,7 @@ sealed class GetBankCardDto with _$GetBankCardDto {
 
 /// DTO для карточки банковской карты (основная информация для отображения)
 @freezed
-sealed class BankCardCardDto with _$BankCardCardDto {
+sealed class BankCardCardDto with _$BankCardCardDto implements BaseCardDto {
   const factory BankCardCardDto({
     required String id,
     required String name,

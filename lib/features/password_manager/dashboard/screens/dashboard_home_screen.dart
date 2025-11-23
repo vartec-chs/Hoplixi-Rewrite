@@ -11,6 +11,7 @@ import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/passwo
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/dashboard_list_toolbar.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/entity_list.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -25,7 +26,7 @@ class DashboardHomeScreen extends ConsumerStatefulWidget {
 class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   late final ScrollController _scrollController;
   static const _kScrollThreshold = 200.0;
-  DashboardListState<dynamic>? _cachedState;
+  DashboardListState<BaseCardDto>? _cachedState;
   Timer? _loadingTimer;
   bool _showLoadingIndicator = false;
 
@@ -72,8 +73,8 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   }
 
   void _handleListStateChange(
-    AsyncValue<DashboardListState<dynamic>>? previous,
-    AsyncValue<DashboardListState<dynamic>> next,
+    AsyncValue<DashboardListState<BaseCardDto>>? previous,
+    AsyncValue<DashboardListState<BaseCardDto>> next,
   ) {
     final value = next.whenOrNull(data: (data) => data);
     if (value != null && mounted) {
@@ -137,7 +138,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   Widget _buildContentSliver(
     EntityType entityType,
     ViewMode viewMode,
-    AsyncValue<DashboardListState<dynamic>> asyncValue,
+    AsyncValue<DashboardListState<BaseCardDto>> asyncValue,
   ) {
     final showOverlay = _showLoadingIndicator;
     return asyncValue.when(
@@ -188,7 +189,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   Widget _buildStateSliver(
     EntityType entityType,
     ViewMode viewMode,
-    DashboardListState<dynamic> state,
+    DashboardListState<BaseCardDto> state,
     bool showOverlay,
   ) {
     if (state.items.isEmpty) {
@@ -216,7 +217,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
       );
     }
 
-    final listSliver = EntitySliverList<dynamic>(
+    final listSliver = EntitySliverList<BaseCardDto>(
       items: state.items,
       viewMode: viewMode,
       listBuilder: (ctx, item) => _buildListCardFor(entityType, item),
@@ -269,7 +270,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<DashboardListState<dynamic>>>(
+    ref.listen<AsyncValue<DashboardListState<BaseCardDto>>>(
       paginatedListProvider,
       _handleListStateChange,
     );
@@ -311,13 +312,19 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   Widget _buildListCardFor(EntityType type, dynamic item) {
     switch (type) {
       case EntityType.password:
-        return PasswordListCard(
-          password: item as PasswordCardDto,
-          onToggleFavorite: () => _onPasswordToggleFavorite(item),
-          onTogglePin: () => _onPasswordTogglePin(item),
-          onToggleArchive: () => _onPasswordToggleArchive(item),
-          onDelete: () => _onPasswordDelete(item),
-          onRestore: () => _onPasswordRestore(item),
+        return Dismissible(
+          key: ValueKey(item.id),
+          onDismissed: (direction) {
+            _onPasswordDelete(item);
+          },
+          child: PasswordListCard(
+            password: item as PasswordCardDto,
+            onToggleFavorite: () => _onPasswordToggleFavorite(item),
+            onTogglePin: () => _onPasswordTogglePin(item),
+            onToggleArchive: () => _onPasswordToggleArchive(item),
+            onDelete: () => _onPasswordDelete(item),
+            onRestore: () => _onPasswordRestore(item),
+          ),
         );
       case EntityType.note:
         return const Center(child: Text('Note card TODO'));
@@ -334,13 +341,19 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   Widget _buildGridCardFor(EntityType type, dynamic item) {
     switch (type) {
       case EntityType.password:
-        return PasswordGridCard(
-          password: item as PasswordCardDto,
-          onToggleFavorite: () => _onPasswordToggleFavorite(item),
-          onTogglePin: () => _onPasswordTogglePin(item),
-          onToggleArchive: () => _onPasswordToggleArchive(item),
-          onDelete: () => _onPasswordDelete(item),
-          onRestore: () => _onPasswordRestore(item),
+        return Dismissible(
+          key: ValueKey(item.id),
+          onDismissed: (direction) {
+            _onPasswordDelete(item);
+          },
+          child: PasswordGridCard(
+            password: item as PasswordCardDto,
+            onToggleFavorite: () => _onPasswordToggleFavorite(item),
+            onTogglePin: () => _onPasswordTogglePin(item),
+            onToggleArchive: () => _onPasswordToggleArchive(item),
+            onDelete: () => _onPasswordDelete(item),
+            onRestore: () => _onPasswordRestore(item),
+          ),
         );
       case EntityType.note:
         return const Center(child: Text('Note grid TODO'));
