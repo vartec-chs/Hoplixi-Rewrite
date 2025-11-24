@@ -407,9 +407,12 @@ class _CloseButton extends StatelessWidget {
           angle: controller.value * math.pi * 0.5,
           child: FloatingActionButton(
             onPressed: onTap,
-            elevation: 6,
-            backgroundColor: theme.colorScheme.primaryContainer,
-            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: theme.colorScheme.onSecondary,
             child: Icon(icon),
           ),
         );
