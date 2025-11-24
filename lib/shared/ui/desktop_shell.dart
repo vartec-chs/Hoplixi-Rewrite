@@ -95,7 +95,7 @@ class _RootBarsOverlayState extends State<RootBarsOverlay> {
     super.initState();
 
     // Ставим callback, чтобы при изменении навигации поднимать entry наверх
-    RootOverlayObserver.instance.onRoutesChanged = _bringEntryToTop;
+    // RootOverlayObserver.instance.onRoutesChanged = _bringEntryToTop;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _insertIntoRootOverlay();

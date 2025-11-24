@@ -15,7 +15,7 @@ import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
-const _kStatusSwitchDuration = Duration(milliseconds: 250);
+const _kStatusSwitchDuration = Duration(milliseconds: 180);
 
 class DashboardHomeScreenV2 extends ConsumerStatefulWidget {
   const DashboardHomeScreenV2({super.key});
@@ -302,6 +302,12 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
   ) {
     // Определяем состояние для отображения статуса (Empty/Error/Loading)
     final hasItems = _displayedItems.isNotEmpty;
+
+    // Если есть элементы, сразу возвращаем список, чтобы избежать лишних перерисовок статуса
+    if (hasItems) {
+      return _buildAnimatedListOrGrid(entityType, viewMode, asyncValue.value);
+    }
+
     final providerHasItems = asyncValue.value?.items.isNotEmpty ?? false;
 
     final isInitialLoading = asyncValue.isLoading && !hasItems;
@@ -347,11 +353,11 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
         // Список всегда в дереве, чтобы избежать Duplicate GlobalKey при анимациях
         _buildAnimatedListOrGrid(entityType, viewMode, asyncValue.value),
         // Статус (загрузка, ошибка, пусто) анимируется отдельно
-        // SliverAnimatedSwitcher(
-        //   duration: const Duration(milliseconds: 150),
-        //   child: statusSliver,
-        // ),
-        statusSliver,
+        SliverAnimatedSwitcher(
+          duration: _kStatusSwitchDuration,
+          child: statusSliver,
+        ),
+        // statusSliver,
       ],
     );
   }
