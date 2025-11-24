@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// Направление раскрытия FAB кнопок
@@ -5,48 +7,94 @@ enum FABExpandDirection {
   /// Вертикально вверх (в столбик)
   up,
 
-  /// Горизонтально вправо (в линию)
-  right,
+  /// Горизонтально вправо с раскладкой вниз
+  rightDown,
 }
 
 /// Callback для уведомления об изменении состояния открытия/закрытия
 typedef FABStateChangeCallback = void Function(bool isOpen);
 
+// =============================================================================
+// FAB Action Data
+// =============================================================================
+
+/// Данные для действия в раскрывающемся FAB
+@immutable
+class FABActionData {
+  const FABActionData({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.backgroundColor,
+    this.foregroundColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+}
+
+// =============================================================================
+// Expandable FAB Widget
+// =============================================================================
+
+/// Раскрывающийся FAB с поддержкой двух режимов раскладки.
+/// Все дочерние элементы отображаются в Overlay поверх остального UI.
 @immutable
 class ExpandableFAB extends StatefulWidget {
   const ExpandableFAB({
     super.key,
-    this.initialOpen,
-    this.distance = 112,
-    this.iconData,
-    this.expandDirection = FABExpandDirection.up,
+    required this.actions,
+    this.mainIcon = Icons.add,
+    this.closeIcon = Icons.close,
+    this.direction = FABExpandDirection.up,
+    this.spacing = 56.0,
+    this.duration = const Duration(milliseconds: 300),
+    this.curve = Curves.easeOutCubic,
+    this.reverseCurve = Curves.easeInCubic,
     this.onStateChanged,
-    this.showActionsInOverlay = false,
-
-    this.importOtpCodes,
-    this.migratePasswords,
-
-    required this.onCreateEntity,
-    required this.entityName,
-
-    required this.onCreateCategory,
-    required this.onCreateTag,
-    required this.onIconCreate,
+    this.showBackdrop = true,
+    this.backdropOpacity = 0.4,
+    this.isUseInNavigationRail = false,
   });
 
-  final bool? initialOpen;
-  final double distance;
-  final String entityName;
-  final IconData? iconData;
-  final FABExpandDirection expandDirection;
+  /// Список действий для отображения
+  final List<FABActionData> actions;
+
+  /// Иконка главной кнопки (закрытое состояние)
+  final IconData mainIcon;
+
+  /// Иконка главной кнопки (открытое состояние)
+  final IconData closeIcon;
+
+  /// Направление раскрытия
+  final FABExpandDirection direction;
+
+  /// Флаг использования внутри NavigationRail
+  final bool isUseInNavigationRail;
+
+  /// Расстояние между элементами
+  final double spacing;
+
+  /// Длительность анимации
+  final Duration duration;
+
+  /// Кривая анимации открытия
+  final Curve curve;
+
+  /// Кривая анимации закрытия
+  final Curve reverseCurve;
+
+  /// Callback при изменении состояния
   final FABStateChangeCallback? onStateChanged;
-  final bool showActionsInOverlay;
-  final VoidCallback? importOtpCodes;
-  final VoidCallback? migratePasswords;
-  final VoidCallback onCreateEntity;
-  final VoidCallback onCreateCategory;
-  final VoidCallback onCreateTag;
-  final VoidCallback onIconCreate;
+
+  /// Показывать затемнённый фон
+  final bool showBackdrop;
+
+  /// Прозрачность фона (0.0 - 1.0)
+  final double backdropOpacity;
 
   @override
   State<ExpandableFAB> createState() => ExpandableFABState();
@@ -54,398 +102,180 @@ class ExpandableFAB extends StatefulWidget {
 
 class ExpandableFABState extends State<ExpandableFAB>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _expandAnimation;
-  bool _open = false;
+  static const double _fabSize = 56.0;
 
-  Animation<double> get expandAnimation => _expandAnimation;
-  bool get isOpen => _open;
+  final GlobalKey _fabKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+  late AnimationController _controller;
+  bool _isOpen = false;
 
-  /// Публичный метод для переключения состояния FAB
-  void toggle() {
-    _toggle();
+  /// Публичное свойство для проверки состояния
+  bool get isOpen => _isOpen;
+
+  /// Публичный метод для переключения состояния
+  void toggle() => _toggle();
+
+  /// Публичный метод для открытия
+  void open() {
+    if (!_isOpen) _toggle();
+  }
+
+  /// Публичный метод для закрытия
+  void close() {
+    if (_isOpen) _toggle();
   }
 
   @override
   void initState() {
     super.initState();
-    _open = widget.initialOpen ?? false;
-    _controller = AnimationController(
-      value: _open ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 250),
-      vsync: this,
-    );
-    _expandAnimation = CurvedAnimation(
-      curve: Curves.fastOutSlowIn,
-      reverseCurve: Curves.easeOutQuad,
-      parent: _controller,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+  }
+
+  @override
+  void didUpdateWidget(covariant ExpandableFAB oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Обновляем длительность если изменилась
+    if (widget.duration != oldWidget.duration) {
+      _controller.duration = widget.duration;
+    }
+    // Закрываем и переоткрываем при смене направления
+    if (widget.direction != oldWidget.direction && _isOpen) {
+      _closeImmediate();
+    }
   }
 
   @override
   void dispose() {
+    _removeOverlay();
     _controller.dispose();
     super.dispose();
   }
 
   void _toggle() {
-    setState(() {
-      _open = !_open;
-      if (_open) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
+    if (_isOpen) {
+      _close();
+    } else {
+      _open();
+    }
+  }
+
+  void _open() {
+    _createOverlay();
+    _controller.forward();
+    setState(() => _isOpen = true);
+    widget.onStateChanged?.call(true);
+  }
+
+  void _close() {
+    _controller.reverse().then((_) {
+      _removeOverlay();
+      if (mounted) {
+        setState(() => _isOpen = false);
       }
-      widget.onStateChanged?.call(_open);
     });
+    widget.onStateChanged?.call(false);
   }
 
-  void _executeAction(VoidCallback action) {
-    _toggle(); // Закрываем FAB
-    action(); // Выполняем действие
+  void _closeImmediate() {
+    _controller.reset();
+    _removeOverlay();
+    setState(() => _isOpen = false);
+    widget.onStateChanged?.call(false);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 56,
-      height: 56,
-      child: Stack(
-        alignment: Alignment.center,
-        clipBehavior: Clip.none,
-        children: [
-          if (widget.showActionsInOverlay) _buildTapToCloseFab(),
-          // Показываем кнопки здесь только если не используем overlay
-          if (!widget.showActionsInOverlay) ..._buildExpandingActionButtons(),
-          _buildTapToOpenFab(),
-        ],
-      ),
-    );
+  void _executeAction(FABActionData action) {
+    _close();
+    action.onPressed();
   }
 
-  Widget _buildTapToCloseFab() {
-    return SizedBox(
-      width: 56,
-      height: 56,
-      child: Center(
-        child: Material(
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          elevation: 4,
-          color: Theme.of(context).colorScheme.secondary,
-          child: InkWell(
-            onTap: _toggle,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Icon(
-                Icons.close,
-                color: Theme.of(context).colorScheme.onSecondary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  Offset _getFabOffset() {
+    final renderBox = _fabKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return Offset.zero;
+    return renderBox.localToGlobal(Offset.zero);
   }
 
-  List<Widget> _buildExpandingActionButtons() {
-    return _buildActionsList()
-        .asMap()
-        .entries
-        .map(
-          (entry) => _ExpandingActionButton(
-            index: entry.key,
-            spacing: 60,
-            progress: _expandAnimation,
-            direction: widget.expandDirection,
-            child: entry.value,
-          ),
-        )
-        .toList();
+  Size _getFabSize() {
+    final renderBox = _fabKey.currentContext?.findRenderObject() as RenderBox?;
+    return renderBox?.size ?? const Size(_fabSize, _fabSize);
   }
 
-  List<ActionButton> _buildActionsList() {
-    return [
-      ActionButton(
-        onPressed: () => _executeAction(widget.onCreateTag),
-        icon: const Icon(Icons.local_offer),
-        label: 'Создать тег',
-        backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
-      ),
-      ActionButton(
-        onPressed: () => _executeAction(widget.onCreateCategory),
-        icon: const Icon(Icons.folder),
-        label: 'Создать категорию',
-        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
-      ),
-      ActionButton(
-        onPressed: () => _executeAction(widget.onIconCreate),
-        icon: const Icon(Icons.folder),
-        label: 'Создать иконку',
-        backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
-      ),
-      if (widget.importOtpCodes != null)
-        ActionButton(
-          onPressed: () => _executeAction(widget.importOtpCodes!),
-          icon: const Icon(Icons.qr_code),
-          label: 'Импортировать OTP коды',
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-        ),
-      if (widget.migratePasswords != null)
-        ActionButton(
-          onPressed: () => _executeAction(widget.migratePasswords!),
-          icon: const Icon(Icons.sync),
-          label: 'Миграция паролей',
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-        ),
-      ActionButton(
-        onPressed: () => _executeAction(widget.onCreateEntity),
-        icon: widget.iconData != null
-            ? Icon(widget.iconData)
-            : const Icon(Icons.key),
-        label: 'Создать ${widget.entityName}',
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-      ),
-    ];
-  }
+  void _createOverlay() {
+    if (_overlayEntry != null) return;
 
-  List<ActionButton> get actionButtons => _buildActionsList();
-
-  Widget _buildTapToOpenFab() {
-    return IgnorePointer(
-      ignoring: _open,
-      child: AnimatedContainer(
-        transformAlignment: Alignment.center,
-        transform: Matrix4.diagonal3Values(
-          _open ? 0.7 : 1.0,
-          _open ? 0.7 : 1.0,
-          1.0,
-        ),
-        duration: const Duration(milliseconds: 250),
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
-        child: AnimatedOpacity(
-          opacity: _open ? 0.0 : 1.0,
-          curve: const Interval(0.25, 1.0, curve: Curves.easeInOut),
-          duration: const Duration(milliseconds: 250),
-          child: FloatingActionButton(
-            onPressed: _toggle,
-            elevation: 0,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            foregroundColor: Theme.of(context).colorScheme.onSecondary,
-            child: const Icon(Icons.add),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-@immutable
-class _ExpandingActionButton extends StatelessWidget {
-  const _ExpandingActionButton({
-    required this.index,
-    required this.spacing,
-    required this.progress,
-    required this.direction,
-    this.fabOffset = Offset.zero,
-    required this.child,
-  });
-
-  final int index;
-  final double spacing;
-  final Animation<double> progress;
-  final FABExpandDirection direction;
-  final Offset fabOffset;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: progress,
-      builder: (context, child) {
-        final offset = progress.value * spacing * (index + 1);
-
-        // Определяем позиционирование в зависимости от направления
-        final double? left;
-        final double? top;
-        final double? bottom;
-
-        if (direction == FABExpandDirection.right) {
-          // Горизонтально вправо - каскадная анимация
-          // Первая кнопка появляется справа, остальные выпадают из неё вниз
-
-          // Задержка для каждой кнопки (первая без задержки)
-          final delay = index * 0.15;
-          final adjustedProgress =
-              (progress.value - delay).clamp(0.0, 1.0) /
-              (1.0 - delay).clamp(0.01, 1.0);
-
-          if (index == 0) {
-            // Первая кнопка - анимированно выдвигается справа от FAB
-            final startLeft =
-                fabOffset.dx + 8; // Начальная позиция (близко к FAB)
-            final endLeft = fabOffset.dx + 80; // Конечная позиция
-            left = startLeft + (endLeft - startLeft) * adjustedProgress;
-            top = fabOffset.dy + 5;
-          } else {
-            final startLeft =
-                fabOffset.dx + 8; // Начальная позиция (близко к FAB)
-            final endLeft = fabOffset.dx + 80; // Конечная позиция
-            left = startLeft + (endLeft - startLeft) * adjustedProgress;
-            // Остальные кнопки - выпадают из первой кнопки вниз
-            // left = fabOffset.dx + 80;
-            // Интерполируем позицию: начинаем с позиции первой кнопки
-            final startTop = fabOffset.dy + 5;
-            final endTop = fabOffset.dy + 5 + (index * 64);
-            top = startTop + (endTop - startTop) * adjustedProgress;
-          }
-          bottom = null;
-
-          // Масштабирование с задержкой
-          final scale = adjustedProgress;
-
-          return Positioned(
-            left: left,
-            top: top,
-            bottom: bottom,
-            child: Opacity(
-              opacity: adjustedProgress,
-              child: Transform.scale(scale: scale, child: child!),
-            ),
+    final fabOffset = _getFabOffset();
+    final fabSize = _getFabSize();
+    final fabCenter = widget.isUseInNavigationRail
+        ? Offset(fabOffset.dx * 3.4, fabOffset.dy / 1.3)
+        : Offset(
+            fabOffset.dx + fabSize.width / 2,
+            fabOffset.dy - fabSize.height / 4,
           );
-        } else {
-          // Вертикально вверх - кнопки центрированы относительно FAB
-          // fabOffset.dx + 28 - это центр FAB (56/2 = 28)
-          left = fabOffset.dx + 28; // Смещаем влево на половину ширины кнопки
-          top = fabOffset.dy - 32 - offset; // Вычитаем, чтобы идти вверх
-          bottom = null;
 
-          return Positioned(
-            left: left,
-            top: top,
-            bottom: bottom,
-            child: Transform.translate(
-              offset: const Offset(
-                -0.5,
-                0,
-              ), // Смещаем влево на половину ширины кнопки
-              child: FractionalTranslation(
-                translation: const Offset(-0.5, 0),
-                child: Transform.scale(scale: progress.value, child: child!),
-              ),
-            ),
-          );
-        }
-      },
-      child: FadeTransition(opacity: progress, child: child),
+    _overlayEntry = OverlayEntry(
+      builder: (context) => _FABOverlayContent(
+        controller: _controller,
+        actions: widget.actions,
+        direction: widget.direction,
+        spacing: widget.spacing,
+        curve: widget.curve,
+        reverseCurve: widget.reverseCurve,
+        fabOffset: fabOffset,
+        fabSize: fabSize,
+        fabCenter: fabCenter,
+        showBackdrop: widget.showBackdrop,
+        backdropOpacity: widget.backdropOpacity,
+        closeIcon: widget.closeIcon,
+        onClose: _close,
+        onActionPressed: _executeAction,
+      ),
     );
+
+    Overlay.of(context).insert(_overlayEntry!);
   }
-}
 
-/// Overlay для отображения раскрывающихся кнопок поверх всего контента
-class FABActionsOverlay extends StatelessWidget {
-  const FABActionsOverlay({
-    super.key,
-    required this.isOpen,
-    required this.animation,
-    required this.actions,
-    required this.direction,
-    required this.spacing,
-    required this.fabOffset,
-    this.onBackdropTap,
-    this.onCloseTap,
-    this.showCloseButton = true,
-  });
-
-  final bool isOpen;
-  final Animation<double> animation;
-  final List<ActionButton> actions;
-  final FABExpandDirection direction;
-  final double spacing;
-  final Offset fabOffset;
-  final VoidCallback? onBackdropTap;
-  final VoidCallback? onCloseTap;
-  final bool showCloseButton;
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry?.dispose();
+    _overlayEntry = null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        // Показываем overlay только когда есть прогресс анимации
-        if (animation.value == 0.0) return const SizedBox.shrink();
+    final theme = Theme.of(context);
 
-        return Positioned.fill(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Затемнение на весь экран с возможностью закрытия по клику
-              GestureDetector(
-                onTap: onBackdropTap,
-                behavior: HitTestBehavior.opaque,
-                child: Opacity(
-                  opacity:
-                      animation.value * 0.5, // Максимальная прозрачность 50%
-                  child: Container(color: Colors.black),
-                ),
-              ),
-              // Кнопки действий
-              for (int i = 0; i < actions.length; i++)
-                _ExpandingActionButton(
-                  index: i,
-                  spacing: spacing,
-                  progress: animation,
-                  direction: direction,
-                  fabOffset: fabOffset,
-                  child: actions[i],
-                ),
-              // Кнопка закрытия поверх всего (только для desktop)
-              if (showCloseButton)
-                Positioned(
-                  left: fabOffset.dx + 1,
-                  top: fabOffset.dy + 6,
-                  child: AnimatedContainer(
-                    transformAlignment: Alignment.center,
-                    transform: Matrix4.diagonal3Values(
-                      animation.value * 0.3 + 0.7, // От 1.0 до 0.7
-                      animation.value * 0.3 + 0.7,
-                      1.0,
-                    ),
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOut,
-                    child: AnimatedOpacity(
-                      opacity: animation.value, // Плавное появление
-                      duration: const Duration(milliseconds: 250),
-                      child: SizedBox(
-                        width: 46,
-                        height: 46,
-                        child: Material(
-                          shape: const CircleBorder(),
-                          clipBehavior: Clip.antiAlias,
-                          elevation: 4,
-                          color: Theme.of(context).colorScheme.surface,
-                          child: InkWell(
-                            onTap: onCloseTap,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Icon(
-                                Icons.close,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        // Масштаб: 1.0 -> 0.75 при открытии
+        final scale = 1.0 - (_controller.value * 0.25);
+        // Скругление: 16 -> 28 (полностью круглая) при открытии
+        final borderRadius = 16.0 + (_controller.value * 12.0);
+
+        return SizedBox(
+          key: _fabKey,
+          width: _fabSize,
+          height: _fabSize,
+          child: Transform.scale(
+            scale: scale,
+            child: Material(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(borderRadius),
+              elevation: _isOpen ? 2 : 6,
+              shadowColor: Colors.black38,
+              child: InkWell(
+                onTap: _toggle,
+                borderRadius: BorderRadius.circular(borderRadius),
+                child: Center(
+                  child: Transform.rotate(
+                    angle: _controller.value * math.pi * 0.5,
+                    child: Icon(
+                      _isOpen ? widget.closeIcon : widget.mainIcon,
+                      color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ),
-            ],
+              ),
+            ),
           ),
         );
       },
@@ -453,6 +283,311 @@ class FABActionsOverlay extends StatelessWidget {
   }
 }
 
+// =============================================================================
+// Overlay Content
+// =============================================================================
+
+class _FABOverlayContent extends StatelessWidget {
+  const _FABOverlayContent({
+    required this.controller,
+    required this.actions,
+    required this.direction,
+    required this.spacing,
+    required this.curve,
+    required this.reverseCurve,
+    required this.fabOffset,
+    required this.fabSize,
+    required this.fabCenter,
+    required this.showBackdrop,
+    required this.backdropOpacity,
+    required this.closeIcon,
+    required this.onClose,
+    required this.onActionPressed,
+  });
+
+  final AnimationController controller;
+  final List<FABActionData> actions;
+  final FABExpandDirection direction;
+  final double spacing;
+  final Curve curve;
+  final Curve reverseCurve;
+  final Offset fabOffset;
+  final Size fabSize;
+  final Offset fabCenter;
+  final bool showBackdrop;
+  final double backdropOpacity;
+  final IconData closeIcon;
+  final VoidCallback onClose;
+  final void Function(FABActionData) onActionPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Material(
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            // Затемнённый фон
+            if (showBackdrop)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: onClose,
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedBuilder(
+                    animation: controller,
+                    builder: (context, _) {
+                      return ColoredBox(
+                        color: Colors.black.withValues(
+                          alpha: controller.value * backdropOpacity,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+            // Кнопки действий
+            ...List.generate(actions.length, (index) {
+              return _AnimatedActionButton(
+                index: index,
+                totalCount: actions.length,
+                controller: controller,
+                action: actions[index],
+                direction: direction,
+                spacing: spacing,
+                curve: curve,
+                reverseCurve: reverseCurve,
+                fabCenter: fabCenter,
+                onPressed: () => onActionPressed(actions[index]),
+              );
+            }),
+
+            // Кнопка закрытия (на месте FAB)
+            Positioned(
+              left: fabOffset.dx,
+              top: fabOffset.dy - fabSize.height / 1.4,
+              width: fabSize.width,
+              height: fabSize.height,
+              child: _CloseButton(
+                controller: controller,
+                icon: closeIcon,
+                onTap: onClose,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Close Button
+// =============================================================================
+
+class _CloseButton extends StatelessWidget {
+  const _CloseButton({
+    required this.controller,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final AnimationController controller;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return Transform.rotate(
+          angle: controller.value * math.pi * 0.5,
+          child: FloatingActionButton(
+            onPressed: onTap,
+            elevation: 6,
+            backgroundColor: theme.colorScheme.primaryContainer,
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+            child: Icon(icon),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// =============================================================================
+// Animated Action Button
+// =============================================================================
+
+class _AnimatedActionButton extends StatelessWidget {
+  const _AnimatedActionButton({
+    required this.index,
+    required this.totalCount,
+    required this.controller,
+    required this.action,
+    required this.direction,
+    required this.spacing,
+    required this.curve,
+    required this.reverseCurve,
+    required this.fabCenter,
+    required this.onPressed,
+  });
+
+  final int index;
+  final int totalCount;
+  final AnimationController controller;
+  final FABActionData action;
+  final FABExpandDirection direction;
+  final double spacing;
+  final Curve curve;
+  final Curve reverseCurve;
+  final Offset fabCenter;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    // Stagger animation: каждая кнопка появляется с небольшой задержкой
+    final staggerDelay = index * 0.08;
+    final staggerEnd = (0.6 + staggerDelay).clamp(0.0, 1.0);
+
+    final animation = CurvedAnimation(
+      parent: controller,
+      curve: Interval(staggerDelay, staggerEnd, curve: curve),
+      reverseCurve: Interval(staggerDelay, staggerEnd, curve: reverseCurve),
+    );
+
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        final progress = animation.value;
+        if (progress == 0.0) return const SizedBox.shrink();
+
+        final position = _calculatePosition(progress);
+
+        if (direction == FABExpandDirection.up) {
+          // Для направления вверх — центрируем по горизонтали
+          return Positioned(
+            left: position.dx,
+            top: position.dy,
+            child: FractionalTranslation(
+              translation: const Offset(-0.5, 0), // Центрирование по X
+              child: Opacity(
+                opacity: progress,
+                child: Transform.scale(
+                  scale: progress,
+                  alignment: Alignment.bottomCenter,
+                  child: child,
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Для других направлений — стандартное позиционирование
+        return Positioned(
+          left: position.dx,
+          top: position.dy,
+          child: Opacity(
+            opacity: progress,
+            child: Transform.scale(
+              scale: progress,
+              alignment: _getScaleAlignment(),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: _ActionButtonWidget(action: action, onPressed: onPressed),
+    );
+  }
+
+  Offset _calculatePosition(double progress) {
+    switch (direction) {
+      case FABExpandDirection.up:
+        // Вверх от FAB, центрировано по горизонтали
+        // fabCenter.dx — это центр FAB по X
+        final targetY = fabCenter.dy - (index + 1) * spacing;
+        final currentY = fabCenter.dy + (targetY - fabCenter.dy) * progress;
+        // Возвращаем X как центр FAB, смещение сделает FractionalTranslation
+        return Offset(fabCenter.dx, currentY - spacing / 2);
+
+      case FABExpandDirection.rightDown:
+        // Вправо от FAB, затем вниз
+        final targetX = fabCenter.dx + 48; // Сдвиг вправо
+        final targetY = fabCenter.dy - 24 + (index * spacing);
+        final currentX = fabCenter.dx + (targetX - fabCenter.dx) * progress;
+        final currentY = fabCenter.dy + (targetY - fabCenter.dy) * progress;
+        return Offset(currentX, currentY);
+    }
+  }
+
+  Alignment _getScaleAlignment() {
+    switch (direction) {
+      case FABExpandDirection.up:
+        return Alignment.center;
+      case FABExpandDirection.rightDown:
+        return Alignment.centerLeft;
+    }
+  }
+}
+
+// =============================================================================
+// Action Button Widget
+// =============================================================================
+
+class _ActionButtonWidget extends StatelessWidget {
+  const _ActionButtonWidget({required this.action, required this.onPressed});
+
+  final FABActionData action;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final backgroundColor =
+        action.backgroundColor ?? theme.colorScheme.secondaryContainer;
+    final foregroundColor =
+        action.foregroundColor ?? theme.colorScheme.onSecondaryContainer;
+
+    return Material(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(28),
+      elevation: 4,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(action.icon, size: 20, color: foregroundColor),
+              const SizedBox(width: 10),
+              Text(
+                action.label,
+                style: TextStyle(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Legacy Compatibility (можно удалить после миграции)
+// =============================================================================
+
+/// @deprecated Use [FABActionData] instead
 @immutable
 class ActionButton extends StatelessWidget {
   const ActionButton({
@@ -479,7 +614,7 @@ class ActionButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(28),
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             mainAxisSize: MainAxisSize.min,

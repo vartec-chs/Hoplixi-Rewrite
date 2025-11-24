@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/features/component_showcase/screens/button_showcase_screen.dart';
+import 'package:hoplixi/features/component_showcase/screens/expandable_fab_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/modal_sheet_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/notification_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/slider_button_showcase_screen.dart';
@@ -48,6 +49,11 @@ class _ComponentShowcaseScreenState extends State<ComponentShowcaseScreen> {
       title: 'Universal Modal',
       icon: Icons.dashboard,
       screen: const UniversalModalShowcaseScreen(),
+    ),
+    ShowcaseItem(
+      title: 'Expandable FAB',
+      icon: Icons.add_circle,
+      screen: const ExpandableFabScreen(),
     ),
   ];
 

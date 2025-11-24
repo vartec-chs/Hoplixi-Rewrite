@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
@@ -51,16 +50,12 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   late AnimationController _animationController;
   late Animation<double> _sidebarAnimation;
   int _previousIndex = 0;
-  bool _fabIsOpen = false;
+
   final GlobalKey<ExpandableFABState> _fabKey = GlobalKey();
   final GlobalKey<ExpandableFABState> _mobileFabKey = GlobalKey();
-  bool _mobileFabIsOpen = false;
 
   // Отслеживание предыдущего состояния формы
   bool _wasFormRoute = false;
-
-  // FAB параметры
-  String? _entityName;
 
   // FAB действия
   void _onCreateEntity() {
@@ -95,6 +90,68 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
 
   void _onIconCreate() {
     context.push(AppRoutesPaths.dashboardIconManager);
+  }
+
+  void _onImportOtpCodes() {
+    // TODO: Implement OTP import
+    debugPrint('Import OTP codes');
+  }
+
+  void _onMigratePasswords() {
+    // TODO: Implement password migration
+    debugPrint('Migrate passwords');
+  }
+
+  /// Список действий FAB
+  List<FABActionData> _buildFabActions(BuildContext context) {
+    final theme = Theme.of(context);
+    final entityTypeState = ref.read(entityTypeProvider);
+    final entityName = entityTypeState.currentType.label;
+
+    return [
+      FABActionData(
+        icon: Icons.local_offer,
+        label: 'Создать тег',
+        onPressed: _onCreateTag,
+        backgroundColor: theme.colorScheme.tertiaryContainer,
+        foregroundColor: theme.colorScheme.onTertiaryContainer,
+      ),
+      FABActionData(
+        icon: Icons.folder,
+        label: 'Создать категорию',
+        onPressed: _onCreateCategory,
+        backgroundColor: theme.colorScheme.secondaryContainer,
+        foregroundColor: theme.colorScheme.onSecondaryContainer,
+      ),
+      FABActionData(
+        icon: Icons.image,
+        label: 'Создать иконку',
+        onPressed: _onIconCreate,
+        backgroundColor: theme.colorScheme.secondaryContainer,
+        foregroundColor: theme.colorScheme.onSecondaryContainer,
+      ),
+      FABActionData(
+        icon: Icons.qr_code,
+        label: 'Импортировать OTP коды',
+        onPressed: _onImportOtpCodes,
+        backgroundColor: theme.colorScheme.primaryContainer,
+        foregroundColor: theme.colorScheme.onPrimaryContainer,
+      ),
+      FABActionData(
+        icon: Icons.sync,
+        label: 'Миграция паролей',
+        onPressed: _onMigratePasswords,
+        backgroundColor: theme.colorScheme.primaryContainer,
+        foregroundColor: theme.colorScheme.onPrimaryContainer,
+      ),
+      FABActionData(
+        icon: entityTypeState.currentType.icon,
+        label: 'Создать $entityName',
+        onPressed: _onCreateEntity,
+        backgroundColor: theme.colorScheme.primaryContainer,
+        foregroundColor: theme.colorScheme.onPrimaryContainer,
+      ),
+    ];
   }
 
   @override
@@ -169,9 +226,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
 
   void _onDestinationSelected(BuildContext context, int index) {
     // Закрываем мобильный FAB при навигации
-    if (_mobileFabIsOpen) {
-      _mobileFabKey.currentState?.toggle();
-    }
+    _mobileFabKey.currentState?.close();
 
     // Если нажали на "Главная" (index 0), принудительно закрываем sidebar
     // чтобы он не открывался автоматически при навигации
@@ -198,8 +253,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   @override
   Widget build(BuildContext context) {
     // Следим за изменением текущего типа сущности
-    final entityTypeState = ref.watch(entityTypeProvider);
-    _entityName = entityTypeState.currentType.label;
+    ref.watch(entityTypeProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -238,130 +292,94 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
         });
 
         if (isDesktop) {
-          // Desktop layout: NavigationRail + Content (или Content + Sidebar)
-          return Scaffold(
-            body: Stack(
-              children: [
-                Row(
-                  children: [
-                    // NavigationRail слева
-                    _buildNavigationRail(context, selectedIndex),
-
-                    // Home контент (всегда присутствует)
-                    const Expanded(flex: 1, child: DashboardHomeScreenV2()),
-
-                    // Анимированный Sidebar справа
-                    AnimatedBuilder(
-                      animation: _sidebarAnimation,
-                      builder: (context, child) {
-                        return ClipRect(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: _sidebarAnimation.value,
-                            child: SizedBox(
-                              width: constraints.maxWidth / 2.15,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLow,
-                                  border: Border(
-                                    left: BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                      width: 1,
-                                    ),
-                                  ),
-                                ),
-                                // Показываем контент если:
-                                // 1. selectedIndex != 0 (категории, иконки, теги)
-                                // 2. isFormRoute == true (любая форма)
-                                child: (selectedIndex != 0 || isFormRoute)
-                                    ? widget.child
-                                    : const SizedBox.shrink(),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                // Overlay для раскрывающихся кнопок FAB
-                if (_fabKey.currentState != null)
-                  FABActionsOverlay(
-                    isOpen: _fabIsOpen,
-                    animation: _fabKey.currentState!.expandAnimation,
-                    actions: _fabKey.currentState!.actionButtons,
-                    direction: FABExpandDirection.right,
-                    spacing: 60,
-                    fabOffset: const Offset(16, 16),
-                    onBackdropTap: () {
-                      // Закрываем FAB при клике на затемнение
-                      _fabKey.currentState?.toggle();
-                    },
-                    onCloseTap: () {
-                      // Закрываем FAB при клике на кнопку закрытия
-                      _fabKey.currentState?.toggle();
-                    },
-                  ),
-              ],
-            ),
+          return _buildDesktopLayout(
+            context,
+            constraints,
+            selectedIndex,
+            isFormRoute,
           );
         } else {
-          // Mobile layout: BottomNavigationBar (без анимации для избежания конфликтов GlobalKey)
-          return Scaffold(
-            body: Stack(
-              children: [
-                widget.child,
-                // Overlay для раскрывающихся кнопок FAB на мобильном
-                if (_mobileFabKey.currentState != null &&
-                    selectedIndex == 0 &&
-                    _mobileFabIsOpen)
-                  FABActionsOverlay(
-                    isOpen: _mobileFabIsOpen,
-                    animation: _mobileFabKey.currentState!.expandAnimation,
-                    actions: _mobileFabKey.currentState!.actionButtons,
-                    direction: FABExpandDirection.up,
-                    spacing: 60,
-                    fabOffset: Offset(
-                      MediaQuery.of(context).size.width / 2 - 28,
-                      MediaQuery.of(context).size.height - 126,
-                    ),
-                    showCloseButton:
-                        false, // Не показываем доп кнопку на мобильном
-                    onBackdropTap: () {
-                      _mobileFabKey.currentState?.toggle();
-                    },
-                  ),
-              ],
-            ),
-            // Скрываем BottomNavigationBar когда открыта форма
-            bottomNavigationBar: isFormRoute
-                ? null
-                : _buildBottomNavigationBar(context, selectedIndex),
-            // Скрываем FAB когда открыта форма
-            floatingActionButton: (selectedIndex == 0 && !isFormRoute)
-                ? ExpandableFAB(
-                    key: _mobileFabKey,
-                    expandDirection: FABExpandDirection.up,
-                    showActionsInOverlay: true,
-                    onStateChanged: (isOpen) {
-                      setState(() {
-                        _mobileFabIsOpen = isOpen;
-                      });
-                    },
-                    onCreateEntity: _onCreateEntity,
-                    entityName: _entityName ?? '',
-                    onCreateCategory: _onCreateCategory,
-                    onCreateTag: _onCreateTag,
-                    onIconCreate: _onIconCreate,
-                  )
-                : null,
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerDocked,
-          );
+          return _buildMobileLayout(context, selectedIndex, isFormRoute);
         }
       },
+    );
+  }
+
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    BoxConstraints constraints,
+    int selectedIndex,
+    bool isFormRoute,
+  ) {
+    return Scaffold(
+      body: Row(
+        children: [
+          // NavigationRail слева
+          _buildNavigationRail(context, selectedIndex),
+
+          // Home контент (всегда присутствует)
+          const Expanded(flex: 1, child: DashboardHomeScreenV2()),
+
+          // Анимированный Sidebar справа
+          AnimatedBuilder(
+            animation: _sidebarAnimation,
+            builder: (context, child) {
+              return ClipRect(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: _sidebarAnimation.value,
+                  child: SizedBox(
+                    width: constraints.maxWidth / 2.15,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        border: Border(
+                          left: BorderSide(
+                            color: Theme.of(context).dividerColor,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      // Показываем контент если:
+                      // 1. selectedIndex != 0 (категории, иконки, теги)
+                      // 2. isFormRoute == true (любая форма)
+                      child: (selectedIndex != 0 || isFormRoute)
+                          ? widget.child
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    int selectedIndex,
+    bool isFormRoute,
+  ) {
+    return Scaffold(
+      body: widget.child,
+      // Скрываем BottomNavigationBar когда открыта форма
+      bottomNavigationBar: isFormRoute
+          ? null
+          : _buildBottomNavigationBar(context, selectedIndex),
+      // Скрываем FAB когда открыта форма
+      floatingActionButton: (selectedIndex == 0 && !isFormRoute)
+          ? ExpandableFAB(
+              key: _mobileFabKey,
+              direction: FABExpandDirection.up,
+              spacing: 56,
+              actions: _buildFabActions(context),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
@@ -381,18 +399,10 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: ExpandableFAB(
             key: _fabKey,
-            expandDirection: FABExpandDirection.right,
-            showActionsInOverlay: true,
-            onStateChanged: (isOpen) {
-              setState(() {
-                _fabIsOpen = isOpen;
-              });
-            },
-            onCreateEntity: _onCreateEntity,
-            entityName: _entityName ?? '',
-            onCreateCategory: _onCreateCategory,
-            onCreateTag: _onCreateTag,
-            onIconCreate: _onIconCreate,
+            direction: FABExpandDirection.rightDown,
+            spacing: 56,
+            isUseInNavigationRail: true,
+            actions: _buildFabActions(context),
           ),
         ),
         destinations: const [
@@ -424,16 +434,13 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   Widget _buildBottomNavigationBar(BuildContext context, int selectedIndex) {
     return BottomAppBar(
       shape: const SmoothRoundedNotchedRectangle(
-        // hostRadius: Radius.circular(8),
         guestCorner: Radius.circular(20),
         notchMargin: 4.0,
         s1: 18.0,
         s2: 18.0,
       ),
-
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       height: 70,
-      // notchMargin: 2,
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

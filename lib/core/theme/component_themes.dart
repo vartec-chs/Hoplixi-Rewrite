@@ -51,6 +51,7 @@ abstract final class ComponentThemes {
     cardElevation: _cardElevation,
     menuBarRadius: defaultBorderRadius,
     menuRadius: defaultBorderRadius,
+    navigationRailIndicatorSchemeColor: SchemeColor.primaryContainer
   );
 
   /// Базовые подтемы для тёмной темы
@@ -91,6 +92,7 @@ abstract final class ComponentThemes {
     cardElevation: _cardElevation,
     menuBarRadius: defaultBorderRadius,
     menuRadius: defaultBorderRadius,
+    navigationRailIndicatorSchemeColor: SchemeColor.primaryContainer
   );
 }
 
