@@ -21,6 +21,7 @@ abstract final class ComponentThemes {
     // tintedDisabledControls: true,
     useM2StyleDividerInM3: true,
     defaultRadius: defaultBorderRadius,
+
     switchSchemeColor: SchemeColor.primary,
     switchThumbSchemeColor: SchemeColor.onPrimary,
     inputDecoratorIsFilled: true,
@@ -30,6 +31,8 @@ abstract final class ComponentThemes {
     // dialogRadius: 31.0,
     timePickerElementRadius: defaultBorderRadius,
     snackBarElevation: 4,
+    interactionEffects: false,
+
     snackBarBackgroundSchemeColor: SchemeColor.secondary,
     snackBarActionSchemeColor: SchemeColor.primary,
     bottomAppBarHeight: 64,
@@ -51,7 +54,6 @@ abstract final class ComponentThemes {
     cardElevation: _cardElevation,
     menuBarRadius: defaultBorderRadius,
     menuRadius: defaultBorderRadius,
-    navigationRailIndicatorSchemeColor: SchemeColor.primaryContainer
   );
 
   /// Базовые подтемы для тёмной темы
@@ -60,6 +62,7 @@ abstract final class ComponentThemes {
     // tintedDisabledControls: true,
     blendOnColors: true,
     useM2StyleDividerInM3: true,
+    interactionEffects: false,
     defaultRadius: defaultBorderRadius,
     switchSchemeColor: SchemeColor.primary,
     switchThumbSchemeColor: SchemeColor.onPrimary,
@@ -92,7 +95,6 @@ abstract final class ComponentThemes {
     cardElevation: _cardElevation,
     menuBarRadius: defaultBorderRadius,
     menuRadius: defaultBorderRadius,
-    navigationRailIndicatorSchemeColor: SchemeColor.primaryContainer
   );
 }
 

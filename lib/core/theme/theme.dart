@@ -45,6 +45,8 @@ abstract final class AppTheme {
           cupertinoOverrideTheme: const CupertinoThemeData(
             applyThemeToAll: true,
           ),
+
+          splashFactory: InkRipple.splashFactory,
           useMaterial3: true,
           transparentStatusBar: true,
           fontFamily: GoogleFonts.nunito().fontFamily,
@@ -97,7 +99,10 @@ abstract final class AppTheme {
           cupertinoOverrideTheme: const CupertinoThemeData(
             applyThemeToAll: true,
           ),
+          // scaffoldBackground: const Color.fromARGB(255, 18, 18, 18),
+          // surface: const Color.fromARGB(255, 18, 18, 18),
           useMaterial3: true,
+          splashFactory: InkRipple.splashFactory,
           transparentStatusBar: true,
           fontFamily: GoogleFonts.nunito().fontFamily,
           error: Color(0xFFE53935),

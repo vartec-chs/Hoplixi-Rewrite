@@ -391,6 +391,8 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
         ),
       ),
       child: NavigationRail(
+        leadingAtTop: true,
+
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) =>
             _onDestinationSelected(context, index),
