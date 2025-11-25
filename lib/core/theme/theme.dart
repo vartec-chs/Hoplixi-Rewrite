@@ -50,8 +50,8 @@ abstract final class AppTheme {
           useMaterial3: true,
           transparentStatusBar: true,
           fontFamily: GoogleFonts.nunito().fontFamily,
-          error: Color(0xFFDE372F),
-          errorContainer: Color(0xFFD50000),
+          error: const Color(0xFFFF1744),
+          errorContainer: const Color(0xFFD50000),
         ).copyWith(
           extensions: <ThemeExtension>[
             WoltModalSheetThemeData(
@@ -105,8 +105,8 @@ abstract final class AppTheme {
           splashFactory: InkRipple.splashFactory,
           transparentStatusBar: true,
           fontFamily: GoogleFonts.nunito().fontFamily,
-          error: Color(0xFFE53935),
-          errorContainer: Color(0xFFB81D28),
+          error: Colors.redAccent.shade400,
+          errorContainer: Colors.redAccent.shade700,
         ).copyWith(
           extensions: <ThemeExtension>[
             WoltModalSheetThemeData(

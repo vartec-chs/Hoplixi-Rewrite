@@ -158,6 +158,9 @@ class SmoothButton extends StatelessWidget {
             side: WidgetStateProperty.all(
               BorderSide(color: variantColor, width: 1.5),
             ),
+            overlayColor: WidgetStateProperty.all(
+              variantColor.withOpacity(0.1),
+            ),
             foregroundColor: WidgetStateProperty.all(variantColor),
           );
           break;
@@ -230,6 +233,7 @@ class SmoothButton extends StatelessWidget {
           },
           focusNode: focusNode,
           autofocus: autofocus,
+
           clipBehavior: clipBehavior,
           style: styledWithVariant.copyWith(
             side: WidgetStateProperty.all(
