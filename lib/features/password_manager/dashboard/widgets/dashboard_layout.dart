@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
+import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/dashboard_destination.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/dashboard_fab_action.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
-
-import 'package:hoplixi/routing/paths.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'smooth_rounded_notched_rectangle.dart';
@@ -68,101 +69,38 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   // Отслеживание предыдущего состояния формы
   bool _wasFormRoute = false;
 
-  // FAB действия
-  void _onCreateEntity() {
-    final entityTypeState = ref.read(entityTypeProvider);
+  // ===========================================================================
+  // FAB Actions Handler
+  // ===========================================================================
 
-    switch (entityTypeState.currentType) {
-      case EntityType.password:
-        context.push(AppRoutesPaths.dashboardPasswordCreate);
-        break;
-      case EntityType.note:
-        context.push(AppRoutesPaths.dashboardNoteCreate);
-        break;
-      case EntityType.bankCard:
-        context.push(AppRoutesPaths.dashboardBankCardCreate);
-        break;
-      case EntityType.file:
-        context.push(AppRoutesPaths.dashboardFileCreate);
-        break;
-      case EntityType.otp:
-        context.push(AppRoutesPaths.dashboardOtpCreate);
-        break;
+  /// Обработчик действий FAB
+  ///
+  /// Централизованная обработка всех FAB actions через [DashboardFabAction]
+  void _onFabActionPressed(DashboardFabAction action) {
+    final entityTypeState = ref.read(entityTypeProvider);
+    final entityType = entityTypeState.currentType;
+    final path = action.getPath(entityType);
+
+    if (path != null) {
+      context.push(path);
+    } else {
+      // Для действий без пути — логируем и показываем TODO
+      logInfo('FAB action без пути: ${action.name}', tag: 'DashboardLayout');
+      debugPrint('TODO: Implement ${action.name}');
     }
   }
 
-  void _onCreateCategory() {
-    context.push(AppRoutesPaths.dashboardCategoryManager);
-  }
-
-  void _onCreateTag() {
-    context.push(AppRoutesPaths.dashboardTagManager);
-  }
-
-  void _onIconCreate() {
-    context.push(AppRoutesPaths.dashboardIconManager);
-  }
-
-  void _onImportOtpCodes() {
-    // TODO: Implement OTP import
-    debugPrint('Import OTP codes');
-  }
-
-  void _onMigratePasswords() {
-    // TODO: Implement password migration
-    debugPrint('Migrate passwords');
-  }
-
-  /// Список действий FAB
+  /// Построить список действий FAB
+  ///
+  /// Использует [DashboardFabAction.buildActions] для генерации
   List<FABActionData> _buildFabActions(BuildContext context) {
-    final theme = Theme.of(context);
     final entityTypeState = ref.read(entityTypeProvider);
-    final entityName = entityTypeState.currentType.label;
 
-    return [
-      FABActionData(
-        icon: Icons.local_offer,
-        label: 'Создать тег',
-        onPressed: _onCreateTag,
-        backgroundColor: theme.colorScheme.tertiaryContainer,
-        foregroundColor: theme.colorScheme.onTertiaryContainer,
-      ),
-      FABActionData(
-        icon: Icons.folder,
-        label: 'Создать категорию',
-        onPressed: _onCreateCategory,
-        backgroundColor: theme.colorScheme.secondaryContainer,
-        foregroundColor: theme.colorScheme.onSecondaryContainer,
-      ),
-      FABActionData(
-        icon: Icons.image,
-        label: 'Создать иконку',
-        onPressed: _onIconCreate,
-        backgroundColor: theme.colorScheme.secondaryContainer,
-        foregroundColor: theme.colorScheme.onSecondaryContainer,
-      ),
-      FABActionData(
-        icon: Icons.qr_code,
-        label: 'Импортировать OTP коды',
-        onPressed: _onImportOtpCodes,
-        backgroundColor: theme.colorScheme.primaryContainer,
-        foregroundColor: theme.colorScheme.onPrimaryContainer,
-      ),
-      FABActionData(
-        icon: Icons.sync,
-        label: 'Миграция паролей',
-        onPressed: _onMigratePasswords,
-        backgroundColor: theme.colorScheme.primaryContainer,
-        foregroundColor: theme.colorScheme.onPrimaryContainer,
-      ),
-      FABActionData(
-        icon: entityTypeState.currentType.icon,
-        label: 'Создать $entityName',
-        onPressed: _onCreateEntity,
-        backgroundColor: theme.colorScheme.primaryContainer,
-        foregroundColor: theme.colorScheme.onPrimaryContainer,
-      ),
-    ];
+    return DashboardFabAction.buildActions(
+      context: context,
+      entityType: entityTypeState.currentType,
+      onActionPressed: _onFabActionPressed,
+    );
   }
 
   @override
@@ -193,26 +131,30 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
     super.dispose();
   }
 
+  // ===========================================================================
+  // Navigation Helpers
+  // ===========================================================================
+
+  /// Получить индекс выбранного destination по текущему пути
+  ///
+  /// Использует [DashboardDestination.fromPath] для определения активного элемента.
+  /// Если открыта форма — возвращает индекс home (0), но sidebar открывается.
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith(AppRoutesPaths.dashboardCategoryManager)) return 1;
-    if (location.startsWith(AppRoutesPaths.dashboardIconManager)) return 2;
-    if (location.startsWith(AppRoutesPaths.dashboardTagManager)) return 3;
 
-    // Проверяем, открыта ли какая-либо форма - тогда показываем её в sidebar
-    // но не меняем selectedIndex (остается 0 - home)
-    if (_isFormRoute(location)) return 0;
+    // Если открыта форма — остаёмся на home, sidebar откроется отдельно
+    if (_isFormRoute(location)) {
+      return DashboardDestination.home.index;
+    }
 
-    return 0; // home
+    return DashboardDestination.fromPath(location).index;
   }
 
   /// Проверяет, является ли путь маршрутом формы
+  ///
+  /// Использует [EntityTypeRouting.isAnyFormRoute] для централизованной проверки
   bool _isFormRoute(String location) {
-    return location.contains('/password/') ||
-        location.contains('/note/') ||
-        location.contains('/bank-card/') ||
-        location.contains('/file/') ||
-        location.contains('/otp/');
+    return EntityTypeRouting.isAnyFormRoute(location);
   }
 
   /// Публичный метод для закрытия sidebar
@@ -243,30 +185,21 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   /// Проверяет, открыт ли sidebar в данный момент
   bool get isSidebarOpen => _animationController.value == 1.0;
 
+  /// Обработчик выбора destination в навигации
+  ///
+  /// Использует [DashboardDestination.fromIndex] для получения пути навигации
   void _onDestinationSelected(BuildContext context, int index) {
     // Закрываем мобильный FAB при навигации
     _mobileFabKey.currentState?.close();
 
-    // Если нажали на "Главная" (index 0), принудительно закрываем sidebar
-    // чтобы он не открывался автоматически при навигации
-    if (index == 0) {
+    final destination = DashboardDestination.fromIndex(index);
+
+    // Если destination не открывает sidebar — закрываем его
+    if (!destination.opensSidebar) {
       closeSidebar();
     }
 
-    switch (index) {
-      case 0:
-        context.go(AppRoutesPaths.dashboardHome);
-        break;
-      case 1:
-        context.go(AppRoutesPaths.dashboardCategoryManager);
-        break;
-      case 2:
-        context.go(AppRoutesPaths.dashboardIconManager);
-        break;
-      case 3:
-        context.go(AppRoutesPaths.dashboardTagManager);
-        break;
-    }
+    context.go(destination.path);
   }
 
   @override
@@ -402,6 +335,13 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
     );
   }
 
+  // ===========================================================================
+  // UI Builders
+  // ===========================================================================
+
+  /// Построить NavigationRail для desktop
+  ///
+  /// Генерирует destinations из [DashboardDestination.values]
   Widget _buildNavigationRail(BuildContext context, int selectedIndex) {
     return Container(
       decoration: BoxDecoration(
@@ -411,7 +351,6 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
       ),
       child: NavigationRail(
         leadingAtTop: true,
-
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) =>
             _onDestinationSelected(context, index),
@@ -426,33 +365,25 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
             actions: _buildFabActions(context),
           ),
         ),
-        destinations: const [
-          NavigationRailDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: Text('Главная'),
-          ),
-          NavigationRailDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder),
-            label: Text('Категории'),
-          ),
-          NavigationRailDestination(
-            icon: Icon(Icons.import_contacts),
-            selectedIcon: Icon(Icons.import_contacts_outlined),
-            label: Text('Иконки'),
-          ),
-          NavigationRailDestination(
-            icon: Icon(Icons.tag_outlined),
-            selectedIcon: Icon(Icons.tag),
-            label: Text('Теги'),
-          ),
-        ],
+        // Генерируем destinations из enum
+        destinations: DashboardDestination.values
+            .map((d) => d.toRailDestination())
+            .toList(),
       ),
     );
   }
 
+  /// Построить BottomAppBar для mobile
+  ///
+  /// Генерирует кнопки из [DashboardDestination.values]
   Widget _buildBottomNavigationBar(BuildContext context, int selectedIndex) {
+    final destinations = DashboardDestination.values;
+    final homeIndex = DashboardDestination.home.index;
+
+    // Разделяем на левую и правую части для FAB notch
+    final leftDestinations = destinations.where((d) => d.index <= 1).toList();
+    final rightDestinations = destinations.where((d) => d.index > 1).toList();
+
     return BottomAppBar(
       shape: const SmoothRoundedNotchedRectangle(
         guestCorner: Radius.circular(20),
@@ -466,62 +397,45 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          _buildBottomNavIconButton(
-            context,
-            icon: Icons.dashboard_outlined,
-            selectedIcon: Icons.dashboard,
-            label: 'Главная',
-            index: 0,
-            selectedIndex: selectedIndex,
+          // Левая часть (до FAB)
+          ...leftDestinations.map(
+            (d) => _buildBottomNavIconButton(
+              context,
+              destination: d,
+              selectedIndex: selectedIndex,
+            ),
           ),
-          _buildBottomNavIconButton(
-            context,
-            icon: Icons.folder_outlined,
-            selectedIcon: Icons.folder,
-            label: 'Категории',
-            index: 1,
-            selectedIndex: selectedIndex,
-          ),
+          // Пространство для FAB (animated)
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            width: selectedIndex == 0 ? 40 : 0,
+            width: selectedIndex == homeIndex ? 40 : 0,
             child: const SizedBox(width: 40),
           ),
-          _buildBottomNavIconButton(
-            context,
-            icon: Icons.import_contacts_outlined,
-            selectedIcon: Icons.import_contacts,
-            label: 'Иконки',
-            index: 2,
-            selectedIndex: selectedIndex,
-          ),
-          _buildBottomNavIconButton(
-            context,
-            icon: Icons.tag_outlined,
-            selectedIcon: Icons.tag,
-            label: 'Теги',
-            index: 3,
-            selectedIndex: selectedIndex,
+          // Правая часть (после FAB)
+          ...rightDestinations.map(
+            (d) => _buildBottomNavIconButton(
+              context,
+              destination: d,
+              selectedIndex: selectedIndex,
+            ),
           ),
         ],
       ),
     );
   }
 
+  /// Построить кнопку для BottomAppBar
   Widget _buildBottomNavIconButton(
     BuildContext context, {
-    required IconData icon,
-    required IconData selectedIcon,
-    required String label,
-    required int index,
+    required DashboardDestination destination,
     required int selectedIndex,
   }) {
-    final isSelected = selectedIndex == index;
+    final isSelected = selectedIndex == destination.index;
     final colorScheme = Theme.of(context).colorScheme;
 
     return InkWell(
-      onTap: () => _onDestinationSelected(context, index),
+      onTap: () => _onDestinationSelected(context, destination.index),
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -530,7 +444,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isSelected ? selectedIcon : icon,
+              isSelected ? destination.selectedIcon : destination.icon,
               color: isSelected
                   ? colorScheme.primary
                   : colorScheme.onSurfaceVariant,
@@ -538,7 +452,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
             ),
             const SizedBox(height: 4),
             Text(
-              label,
+              destination.label,
               style: TextStyle(
                 fontSize: 12,
                 color: isSelected

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/routing/paths.dart';
 
 enum EntityType {
   password('password', 'Пароли', Icons.lock),
@@ -40,4 +41,79 @@ enum EntityType {
 
   @override
   String toString() => 'EntityType(id: $id, label: $label, icon: $icon)';
+}
+
+// =============================================================================
+// EntityType Routing Extension
+// =============================================================================
+
+/// Extension для работы с путями навигации для каждого типа сущности
+extension EntityTypeRouting on EntityType {
+  /// Путь для создания новой сущности
+  String get createPath {
+    switch (this) {
+      case EntityType.password:
+        return AppRoutesPaths.dashboardPasswordCreate;
+      case EntityType.note:
+        return AppRoutesPaths.dashboardNoteCreate;
+      case EntityType.bankCard:
+        return AppRoutesPaths.dashboardBankCardCreate;
+      case EntityType.file:
+        return AppRoutesPaths.dashboardFileCreate;
+      case EntityType.otp:
+        return AppRoutesPaths.dashboardOtpCreate;
+    }
+  }
+
+  /// Путь для редактирования сущности с указанным ID
+  String editPath(String id) {
+    switch (this) {
+      case EntityType.password:
+        return AppRoutesPaths.dashboardPasswordEditWithId(id);
+      case EntityType.note:
+        return AppRoutesPaths.dashboardNoteEditWithId(id);
+      case EntityType.bankCard:
+        return AppRoutesPaths.dashboardBankCardEditWithId(id);
+      case EntityType.file:
+        return AppRoutesPaths.dashboardFileEditWithId(id);
+      case EntityType.otp:
+        return AppRoutesPaths.dashboardOtpEditWithId(id);
+    }
+  }
+
+  /// Паттерн пути для определения form route (содержит /<entity>/)
+  String get formRoutePattern {
+    switch (this) {
+      case EntityType.password:
+        return '/password/';
+      case EntityType.note:
+        return '/note/';
+      case EntityType.bankCard:
+        return '/bank-card/';
+      case EntityType.file:
+        return '/file/';
+      case EntityType.otp:
+        return '/otp/';
+    }
+  }
+
+  /// Проверить, является ли путь form route для этого типа
+  bool isFormRoute(String location) {
+    return location.contains(formRoutePattern);
+  }
+
+  /// Проверить, является ли путь form route для любого типа сущности
+  static bool isAnyFormRoute(String location) {
+    return EntityType.values.any((type) => type.isFormRoute(location));
+  }
+
+  /// Получить тип сущности по пути (если путь является form route)
+  static EntityType? fromFormRoute(String location) {
+    for (final type in EntityType.values) {
+      if (type.isFormRoute(location)) {
+        return type;
+      }
+    }
+    return null;
+  }
 }
