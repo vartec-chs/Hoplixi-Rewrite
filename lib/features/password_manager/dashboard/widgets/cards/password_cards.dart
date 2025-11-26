@@ -721,6 +721,22 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
               child: const Icon(Icons.star, size: 18, color: Colors.amber),
             ),
           ),
+        if (widget.password.isArchived)
+          Positioned(
+            top: 2,
+            // if pinned also present - shift favorite a bit to the right
+            left: widget.password.isPinned || widget.password.isFavorite
+                ? (widget.password.isFavorite ? 60 : 34)
+                : 8,
+            child: Transform.rotate(
+              angle: -0.52,
+              child: const Icon(
+                Icons.archive,
+                size: 18,
+                color: Colors.blueGrey,
+              ),
+            ),
+          ),
       ],
     );
   }

@@ -4,7 +4,6 @@ import 'package:hoplixi/features/password_manager/category_manager/category_mana
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
@@ -19,12 +18,7 @@ import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
-import 'package:hoplixi/global_key.dart';
 import 'package:hoplixi/routing/paths.dart';
-
-/// Флаг для отключения/включения кастомных анимаций при переходах между экранами dashboard
-/// true = кастомные Scale+Fade анимации, false = стандартные MaterialPage анимации
-const bool _enableDashboardTransitions = false;
 
 final List<RouteBase> appRoutes = [
   GoRoute(
@@ -59,256 +53,48 @@ final List<RouteBase> appRoutes = [
     routes: [
       GoRoute(
         path: AppRoutesPaths.dashboardHome,
-        pageBuilder: (context, state) {
-          if (!_enableDashboardTransitions) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const DashboardHomeScreenV2(),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: const DashboardHomeScreenV2(),
-            transitionDuration: const Duration(milliseconds: 200),
-            reverseTransitionDuration: const Duration(milliseconds: 150),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return ScaleTransition(
-                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-          );
+        builder: (context, state) {
+          return const DashboardHomeScreenV2();
         },
       ),
       GoRoute(
         path: AppRoutesPaths.dashboardCategories,
-        pageBuilder: (context, state) {
-          if (!_enableDashboardTransitions) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const CategoriesScreen(),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: const CategoriesScreen(),
-            transitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  if (secondaryAnimation.status == AnimationStatus.forward ||
-                      secondaryAnimation.status == AnimationStatus.reverse) {
-                    return ScaleTransition(
-                      scale: Tween<double>(begin: 1.0, end: 0.9).animate(
-                        CurvedAnimation(
-                          parent: secondaryAnimation,
-                          curve: Curves.easeInCubic,
-                        ),
-                      ),
-                      child: FadeTransition(
-                        opacity: Tween<double>(
-                          begin: 1.0,
-                          end: 0.0,
-                        ).animate(secondaryAnimation),
-                        child: ScaleTransition(
-                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          ),
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return ScaleTransition(
-                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-          );
+        builder: (context, state) {
+          return const CategoriesScreen();
         },
       ),
+
       GoRoute(
         path: AppRoutesPaths.dashboardSearch,
-        pageBuilder: (context, state) {
-          if (!_enableDashboardTransitions) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const SearchScreen(),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: const SearchScreen(),
-            transitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  if (secondaryAnimation.status == AnimationStatus.forward ||
-                      secondaryAnimation.status == AnimationStatus.reverse) {
-                    return ScaleTransition(
-                      scale: Tween<double>(begin: 1.0, end: 0.9).animate(
-                        CurvedAnimation(
-                          parent: secondaryAnimation,
-                          curve: Curves.easeInCubic,
-                        ),
-                      ),
-                      child: FadeTransition(
-                        opacity: Tween<double>(
-                          begin: 1.0,
-                          end: 0.0,
-                        ).animate(secondaryAnimation),
-                        child: ScaleTransition(
-                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          ),
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return ScaleTransition(
-                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    ),
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-          );
+        builder: (context, state) {
+          return const SearchScreen();
         },
       ),
       GoRoute(
         path: AppRoutesPaths.dashboardSettings,
-        pageBuilder: (context, state) {
-          return MaterialPage(
-            key: state.pageKey,
-            child: const DashboardSettingsScreen(),
-          );
+        builder: (context, state) {
+          return const DashboardSettingsScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardIconManager,
-        pageBuilder: (context, state) {
-          final isDesktop = MediaQuery.of(context).size.width >= 900;
-          if (!isDesktop) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const IconManagerScreen(),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: const IconManagerScreen(),
-            transitionDuration: const Duration(milliseconds: 300),
-            reverseTransitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(1.0, 0.0);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutCubic;
-                  final tween = Tween(
-                    begin: begin,
-                    end: end,
-                  ).chain(CurveTween(curve: curve));
-                  final offsetAnimation = animation.drive(tween);
-                  return SlideTransition(
-                    position: offsetAnimation,
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-          );
+        builder: (context, state) {
+          return const IconManagerScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardCategoryManager,
-        pageBuilder: (context, state) {
-          final isDesktop = MediaQuery.of(context).size.width >= 900;
-          if (!isDesktop) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const CategoryManagerScreen(),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: const CategoryManagerScreen(),
-            transitionDuration: const Duration(milliseconds: 300),
-            reverseTransitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(1.0, 0.0);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutCubic;
-                  final tween = Tween(
-                    begin: begin,
-                    end: end,
-                  ).chain(CurveTween(curve: curve));
-                  final offsetAnimation = animation.drive(tween);
-                  return SlideTransition(
-                    position: offsetAnimation,
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-          );
+        builder: (context, state) {
+          return const CategoryManagerScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardTagManager,
-        pageBuilder: (context, state) {
-          final isDesktop = MediaQuery.of(context).size.width >= 900;
-          if (!isDesktop) {
-            return MaterialPage(
-              key: state.pageKey,
-              child: const TagsManagerScreen(),
-            );
-          }
-          return CustomTransitionPage(
-            key: state.pageKey,
-            child: const TagsManagerScreen(),
-            transitionDuration: const Duration(milliseconds: 300),
-            reverseTransitionDuration: const Duration(milliseconds: 250),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  const begin = Offset(1.0, 0.0);
-                  const end = Offset.zero;
-                  const curve = Curves.easeOutCubic;
-                  final tween = Tween(
-                    begin: begin,
-                    end: end,
-                  ).chain(CurveTween(curve: curve));
-                  final offsetAnimation = animation.drive(tween);
-                  return SlideTransition(
-                    position: offsetAnimation,
-                    child: FadeTransition(opacity: animation, child: child),
-                  );
-                },
-          );
+        builder: (context, state) {
+          return const TagsManagerScreen();
         },
       ),
 
@@ -325,97 +111,73 @@ final List<RouteBase> appRoutes = [
 
       GoRoute(
         path: AppRoutesPaths.dashboardPasswordEdit,
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final passwordId = state.pathParameters['id'];
-          return MaterialPage(
-            key: state.pageKey,
-            child: PasswordFormScreen(passwordId: passwordId),
-          );
+          return PasswordFormScreen(passwordId: passwordId);
         },
       ),
 
       // Note forms
       GoRoute(
         path: AppRoutesPaths.dashboardNoteCreate,
-        pageBuilder: (context, state) {
-          return MaterialPage(
-            key: state.pageKey,
-            child: const NoteFormScreen(),
-          );
+        builder: (context, state) {
+          return const NoteFormScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardNoteEdit,
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final noteId = state.pathParameters['id'];
-          return MaterialPage(
-            key: state.pageKey,
-            child: NoteFormScreen(noteId: noteId),
-          );
+          return NoteFormScreen(noteId: noteId);
         },
       ),
 
       // Bank Card forms
       GoRoute(
         path: AppRoutesPaths.dashboardBankCardCreate,
-        pageBuilder: (context, state) {
-          return MaterialPage(
-            key: state.pageKey,
-            child: const BankCardFormScreen(),
-          );
+        builder: (context, state) {
+          return const BankCardFormScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardBankCardEdit,
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final bankCardId = state.pathParameters['id'];
-          return MaterialPage(
-            key: state.pageKey,
-            child: BankCardFormScreen(bankCardId: bankCardId),
-          );
+          return BankCardFormScreen(bankCardId: bankCardId);
         },
       ),
 
       // File forms
       GoRoute(
         path: AppRoutesPaths.dashboardFileCreate,
-        pageBuilder: (context, state) {
-          return MaterialPage(
-            key: state.pageKey,
-            child: const FileFormScreen(),
-          );
+        builder: (context, state) {
+          return const FileFormScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardFileEdit,
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final fileId = state.pathParameters['id'];
-          return MaterialPage(
-            key: state.pageKey,
-            child: FileFormScreen(fileId: fileId),
-          );
+          return FileFormScreen(fileId: fileId);
         },
       ),
 
       // OTP forms
       GoRoute(
         path: AppRoutesPaths.dashboardOtpCreate,
-        pageBuilder: (context, state) {
-          return MaterialPage(key: state.pageKey, child: const OtpFormScreen());
+        builder: (context, state) {
+          return const OtpFormScreen();
         },
       ),
 
       GoRoute(
         path: AppRoutesPaths.dashboardOtpEdit,
-        pageBuilder: (context, state) {
+        builder: (context, state) {
           final otpId = state.pathParameters['id'];
-          return MaterialPage(
-            key: state.pageKey,
-            child: OtpFormScreen(otpId: otpId),
-          );
+          return OtpFormScreen(otpId: otpId);
         },
       ),
     ],

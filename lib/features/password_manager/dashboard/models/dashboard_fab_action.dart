@@ -30,7 +30,7 @@ typedef FabActionVisibilityCallback =
 /// 3. Опционально настроить isVisible для условного отображения
 enum DashboardFabAction {
   /// Создать тег
-  createTag(icon: Icons.local_offer, colorType: FabActionColorType.tertiary),
+  createTag(icon: Icons.local_offer, colorType: FabActionColorType.secondary),
 
   /// Создать категорию
   createCategory(icon: Icons.folder, colorType: FabActionColorType.secondary),
@@ -114,11 +114,28 @@ enum DashboardFabAction {
 
   /// Проверить видимость действия
   ///
-  /// По умолчанию все действия видимы
+  /// Скрывает определённые действия в зависимости от текущего EntityType:
+  /// - `importOtp` — видим только когда выбран EntityType.otp
+  /// - `migratePasswords` — видим только для EntityType.password
+  /// - `createEntity` — всегда видим
+  /// - остальные — всегда видимы
   bool isVisible(BuildContext context, EntityType? entityType) {
-    // Можно добавить логику скрытия определённых действий
-    // Например, скрыть importOtp если не выбран EntityType.otp
-    return true;
+    switch (this) {
+      case DashboardFabAction.importOtp:
+        // Показывать импорт OTP только когда выбран тип OTP
+        return entityType == EntityType.otp;
+
+      case DashboardFabAction.migratePasswords:
+        // Показывать миграцию только для паролей
+        return entityType == EntityType.password;
+
+      case DashboardFabAction.createTag:
+      case DashboardFabAction.createCategory:
+      case DashboardFabAction.createIcon:
+      case DashboardFabAction.createEntity:
+        // Всегда видимы
+        return true;
+    }
   }
 
   // ===========================================================================
