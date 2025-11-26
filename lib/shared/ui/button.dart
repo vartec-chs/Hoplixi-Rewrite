@@ -77,13 +77,13 @@ class SmoothButton extends StatelessWidget {
       case SmoothButtonVariant.normal:
         return colorScheme.primary;
       case SmoothButtonVariant.error:
-        return const Color(0xFFFF5252); // Яркий красный
+        return Colors.redAccent.shade400; // Яркий красный
       case SmoothButtonVariant.warning:
-        return const Color(0xFFFF9800); // Яркий оранжевый
+        return Colors.orangeAccent.shade700; // Яркий оранжевый
       case SmoothButtonVariant.info:
-        return const Color(0xFF2196F3); // Яркий синий
+        return Colors.blueAccent.shade700; // Яркий синий
       case SmoothButtonVariant.success:
-        return const Color(0xFF4CAF50); // Яркий зелёный
+        return Colors.greenAccent.shade700; // Яркий зелёный
     }
   }
 

@@ -117,7 +117,7 @@ InputDecoration primaryInputDecoration(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
           ),
-    fillColor: theme.colorScheme.surfaceContainerHighest,
+    fillColor: theme.colorScheme.secondary,
     enabledBorder: UnderlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
       borderSide: const BorderSide(color: Colors.transparent, width: 0),
@@ -139,10 +139,10 @@ InputDecoration primaryInputDecoration(
   ).copyWith(
     // Apply disabled styles when enabled is false
     fillColor: !enabled
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+        ? theme.colorScheme.secondary
         : isFocused
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8)
-        : theme.colorScheme.surfaceContainerHighest,
+        ? theme.colorScheme.secondary
+        : theme.colorScheme.secondary,
     labelStyle: !enabled
         ? TextStyle(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.5),

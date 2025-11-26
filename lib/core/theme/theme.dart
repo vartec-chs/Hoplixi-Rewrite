@@ -42,16 +42,19 @@ abstract final class AppTheme {
           swapLegacyOnMaterial3: true,
           subThemesData: ComponentThemes.lightSubThemes,
           visualDensity: visualDensity,
+
+          appBarStyle: FlexAppBarStyle.surface,
+          transparentStatusBar: false,
+          splashFactory: InkRipple.splashFactory,
+          useMaterial3: true,
+
+          fontFamily: GoogleFonts.nunito().fontFamily,
+          error: AppColors.lightColors.error,
           cupertinoOverrideTheme: const CupertinoThemeData(
             applyThemeToAll: true,
           ),
 
-          splashFactory: InkRipple.splashFactory,
-          useMaterial3: true,
-          transparentStatusBar: true,
-          fontFamily: GoogleFonts.nunito().fontFamily,
-          error: const Color(0xFFFF1744),
-          errorContainer: const Color(0xFFD50000),
+          errorContainer: AppColors.lightColors.errorContainer,
         ).copyWith(
           extensions: <ThemeExtension>[
             WoltModalSheetThemeData(
@@ -93,20 +96,20 @@ abstract final class AppTheme {
           colors: AppColors.darkColors,
           useMaterial3ErrorColors: true,
           swapLegacyOnMaterial3: true,
-          surfaceTint: AppColors.darkSurfaceTint,
           subThemesData: ComponentThemes.darkSubThemes,
           visualDensity: visualDensity,
           cupertinoOverrideTheme: const CupertinoThemeData(
             applyThemeToAll: true,
           ),
-          // scaffoldBackground: const Color.fromARGB(255, 18, 18, 18),
-          // surface: const Color.fromARGB(255, 18, 18, 18),
+          surfaceTint: const Color(0xFF2E2E2E),
+          // Convenience direct styling properties.
+          appBarStyle: FlexAppBarStyle.scaffoldBackground,
+          transparentStatusBar: false,
           useMaterial3: true,
           splashFactory: InkRipple.splashFactory,
-          transparentStatusBar: true,
           fontFamily: GoogleFonts.nunito().fontFamily,
-          error: Colors.redAccent.shade400,
-          errorContainer: Colors.redAccent.shade700,
+          error: AppColors.darkColors.error,
+          errorContainer: AppColors.darkColors.errorContainer,
         ).copyWith(
           extensions: <ThemeExtension>[
             WoltModalSheetThemeData(
