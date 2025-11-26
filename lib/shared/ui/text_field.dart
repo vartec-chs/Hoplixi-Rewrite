@@ -1,6 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+class CustomOutlineInputBorder extends UnderlineInputBorder {
+  const CustomOutlineInputBorder({super.borderRadius, super.borderSide});
+
+  @override
+  void paint(
+    Canvas canvas,
+    Rect rect, {
+    double? gapStart,
+    double gapExtent = 0.0,
+    double gapPercentage = 0.0,
+    TextDirection? textDirection,
+  }) {
+    final RRect outer = borderRadius.toRRect(rect);
+    final RRect center = outer.deflate(borderSide.width / 2.0);
+    final Paint paint = borderSide.toPaint();
+    canvas.drawRRect(center, paint);
+  }
+
+  @override
+  ShapeBorder? lerpTo(ShapeBorder? b, double t) {
+    if (b is CustomOutlineInputBorder) {
+      return CustomOutlineInputBorder(
+        borderRadius: BorderRadius.lerp(borderRadius, b.borderRadius, t)!,
+        borderSide: BorderSide.lerp(borderSide, b.borderSide, t),
+      );
+    }
+    return super.lerpTo(b, t);
+  }
+
+  @override
+  ShapeBorder? lerpFrom(ShapeBorder? a, double t) {
+    return lerpTo(a, 1 - t);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is CustomOutlineInputBorder) {
+      return borderSide == other.borderSide &&
+          borderSide == other.borderSide &&
+          borderRadius == other.borderRadius;
+    }
+
+    return super == other;
+  }
+
+  @override
+  int get hashCode => Object.hash(borderSide, borderRadius);
+}
+
 // Универсальный радиус по умолчанию
 const BorderRadius defaultBorderRadiusValue = BorderRadius.all(
   Radius.circular(16),
@@ -70,7 +119,7 @@ InputDecoration primaryInputDecoration(
     isDense: isDense,
     contentPadding:
         contentPadding ??
-        const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+        const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
     errorMaxLines: errorMaxLines,
     helperMaxLines: helperMaxLines,
     hintMaxLines: hintMaxLines,
@@ -90,19 +139,19 @@ InputDecoration primaryInputDecoration(
       fontSize: 14,
       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
     ),
-    border: UnderlineInputBorder(
-      borderRadius: defaultBorderRadiusValue,
-      borderSide: const BorderSide(color: Colors.transparent, width: 0),
+    border: CustomOutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: theme.colorScheme.secondary, width: 1),
     ),
     hintTextDirection: TextDirection.ltr,
     filled: filled,
-    errorBorder: UnderlineInputBorder(
+    errorBorder: CustomOutlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
-      borderSide: const BorderSide(color: Colors.transparent, width: 0),
+      borderSide: BorderSide(color: theme.colorScheme.error, width: 0),
     ),
-    focusedErrorBorder: UnderlineInputBorder(
+    focusedErrorBorder: CustomOutlineInputBorder(
       borderRadius: defaultBorderRadiusValue,
-      borderSide: BorderSide(color: Colors.transparent, width: 0),
+      borderSide: BorderSide(color: theme.colorScheme.error, width: 0),
     ),
     floatingLabelBehavior: FloatingLabelBehavior.auto,
     floatingLabelAlignment: FloatingLabelAlignment.start,
@@ -118,18 +167,21 @@ InputDecoration primaryInputDecoration(
             color: Theme.of(context).colorScheme.onSurface,
           ),
     fillColor: theme.colorScheme.secondary,
-    enabledBorder: UnderlineInputBorder(
-      borderRadius: defaultBorderRadiusValue,
-      borderSide: const BorderSide(color: Colors.transparent, width: 0),
+    enabledBorder: CustomOutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: theme.colorScheme.tertiary, width: 1),
     ),
-    disabledBorder: UnderlineInputBorder(
-      borderRadius: defaultBorderRadiusValue,
-      borderSide: const BorderSide(color: Colors.transparent, width: 0),
+    disabledBorder: CustomOutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+        width: 1,
+      ),
     ),
 
-    focusedBorder: UnderlineInputBorder(
-      borderRadius: defaultBorderRadiusValue,
-      borderSide: const BorderSide(color: Colors.transparent, width: 1),
+    focusedBorder: CustomOutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: theme.colorScheme.tertiary, width: 1),
     ),
     helperStyle: TextStyle(
       fontSize: 12,
@@ -139,9 +191,9 @@ InputDecoration primaryInputDecoration(
   ).copyWith(
     // Apply disabled styles when enabled is false
     fillColor: !enabled
-        ? theme.colorScheme.secondary
+        ? theme.colorScheme.secondary.withValues(alpha: 0.6)
         : isFocused
-        ? theme.colorScheme.secondary
+        ? theme.colorScheme.secondary.withValues(alpha: 0.9)
         : theme.colorScheme.secondary,
     labelStyle: !enabled
         ? TextStyle(

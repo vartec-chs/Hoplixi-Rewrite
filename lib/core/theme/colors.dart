@@ -12,7 +12,7 @@ abstract final class AppColors {
     tertiary: Color(0xFFF0F1F1),
     tertiaryContainer: Color(0xFFF1F1F1),
     appBarColor: Color(0xFFE2E2E2),
-    error: Color(0xFFFF5252),
+    error: Color.fromARGB(255, 255, 48, 48),
     errorContainer: Color(0xFFFF1744),
   );
 
@@ -28,7 +28,7 @@ abstract final class AppColors {
     tertiaryContainer: Color(0xFF414141),
     tertiaryLightRef: Color(0xFFF0F1F1), // The color of light mode tertiary
     appBarColor: Color(0xFFE2E2E2),
-    error: Color(0xFFFF1744),
+    error: Color.fromARGB(255, 255, 48, 48),
     errorContainer: Color(0xFFD50000),
   );
 
