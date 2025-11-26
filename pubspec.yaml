@@ -86,6 +86,7 @@ dependencies:
   image: ^4.5.4
   flutter_expandable_fab: ^2.5.2
   sliver_tools: ^0.2.12
+  screen_protector: ^1.4.7
 
 
 dev_dependencies:

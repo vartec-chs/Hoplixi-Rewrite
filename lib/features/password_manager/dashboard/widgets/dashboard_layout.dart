@@ -7,6 +7,8 @@ import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.d
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 
 import 'package:hoplixi/routing/paths.dart';
+import 'package:screen_protector/screen_protector.dart';
+import 'package:universal_platform/universal_platform.dart';
 import 'smooth_rounded_notched_rectangle.dart';
 
 // dashboard sidebar key - позволяет управлять sidebar из любого места приложения
@@ -53,6 +55,15 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
 
   final GlobalKey<ExpandableFABState> _fabKey = GlobalKey();
   final GlobalKey<ExpandableFABState> _mobileFabKey = GlobalKey();
+
+  void _preventScreenshotOn() async =>
+      await ScreenProtector.protectDataLeakageOn();
+
+  void _protectDataLeakageWithBlur() async =>
+      await ScreenProtector.protectDataLeakageWithBlur();
+
+  void _protectDataLeakageOff() async =>
+      await ScreenProtector.protectDataLeakageOff();
 
   // Отслеживание предыдущего состояния формы
   bool _wasFormRoute = false;
@@ -156,6 +167,10 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
 
   @override
   void initState() {
+    if (UniversalPlatform.isMobile) {
+      _preventScreenshotOn();
+      _protectDataLeakageWithBlur();
+    }
     super.initState();
     _animationController = AnimationController(
       vsync: this,
@@ -170,6 +185,10 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
 
   @override
   void dispose() {
+    if (UniversalPlatform.isMobile) {
+      _protectDataLeakageOff();
+    }
+
     _animationController.dispose();
     super.dispose();
   }
