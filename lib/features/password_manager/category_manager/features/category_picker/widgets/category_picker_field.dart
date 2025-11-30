@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/providers/category_info_provider.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/widgets/category_picker_modal.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 
 /// Текстовое поле для выбора категории
-class CategoryPickerField extends StatefulWidget {
+class CategoryPickerField extends ConsumerStatefulWidget {
   const CategoryPickerField({
     super.key,
     this.onCategorySelected,
@@ -64,17 +66,54 @@ class CategoryPickerField extends StatefulWidget {
   final CategoryType? filterByType;
 
   @override
-  State<CategoryPickerField> createState() => _CategoryPickerFieldState();
+  ConsumerState<CategoryPickerField> createState() =>
+      _CategoryPickerFieldState();
 }
 
-class _CategoryPickerFieldState extends State<CategoryPickerField> {
+class _CategoryPickerFieldState extends ConsumerState<CategoryPickerField> {
   late final FocusNode _internalFocusNode;
   FocusNode get _effectiveFocusNode => widget.focusNode ?? _internalFocusNode;
+
+  /// Закэшированное имя категории (для случая, когда передан только ID)
+  String? _resolvedCategoryName;
+
+  /// Закэшированные имена категорий (для режима фильтра)
+  List<String> _resolvedCategoryNames = [];
+
+  /// Состояние наведения курсора
+  bool _isHovered = false;
 
   @override
   void initState() {
     super.initState();
     _internalFocusNode = FocusNode();
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoryPickerField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Сбрасываем кэш если изменился ID категории
+    if (oldWidget.selectedCategoryId != widget.selectedCategoryId) {
+      _resolvedCategoryName = null;
+    }
+
+    // Сбрасываем кэш если изменились ID категорий в режиме фильтра
+    if (!_listEquals(
+      oldWidget.selectedCategoryIds,
+      widget.selectedCategoryIds,
+    )) {
+      _resolvedCategoryNames = [];
+    }
+  }
+
+  /// Сравнение списков
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -126,6 +165,7 @@ class _CategoryPickerFieldState extends State<CategoryPickerField> {
       // Обычный режим - одиночный выбор
       await CategoryPickerModal.show(
         context: context,
+        filterByType: widget.filterByType?.value,
         currentCategoryId: widget.selectedCategoryId,
         onCategorySelected: (categoryId, categoryName) {
           widget.onCategorySelected?.call(categoryId, categoryName);
@@ -139,22 +179,101 @@ class _CategoryPickerFieldState extends State<CategoryPickerField> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Получаем эффективное имя категории
+    String? effectiveCategoryName = widget.selectedCategoryName;
+    List<String> effectiveCategoryNames = widget.selectedCategoryNames;
+
+    // Автоматически загружаем имя категории по ID, если имя не передано
+    if (!widget.isFilter) {
+      // Одиночный режим
+      if (widget.selectedCategoryId != null &&
+          widget.selectedCategoryId!.isNotEmpty &&
+          (widget.selectedCategoryName == null ||
+              widget.selectedCategoryName!.isEmpty)) {
+        // Используем кэш, если уже загружено
+        if (_resolvedCategoryName != null) {
+          effectiveCategoryName = _resolvedCategoryName;
+        } else {
+          // Загружаем через провайдер
+          final categoryInfoAsync = ref.watch(
+            categoryInfoProvider(widget.selectedCategoryId!),
+          );
+
+          categoryInfoAsync.whenData((info) {
+            if (info != null && _resolvedCategoryName != info.name) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _resolvedCategoryName = info.name;
+                  });
+                }
+              });
+            }
+          });
+
+          // Показываем временный текст пока загружается
+          effectiveCategoryName = categoryInfoAsync.when(
+            data: (info) => info?.name,
+            loading: () => 'Загрузка...',
+            error: (_, __) => null,
+          );
+        }
+      }
+    } else {
+      // Режим фильтра - множественный выбор
+      if (widget.selectedCategoryIds.isNotEmpty &&
+          widget.selectedCategoryNames.isEmpty) {
+        // Используем кэш, если уже загружено
+        if (_resolvedCategoryNames.isNotEmpty &&
+            _resolvedCategoryNames.length ==
+                widget.selectedCategoryIds.length) {
+          effectiveCategoryNames = _resolvedCategoryNames;
+        } else {
+          // Загружаем через провайдер
+          final categoriesInfoAsync = ref.watch(
+            categoriesInfoProvider(widget.selectedCategoryIds),
+          );
+
+          categoriesInfoAsync.whenData((infos) {
+            final names = infos.map((i) => i.name).toList();
+            if (!_listEquals(_resolvedCategoryNames, names)) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _resolvedCategoryNames = names;
+                  });
+                }
+              });
+            }
+          });
+
+          // Показываем временный текст пока загружается
+          effectiveCategoryNames = categoriesInfoAsync.when(
+            data: (infos) => infos.map((i) => i.name).toList(),
+            loading: () => ['Загрузка...'],
+            error: (_, __) => [],
+          );
+        }
+      }
+    }
+
     // Определяем наличие значения в зависимости от режима
     final hasValue = widget.isFilter
-        ? widget.selectedCategoryNames.isNotEmpty
-        : (widget.selectedCategoryName != null &&
-              widget.selectedCategoryName!.isNotEmpty);
+        ? effectiveCategoryNames.isNotEmpty
+        : (effectiveCategoryName != null && effectiveCategoryName.isNotEmpty);
 
     return Semantics(
       label: widget.label,
-      hint: hasValue
+      value: hasValue
           ? (widget.isFilter
-                ? '${widget.selectedCategoryNames.length} категорий выбрано'
-                : widget.selectedCategoryName)
-          : widget.hintText,
+                ? effectiveCategoryNames.join(', ')
+                : effectiveCategoryName)
+          : null,
+      hint: hasValue ? null : widget.hintText,
       button: true,
       enabled: widget.enabled,
-      focusable: true,
+      focusable: widget.enabled,
+      onTap: widget.enabled ? _openPicker : null,
       child: Focus(
         focusNode: _effectiveFocusNode,
         autofocus: widget.autofocus,
@@ -186,69 +305,101 @@ class _CategoryPickerFieldState extends State<CategoryPickerField> {
           builder: (context, child) {
             final isFocused = _effectiveFocusNode.hasFocus;
 
-            return InputDecorator(
-              decoration: primaryInputDecoration(
-                context,
-                labelText: widget.label,
-                hintText: widget.hintText,
-                enabled: widget.enabled,
-                isFocused: isFocused,
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (hasValue)
-                      IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        onPressed: widget.enabled ? _handleClear : null,
-                        tooltip: widget.isFilter
-                            ? 'Очистить все (Delete/Backspace)'
-                            : 'Очистить (Delete/Backspace)',
-                      ),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: widget.enabled
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurface.withOpacity(0.38),
-                    ),
-                  ],
-                ),
-              ),
-              child: InkWell(
-                onTap: _handleTap,
-                borderRadius: BorderRadius.circular(12),
-                focusColor: colorScheme.primary.withOpacity(1),
-                hoverColor: colorScheme.onSurface.withOpacity(0.04),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 2),
-                  child: widget.isFilter && hasValue
-                      ? Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: List.generate(
-                            widget.selectedCategoryNames.length,
-                            (index) => _CategoryChip(
-                              label: widget.selectedCategoryNames[index],
-                              onRemove: widget.enabled
-                                  ? () => _handleRemoveCategory(index)
-                                  : null,
-                              enabled: widget.enabled,
+            return GestureDetector(
+              onTap: _handleTap,
+              behavior: HitTestBehavior.opaque,
+              child: MouseRegion(
+                cursor: widget.enabled
+                    ? SystemMouseCursors.click
+                    : SystemMouseCursors.basic,
+                onEnter: (_) {
+                  if (widget.enabled && !_isHovered) {
+                    setState(() => _isHovered = true);
+                  }
+                },
+                onExit: (_) {
+                  if (_isHovered) {
+                    setState(() => _isHovered = false);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: _isHovered && widget.enabled
+                        ? colorScheme.onSurface.withOpacity(0.04)
+                        : Colors.transparent,
+                  ),
+                  child: InputDecorator(
+                    decoration: primaryInputDecoration(
+                      context,
+                      labelText: widget.label,
+                      hintText: hasValue ? null : widget.hintText,
+                      enabled: widget.enabled,
+                      isFocused: isFocused,
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hasValue)
+                            ExcludeSemantics(
+                              child: IconButton(
+                                icon: const Icon(Icons.clear, size: 20),
+                                onPressed: widget.enabled ? _handleClear : null,
+                                tooltip: widget.isFilter
+                                    ? 'Очистить все (Delete/Backspace)'
+                                    : 'Очистить (Delete/Backspace)',
+                              ),
                             ),
-                          ),
-                        )
-                      : Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            hasValue
-                                ? widget.selectedCategoryName!
-                                : widget.hintText,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: hasValue
+                          ExcludeSemantics(
+                            child: Icon(
+                              Icons.arrow_drop_down,
+                              color: widget.enabled
                                   ? colorScheme.onSurface
-                                  : colorScheme.onSurface.withOpacity(0.6),
+                                  : colorScheme.onSurface.withOpacity(0.38),
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                    isFocused: isFocused,
+                    child: IgnorePointer(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: widget.isFilter && hasValue
+                            ? Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: List.generate(
+                                  effectiveCategoryNames.length,
+                                  (index) => _CategoryChip(
+                                    label: effectiveCategoryNames[index],
+                                    onRemove: widget.enabled
+                                        ? () => _handleRemoveCategory(index)
+                                        : null,
+                                    enabled: widget.enabled,
+                                  ),
+                                ),
+                              )
+                            : Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  hasValue
+                                      ? effectiveCategoryName!
+                                      : widget.hintText,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: hasValue
+                                        ? colorScheme.onSurface
+                                        : colorScheme.onSurface.withOpacity(
+                                            0.6,
+                                          ),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             );

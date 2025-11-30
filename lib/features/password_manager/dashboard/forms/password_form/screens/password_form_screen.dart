@@ -6,6 +6,7 @@ import 'package:hoplixi/features/password_manager/category_manager/features/cate
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
+import 'package:hoplixi/main_store/models/enums/entity_types.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 import '../providers/password_form_provider.dart';
@@ -118,7 +119,7 @@ class _PasswordFormScreenState extends ConsumerState<PasswordFormScreen> {
         actions: [
           if (state.isSaving)
             const Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(12.0),
               child: SizedBox(
                 width: 24,
                 height: 24,
@@ -144,202 +145,230 @@ class _PasswordFormScreenState extends ConsumerState<PasswordFormScreen> {
 
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Название *
-                  TextField(
-                    controller: _nameController,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'Название *',
-                      hintText: 'Введите название',
-                      errorText: state.nameError,
-                    ),
-                    onChanged: (value) {
-                      ref.read(passwordFormProvider.notifier).setName(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Пароль *
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'Пароль *',
-                      hintText: 'Введите пароль',
-                      errorText: state.passwordError,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+          : Column(
+              children: [
+                Expanded(
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      padding: const EdgeInsets.all(12),
+                      children: [
+                        // Название *
+                        TextField(
+                          controller: _nameController,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'Название *',
+                            hintText: 'Введите название',
+                            errorText: state.nameError,
+                          ),
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setName(value);
+                          },
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                    onChanged: (value) {
-                      ref
-                          .read(passwordFormProvider.notifier)
-                          .setPassword(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                  // Логин
-                  TextField(
-                    controller: _loginController,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'Логин',
-                      hintText: 'Введите логин',
-                      errorText: state.loginError,
-                    ),
-                    onChanged: (value) {
-                      ref.read(passwordFormProvider.notifier).setLogin(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Email
-                  TextField(
-                    controller: _emailController,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'Email',
-                      hintText: 'Введите email',
-                      errorText: state.emailError,
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    onChanged: (value) {
-                      ref.read(passwordFormProvider.notifier).setEmail(value);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Подсказка
-                  Text(
-                    '* Заполните хотя бы одно поле: Логин или Email',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // URL
-                  TextField(
-                    controller: _urlController,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'URL',
-                      hintText: 'https://example.com',
-                      errorText: state.urlError,
-                    ),
-                    keyboardType: TextInputType.url,
-                    onChanged: (value) {
-                      ref.read(passwordFormProvider.notifier).setUrl(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Категория
-                  CategoryPickerField(
-                    selectedCategoryId: state.categoryId,
-                    selectedCategoryName: state.categoryName,
-                    label: 'Категория',
-                    hintText: 'Выберите категорию',
-                    onCategorySelected: (categoryId, categoryName) {
-                      ref
-                          .read(passwordFormProvider.notifier)
-                          .setCategory(categoryId, categoryName);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Теги
-                  TagPickerField(
-                    selectedTagIds: state.tagIds,
-                    selectedTagNames: state.tagNames,
-                    label: 'Теги',
-                    hintText: 'Выберите теги',
-                    onTagsSelected: (tagIds, tagNames) {
-                      ref
-                          .read(passwordFormProvider.notifier)
-                          .setTags(tagIds, tagNames);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Описание
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'Описание',
-                      hintText: 'Краткое описание',
-                    ),
-                    maxLines: 2,
-                    onChanged: (value) {
-                      ref
-                          .read(passwordFormProvider.notifier)
-                          .setDescription(value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Заметки
-                  TextField(
-                    controller: _notesController,
-                    decoration: primaryInputDecoration(
-                      context,
-                      labelText: 'Заметки',
-                      hintText: 'Дополнительные заметки',
-                    ),
-                    maxLines: 4,
-                    onChanged: (value) {
-                      ref.read(passwordFormProvider.notifier).setNotes(value);
-                    },
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Кнопки
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SmoothButton(
-                          label: 'Отмена',
-                          onPressed: state.isSaving
-                              ? null
-                              : () => context.pop(false),
-                          type: SmoothButtonType.outlined,
-                          variant: SmoothButtonVariant.normal,
+                        // Пароль *
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'Пароль *',
+                            hintText: 'Введите пароль',
+                            errorText: state.passwordError,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setPassword(value);
+                          },
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: SmoothButton(
-                          label: widget.passwordId != null
-                              ? 'Сохранить'
-                              : 'Создать',
-                          onPressed: state.isSaving ? null : _handleSave,
-                          type: SmoothButtonType.filled,
-                          variant: SmoothButtonVariant.normal,
+                        const SizedBox(height: 16),
+
+                        // Логин
+                        TextField(
+                          controller: _loginController,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'Логин',
+                            hintText: 'Введите логин',
+                            errorText: state.loginError,
+                          ),
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setLogin(value);
+                          },
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+
+                        // Email
+                        TextField(
+                          controller: _emailController,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'Email',
+                            hintText: 'Введите email',
+                            errorText: state.emailError,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setEmail(value);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Подсказка
+                        Text(
+                          '* Заполните хотя бы одно поле: Логин или Email',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // URL
+                        TextField(
+                          controller: _urlController,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'URL',
+                            hintText: 'https://example.com',
+                            errorText: state.urlError,
+                          ),
+                          keyboardType: TextInputType.url,
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setUrl(value);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Категория
+                        CategoryPickerField(
+                          selectedCategoryId: state.categoryId,
+                          selectedCategoryName: state.categoryName,
+                          label: 'Категория',
+                          hintText: 'Выберите категорию',
+                          filterByType: CategoryType.password,
+                          onCategorySelected: (categoryId, categoryName) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setCategory(categoryId, categoryName);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Теги
+                        TagPickerField(
+                          selectedTagIds: state.tagIds,
+                          selectedTagNames: state.tagNames,
+                          label: 'Теги',
+                          hintText: 'Выберите теги',
+                          filterByType: TagType.password,
+                          onTagsSelected: (tagIds, tagNames) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setTags(tagIds, tagNames);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Описание
+                        TextField(
+                          controller: _descriptionController,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'Описание',
+                            hintText: 'Краткое описание',
+                          ),
+                          maxLines: 2,
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setDescription(value);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Заметки
+                        TextField(
+                          controller: _notesController,
+                          decoration: primaryInputDecoration(
+                            context,
+                            labelText: 'Заметки',
+                            hintText: 'Дополнительные заметки',
+                          ),
+                          maxLines: 4,
+                          onChanged: (value) {
+                            ref
+                                .read(passwordFormProvider.notifier)
+                                .setNotes(value);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+                ),
+
+                // Закрепленные кнопки снизу
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    border: Border(
+                      top: BorderSide(color: theme.dividerColor, width: 1),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SmoothButton(
+                            label: 'Отмена',
+                            onPressed: state.isSaving
+                                ? null
+                                : () => context.pop(false),
+                            type: SmoothButtonType.outlined,
+                            variant: SmoothButtonVariant.normal,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: SmoothButton(
+                            label: widget.passwordId != null
+                                ? 'Сохранить'
+                                : 'Создать',
+                            onPressed: state.isSaving ? null : _handleSave,
+                            type: SmoothButtonType.filled,
+                            variant: SmoothButtonVariant.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }

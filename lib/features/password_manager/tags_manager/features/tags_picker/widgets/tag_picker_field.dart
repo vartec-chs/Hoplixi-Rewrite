@@ -62,6 +62,9 @@ class _TagPickerFieldState extends State<TagPickerField> {
   late final FocusNode _internalFocusNode;
   FocusNode get _effectiveFocusNode => widget.focusNode ?? _internalFocusNode;
 
+  /// Состояние наведения курсора
+  bool _isHovered = false;
+
   @override
   void initState() {
     super.initState();
@@ -119,14 +122,12 @@ class _TagPickerFieldState extends State<TagPickerField> {
 
     return Semantics(
       label: widget.label,
-      hint: hasValue
-          ? (widget.isFilter
-                ? '${widget.selectedTagNames.length} тегов выбрано'
-                : '${widget.selectedTagNames.length} тегов выбрано')
-          : widget.hintText,
+      value: hasValue ? widget.selectedTagNames.join(', ') : null,
+      hint: hasValue ? null : widget.hintText,
       button: true,
       enabled: widget.enabled,
-      focusable: true,
+      focusable: widget.enabled,
+      onTap: widget.enabled ? _openPicker : null,
       child: Focus(
         focusNode: _effectiveFocusNode,
         autofocus: widget.autofocus,
@@ -158,68 +159,95 @@ class _TagPickerFieldState extends State<TagPickerField> {
           builder: (context, child) {
             final isFocused = _effectiveFocusNode.hasFocus;
 
-            return InputDecorator(
-              decoration: primaryInputDecoration(
-                context,
-                labelText: widget.label,
-                hintText: widget.hintText,
-                enabled: widget.enabled,
-                isFocused: isFocused,
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (hasValue)
-                      IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        onPressed: widget.enabled ? _handleClear : null,
-                        tooltip: widget.isFilter
-                            ? 'Очистить все (Delete/Backspace)'
-                            : 'Очистить все (Delete/Backspace)',
-                      ),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: widget.enabled
-                          ? colorScheme.onSurface
-                          : colorScheme.onSurface.withOpacity(0.38),
-                    ),
-                  ],
-                ),
-              ),
-              child: InkWell(
-                onTap: _handleTap,
-                borderRadius: BorderRadius.circular(12),
-                focusColor: colorScheme.primary.withOpacity(1),
-                hoverColor: colorScheme.onSurface.withOpacity(0.04),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 2,
-                    horizontal: 4,
+            return GestureDetector(
+              onTap: _handleTap,
+              behavior: HitTestBehavior.opaque,
+              child: MouseRegion(
+                cursor: widget.enabled
+                    ? SystemMouseCursors.click
+                    : SystemMouseCursors.basic,
+                onEnter: (_) {
+                  if (widget.enabled && !_isHovered) {
+                    setState(() => _isHovered = true);
+                  }
+                },
+                onExit: (_) {
+                  if (_isHovered) {
+                    setState(() => _isHovered = false);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: _isHovered && widget.enabled
+                        ? colorScheme.onSurface.withOpacity(0.04)
+                        : Colors.transparent,
                   ),
-                  child: hasValue
-                      ? Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: List.generate(
-                            widget.selectedTagNames.length,
-                            (index) => _TagChip(
-                              label: widget.selectedTagNames[index],
-                              onRemove: widget.enabled
-                                  ? () => _handleRemoveTag(index)
-                                  : null,
-                              enabled: widget.enabled,
+                  child: InputDecorator(
+                    decoration: primaryInputDecoration(
+                      context,
+                      labelText: widget.label,
+                      hintText: hasValue ? null : widget.hintText,
+                      enabled: widget.enabled,
+                      isFocused: isFocused,
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hasValue)
+                            ExcludeSemantics(
+                              child: IconButton(
+                                icon: const Icon(Icons.clear, size: 20),
+                                onPressed: widget.enabled ? _handleClear : null,
+                                tooltip: 'Очистить все (Delete/Backspace)',
+                              ),
+                            ),
+                          ExcludeSemantics(
+                            child: Icon(
+                              Icons.arrow_drop_down,
+                              color: widget.enabled
+                                  ? colorScheme.onSurface
+                                  : colorScheme.onSurface.withOpacity(0.38),
                             ),
                           ),
-                        )
-                      : Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            widget.hintText,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.6),
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                        ],
+                      ),
+                    ),
+                    isFocused: isFocused,
+                    child: IgnorePointer(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: hasValue
+                            ? Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: List.generate(
+                                  widget.selectedTagNames.length,
+                                  (index) => _TagChip(
+                                    label: widget.selectedTagNames[index],
+                                    onRemove: widget.enabled
+                                        ? () => _handleRemoveTag(index)
+                                        : null,
+                                    enabled: widget.enabled,
+                                  ),
+                                ),
+                              )
+                            : Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  widget.hintText,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.6,
+                                    ),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             );

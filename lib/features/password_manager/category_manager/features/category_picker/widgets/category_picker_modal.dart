@@ -14,6 +14,7 @@ class CategoryPickerModal {
     required Function(String categoryId, String categoryName)
     onCategorySelected,
     String? currentCategoryId,
+    String? filterByType,
   }) {
     return WoltModalSheet.show(
       context: context,
@@ -21,7 +22,12 @@ class CategoryPickerModal {
       useRootNavigator: true,
 
       pageListBuilder: (context) => [
-        _buildPickerPage(context, onCategorySelected, currentCategoryId),
+        _buildPickerPage(
+          context,
+          onCategorySelected,
+          currentCategoryId,
+          filterByType,
+        ),
       ],
     );
   }
@@ -53,6 +59,7 @@ class CategoryPickerModal {
     BuildContext context,
     Function(String categoryId, String categoryName) onCategorySelected,
     String? currentCategoryId,
+    String? filterByType,
   ) {
     return SliverWoltModalSheetPage(
       heroImage: null,
@@ -71,6 +78,7 @@ class CategoryPickerModal {
         _CategoryListView(
           currentCategoryId: currentCategoryId,
           onCategorySelected: onCategorySelected,
+          filterByType: filterByType,
         ),
       ],
     );
@@ -107,11 +115,12 @@ class _CategoryListView extends ConsumerStatefulWidget {
   const _CategoryListView({
     required this.currentCategoryId,
     required this.onCategorySelected,
+    this.filterByType,
   });
 
   final String? currentCategoryId;
   final Function(String categoryId, String categoryName) onCategorySelected;
-
+  final String? filterByType;
   @override
   ConsumerState<_CategoryListView> createState() => _CategoryListViewState();
 }
@@ -201,6 +210,14 @@ class _CategoryListViewState extends ConsumerState<_CategoryListView> {
   @override
   Widget build(BuildContext context) {
     final categoriesState = ref.watch(categoryPickerListProvider);
+
+    if (widget.filterByType != null) {
+      Future.microtask(() {
+        ref
+            .read(categoryPickerFilterProvider.notifier)
+            .updateType(widget.filterByType);
+      });
+    }
 
     return categoriesState.when(
       data: (state) {

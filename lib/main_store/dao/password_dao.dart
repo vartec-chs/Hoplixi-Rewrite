@@ -101,19 +101,13 @@ class PasswordDao extends DatabaseAccessor<MainStore>
   Future<bool> updatePassword(String id, UpdatePasswordDto dto) async {
     final companion = PasswordsCompanion(
       name: dto.name != null ? Value(dto.name!) : const Value.absent(),
-      password: dto.password != null
-          ? Value(dto.password!)
-          : const Value.absent(),
-      login: dto.login != null ? Value(dto.login) : const Value.absent(),
-      email: dto.email != null ? Value(dto.email) : const Value.absent(),
-      url: dto.url != null ? Value(dto.url) : const Value.absent(),
-      description: dto.description != null
-          ? Value(dto.description)
-          : const Value.absent(),
-      notes: dto.notes != null ? Value(dto.notes) : const Value.absent(),
-      categoryId: dto.categoryId != null
-          ? Value(dto.categoryId)
-          : const Value.absent(),
+      password: Value(dto.password == null ? '' : dto.password!),
+      login: Value(dto.login),
+      email: Value(dto.email),
+      url: Value(dto.url),
+      description: Value(dto.description),
+      notes: Value(dto.notes),
+      categoryId: Value(dto.categoryId),
       isFavorite: dto.isFavorite != null
           ? Value(dto.isFavorite!)
           : const Value.absent(),

@@ -55,6 +55,7 @@ class PasswordFormNotifier extends Notifier<PasswordFormState> {
         description: password.description ?? '',
         notes: password.notes ?? '',
         categoryId: password.categoryId,
+
         // categoryName: ..., // TODO: Получить имя категории
         tagIds: tagIds,
         tagNames: tagRecords.map((tag) => tag.name).toList(),

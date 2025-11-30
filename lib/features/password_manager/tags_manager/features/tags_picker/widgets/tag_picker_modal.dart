@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
+import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/providers/tag_filter_provider.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/providers/tag_picker_provider.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/widgets/tag_picker_filters.dart';
@@ -247,6 +248,14 @@ class _TagPickerContentState extends ConsumerState<_TagPickerContent> {
   @override
   Widget build(BuildContext context) {
     final tagsState = ref.watch(tagPickerListProvider);
+
+    if (widget.filterByType != null) {
+      Future.microtask(() {
+        ref
+            .read(tagPickerFilterProvider.notifier)
+            .updateType(widget.filterByType);
+      });
+    }
 
     return tagsState.when(
       data: (state) {

@@ -181,7 +181,7 @@ InputDecoration primaryInputDecoration(
 
     focusedBorder: CustomOutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: theme.colorScheme.tertiary, width: 1),
+      borderSide: BorderSide(color: theme.colorScheme.primary, width: 1),
     ),
     helperStyle: TextStyle(
       fontSize: 12,
@@ -216,13 +216,9 @@ InputDecoration primaryInputDecoration(
           ),
     prefixIconColor: !enabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-        : isFocused
-        ? theme.colorScheme.primary
         : theme.colorScheme.onSurface,
     suffixIconColor: !enabled
         ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-        : isFocused
-        ? theme.colorScheme.primary
         : theme.colorScheme.onSurface,
     helperStyle: !enabled
         ? TextStyle(
