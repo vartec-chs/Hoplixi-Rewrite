@@ -3,6 +3,7 @@ import 'package:hoplixi/features/component_showcase/screens/button_showcase_scre
 import 'package:hoplixi/features/component_showcase/screens/expandable_fab_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/modal_sheet_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/notification_showcase_screen.dart';
+import 'package:hoplixi/features/component_showcase/screens/qr_scanner_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/slider_button_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/text_field_showcase_screen.dart';
 import 'package:hoplixi/features/component_showcase/screens/universal_modal_showcase_screen.dart';
@@ -54,6 +55,11 @@ class _ComponentShowcaseScreenState extends State<ComponentShowcaseScreen> {
       title: 'Expandable FAB',
       icon: Icons.add_circle,
       screen: const ExpandableFabScreen(),
+    ),
+    ShowcaseItem(
+      title: 'QR Scanners',
+      icon: Icons.qr_code_scanner,
+      screen: const QrScannerShowcaseScreen(),
     ),
   ];
 
