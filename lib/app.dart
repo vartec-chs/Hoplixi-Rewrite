@@ -10,6 +10,8 @@ import 'package:hoplixi/shared/ui/desktop_shell.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart'
     as animated_theme;
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -110,13 +112,16 @@ class _AppState extends ConsumerState<App> with TrayListener {
         darkTheme: AppTheme.dark(context),
         routerConfig: router,
         // themeMode: themeMode,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          FlutterQuillLocalizations.delegate,
+        ],
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
           return animated_theme.ThemeSwitchingArea(
-            child: 
-                RootBarsOverlay(child: child!),
-              
-            
+            child: RootBarsOverlay(child: child!),
           );
         },
       ),

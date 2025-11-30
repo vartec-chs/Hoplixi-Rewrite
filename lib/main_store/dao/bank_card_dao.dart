@@ -27,8 +27,6 @@ class BankCardDao extends DatabaseAccessor<MainStore>
     )..where((bc) => bc.id.equals(id))).getSingleOrNull();
   }
 
-  
-
   /// Переключить избранное
   @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
@@ -63,34 +61,49 @@ class BankCardDao extends DatabaseAccessor<MainStore>
     )..orderBy([(bc) => OrderingTerm.desc(bc.modifiedAt)])).watch();
   }
 
-  
-
   /// Создать новую карту
   Future<String> createBankCard(CreateBankCardDto dto) async {
     final uuid = const Uuid().v4();
-    final companion = BankCardsCompanion.insert(
-      id: Value(uuid),
-      name: dto.name,
-      cardholderName: dto.cardholderName,
-      cardNumber: dto.cardNumber,
-      expiryMonth: dto.expiryMonth,
-      expiryYear: dto.expiryYear,
-      cardType: dto.cardType != null
-          ? Value(CardTypeX.fromString(dto.cardType!))
-          : const Value.absent(),
-      cardNetwork: dto.cardNetwork != null
-          ? Value(CardNetworkX.fromString(dto.cardNetwork!))
-          : const Value.absent(),
-      cvv: Value(dto.cvv),
-      bankName: Value(dto.bankName),
-      accountNumber: Value(dto.accountNumber),
-      routingNumber: Value(dto.routingNumber),
-      description: Value(dto.description),
-      notes: Value(dto.notes),
-      categoryId: Value(dto.categoryId),
-    );
-    await into(bankCards).insert(companion);
-    return uuid;
+    return await db.transaction(() async {
+      final companion = BankCardsCompanion.insert(
+        id: Value(uuid),
+        name: dto.name,
+        cardholderName: dto.cardholderName,
+        cardNumber: dto.cardNumber,
+        expiryMonth: dto.expiryMonth,
+        expiryYear: dto.expiryYear,
+        cardType: dto.cardType != null
+            ? Value(CardTypeX.fromString(dto.cardType!))
+            : const Value.absent(),
+        cardNetwork: dto.cardNetwork != null
+            ? Value(CardNetworkX.fromString(dto.cardNetwork!))
+            : const Value.absent(),
+        cvv: Value(dto.cvv),
+        bankName: Value(dto.bankName),
+        accountNumber: Value(dto.accountNumber),
+        routingNumber: Value(dto.routingNumber),
+        description: Value(dto.description),
+        notes: Value(dto.notes),
+        categoryId: Value(dto.categoryId),
+      );
+      await into(bankCards).insert(companion);
+      await _insertBankCardTags(uuid, dto.tagsIds);
+      return uuid;
+    });
+  }
+
+  Future<void> _insertBankCardTags(
+    String bankCardId,
+    List<String>? tagIds,
+  ) async {
+    if (tagIds == null || tagIds.isEmpty) return;
+    for (final tagId in tagIds) {
+      await db
+          .into(db.bankCardsTags)
+          .insert(
+            BankCardsTagsCompanion.insert(cardId: bankCardId, tagId: tagId),
+          );
+    }
   }
 
   /// Обновить карту

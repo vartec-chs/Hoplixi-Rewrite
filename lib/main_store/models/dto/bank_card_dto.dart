@@ -24,6 +24,7 @@ sealed class CreateBankCardDto with _$CreateBankCardDto {
     String? description,
     String? notes,
     String? categoryId,
+    required List<String> tagsIds,
   }) = _CreateBankCardDto;
 
   factory CreateBankCardDto.fromJson(Map<String, dynamic> json) =>

@@ -3,6 +3,7 @@ import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/note_dto.dart';
 import 'package:hoplixi/main_store/tables/notes.dart';
+import 'package:uuid/uuid.dart';
 
 part 'note_dao.g.dart';
 
@@ -20,24 +21,6 @@ class NoteDao extends DatabaseAccessor<MainStore>
   /// Получить заметку по ID
   Future<NotesData?> getNoteById(String id) {
     return (select(notes)..where((n) => n.id.equals(id))).getSingleOrNull();
-  }
-
-  /// Получить заметки в виде карточек
-  Future<List<NoteCardDto>> getAllNoteCards() {
-    return (select(notes)..orderBy([(n) => OrderingTerm.desc(n.modifiedAt)]))
-        .map(
-          (n) => NoteCardDto(
-            id: n.id,
-            title: n.title,
-            description: n.description,
-            categoryName: null, // TODO: join with categories
-            isFavorite: n.isFavorite,
-            isPinned: n.isPinned,
-            usedCount: n.usedCount,
-            modifiedAt: n.modifiedAt,
-          ),
-        )
-        .get();
   }
 
   /// Переключить избранное
@@ -77,41 +60,63 @@ class NoteDao extends DatabaseAccessor<MainStore>
     )..orderBy([(n) => OrderingTerm.desc(n.modifiedAt)])).watch();
   }
 
-  /// Смотреть заметки карточки с автообновлением
-  Stream<List<NoteCardDto>> watchNoteCards() {
-    return (select(
-      notes,
-    )..orderBy([(n) => OrderingTerm.desc(n.modifiedAt)])).watch().map(
-      (notes) => notes
-          .map(
-            (n) => NoteCardDto(
-              id: n.id,
-              title: n.title,
-              description: n.description,
-              categoryName: null,
-              isFavorite: n.isFavorite,
-              isPinned: n.isPinned,
-              usedCount: n.usedCount,
-              modifiedAt: n.modifiedAt,
-            ),
-          )
-          .toList(),
-    );
+  /// Создать новую заметку
+  Future<String> createNote(CreateNoteDto dto) async {
+    final uuid = const Uuid().v4();
+    return await db.transaction(() async {
+      final companion = NotesCompanion.insert(
+        id: Value(uuid),
+        title: dto.title,
+        content: dto.content,
+        deltaJson: dto.deltaJson,
+        description: Value(dto.description),
+        categoryId: Value(dto.categoryId),
+      );
+      await into(notes).insert(companion);
+      await _insertNoteTags(uuid, dto.tagsIds);
+      return uuid;
+    });
   }
 
-  /// Создать новую заметку
-  Future<String> createNote(CreateNoteDto dto) {
-    final companion = NotesCompanion.insert(
-      title: dto.title,
-      content: dto.content,
-      deltaJson: dto.deltaJson,
-      description: Value(dto.description),
-      categoryId: Value(dto.categoryId),
-    );
-    return into(notes).insert(companion).then((id) {
-      return (select(
-        notes,
-      )..where((n) => n.id.equals(id.toString()))).map((n) => n.id).getSingle();
+  Future<void> _insertNoteTags(String noteId, List<String>? tagIds) async {
+    if (tagIds == null || tagIds.isEmpty) return;
+    for (final tagId in tagIds) {
+      await db
+          .into(db.notesTags)
+          .insert(NotesTagsCompanion.insert(noteId: noteId, tagId: tagId));
+    }
+  }
+
+  /// Получить ID тегов заметки
+  Future<List<String>> getNoteTagIds(String noteId) async {
+    final rows = await (select(
+      db.notesTags,
+    )..where((t) => t.noteId.equals(noteId))).get();
+    return rows.map((row) => row.tagId).toList();
+  }
+
+  /// Синхронизировать теги заметки
+  Future<void> syncNoteTags(String noteId, List<String> tagIds) async {
+    await db.transaction(() async {
+      final existing = await (select(
+        db.notesTags,
+      )..where((t) => t.noteId.equals(noteId))).get();
+      final existingIds = existing.map((row) => row.tagId).toSet();
+      final newIds = tagIds.toSet();
+
+      final toDelete = existingIds.difference(newIds);
+      if (toDelete.isNotEmpty) {
+        await (delete(
+          db.notesTags,
+        )..where((t) => t.noteId.equals(noteId) & t.tagId.isIn(toDelete))).go();
+      }
+
+      final toInsert = newIds.difference(existingIds);
+      for (final tagId in toInsert) {
+        await db
+            .into(db.notesTags)
+            .insert(NotesTagsCompanion.insert(noteId: noteId, tagId: tagId));
+      }
     });
   }
 

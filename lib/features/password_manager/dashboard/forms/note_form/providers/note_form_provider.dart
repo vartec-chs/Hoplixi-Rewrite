@@ -1,0 +1,268 @@
+import 'dart:convert';
+
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
+import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
+import 'package:hoplixi/main_store/models/dto/note_dto.dart';
+import 'package:hoplixi/main_store/provider/dao_providers.dart';
+import '../models/note_form_state.dart';
+
+const _logTag = 'NoteFormProvider';
+
+/// Провайдер состояния формы заметки
+final noteFormProvider =
+    NotifierProvider.autoDispose<NoteFormNotifier, NoteFormState>(
+      NoteFormNotifier.new,
+    );
+
+/// Notifier для управления формой заметки
+class NoteFormNotifier extends Notifier<NoteFormState> {
+  @override
+  NoteFormState build() {
+    return const NoteFormState(isEditMode: false);
+  }
+
+  /// Инициализировать форму для создания новой заметки
+  void initForCreate() {
+    state = const NoteFormState(isEditMode: false);
+  }
+
+  /// Инициализировать форму для редактирования заметки
+  Future<void> initForEdit(String noteId) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final dao = await ref.read(noteDaoProvider.future);
+      final note = await dao.getNoteById(noteId);
+
+      if (note == null) {
+        logWarning('Note not found: $noteId', tag: _logTag);
+        state = state.copyWith(isLoading: false);
+        return;
+      }
+
+      // Получить теги заметки
+      final tagIds = await dao.getNoteTagIds(noteId);
+      final tagDao = await ref.read(tagDaoProvider.future);
+      final tagRecords = await tagDao.getTagsByIds(tagIds);
+
+      state = NoteFormState(
+        isEditMode: true,
+        editingNoteId: noteId,
+        title: note.title,
+        content: note.content,
+        deltaJson: note.deltaJson,
+        description: note.description ?? '',
+        categoryId: note.categoryId,
+        // categoryName: ..., // TODO: Получить имя категории
+        tagIds: tagIds,
+        tagNames: tagRecords.map((tag) => tag.name).toList(),
+        isLoading: false,
+      );
+    } catch (e, stack) {
+      logError(
+        'Failed to load note for editing',
+        error: e,
+        stackTrace: stack,
+        tag: _logTag,
+      );
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  /// Обновить заголовок
+  void setTitle(String value) {
+    state = state.copyWith(
+      title: value,
+      titleError: _validateTitle(value),
+      hasUnsavedChanges: true,
+    );
+  }
+
+  /// Обновить контент (plain text)
+  void setContent(String value) {
+    state = state.copyWith(
+      content: value,
+      contentError: _validateContent(value),
+      hasUnsavedChanges: true,
+    );
+  }
+
+  /// Обновить delta JSON (структура Quill документа)
+  void setDeltaJson(String value) {
+    state = state.copyWith(deltaJson: value, hasUnsavedChanges: true);
+  }
+
+  /// Обновить контент из QuillController
+  void updateFromController(QuillController controller) {
+    final plainText = controller.document.toPlainText();
+    final deltaJson = jsonEncode(controller.document.toDelta().toJson());
+
+    state = state.copyWith(
+      content: plainText,
+      deltaJson: deltaJson,
+      contentError: _validateContent(plainText),
+      hasUnsavedChanges: true,
+    );
+  }
+
+  /// Обновить описание
+  void setDescription(String value) {
+    state = state.copyWith(description: value, hasUnsavedChanges: true);
+  }
+
+  /// Обновить категорию
+  void setCategory(String? categoryId, String? categoryName) {
+    state = state.copyWith(
+      categoryId: categoryId,
+      categoryName: categoryName,
+      hasUnsavedChanges: true,
+    );
+  }
+
+  /// Обновить теги
+  void setTags(List<String> tagIds, List<String> tagNames) {
+    state = state.copyWith(
+      tagIds: tagIds,
+      tagNames: tagNames,
+      hasUnsavedChanges: true,
+    );
+  }
+
+  /// Валидация заголовка
+  String? _validateTitle(String value) {
+    if (value.trim().isEmpty) {
+      return 'Заголовок обязателен';
+    }
+    if (value.trim().length > 255) {
+      return 'Заголовок не должен превышать 255 символов';
+    }
+    return null;
+  }
+
+  /// Валидация контента
+  String? _validateContent(String value) {
+    if (value.trim().isEmpty) {
+      return 'Содержание не может быть пустым';
+    }
+    return null;
+  }
+
+  /// Валидировать все поля формы
+  bool validateAll() {
+    final titleError = _validateTitle(state.title);
+    final contentError = _validateContent(state.content);
+
+    state = state.copyWith(titleError: titleError, contentError: contentError);
+
+    return !state.hasErrors;
+  }
+
+  /// Сохранить форму
+  Future<bool> save() async {
+    // Валидация
+    if (!validateAll()) {
+      logWarning('Form validation failed', tag: _logTag);
+      return false;
+    }
+
+    state = state.copyWith(isSaving: true);
+
+    try {
+      final dao = await ref.read(noteDaoProvider.future);
+
+      if (state.isEditMode && state.editingNoteId != null) {
+        // Режим редактирования
+        final dto = UpdateNoteDto(
+          title: state.title.trim(),
+          content: state.content.trim(),
+          deltaJson: state.deltaJson,
+          description: state.description.trim().isEmpty
+              ? null
+              : state.description.trim(),
+          categoryId: state.categoryId,
+        );
+
+        final success = await dao.updateNote(state.editingNoteId!, dto);
+
+        if (success) {
+          // Синхронизация тегов
+          await dao.syncNoteTags(state.editingNoteId!, state.tagIds);
+
+          logInfo('Note updated: ${state.editingNoteId}', tag: _logTag);
+          state = state.copyWith(
+            isSaving: false,
+            isSaved: true,
+            hasUnsavedChanges: false,
+          );
+
+          // Триггерим обновление списка заметок
+          ref
+              .read(dataRefreshTriggerProvider.notifier)
+              .triggerEntityUpdate(
+                EntityType.note,
+                entityId: state.editingNoteId,
+              );
+
+          return true;
+        } else {
+          logWarning(
+            'Failed to update note: ${state.editingNoteId}',
+            tag: _logTag,
+          );
+          state = state.copyWith(isSaving: false);
+          return false;
+        }
+      } else {
+        // Режим создания
+        final dto = CreateNoteDto(
+          title: state.title.trim(),
+          content: state.content.trim(),
+          deltaJson: state.deltaJson,
+          description: state.description.trim().isEmpty
+              ? null
+              : state.description.trim(),
+          categoryId: state.categoryId,
+          tagsIds: state.tagIds.isEmpty ? null : state.tagIds,
+        );
+
+        final noteId = await dao.createNote(dto);
+
+        logInfo('Note created: $noteId', tag: _logTag);
+        state = state.copyWith(
+          isSaving: false,
+          isSaved: true,
+          hasUnsavedChanges: false,
+        );
+
+        // Триггерим обновление списка заметок
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerEntityAdd(EntityType.note, entityId: noteId);
+
+        return true;
+      }
+    } catch (e, stack) {
+      logError(
+        'Failed to save note',
+        error: e,
+        stackTrace: stack,
+        tag: _logTag,
+      );
+      state = state.copyWith(isSaving: false);
+      return false;
+    }
+  }
+
+  /// Сбросить флаг сохранения
+  void resetSaved() {
+    state = state.copyWith(isSaved: false);
+  }
+
+  /// Сбросить флаг несохраненных изменений
+  void resetUnsavedChanges() {
+    state = state.copyWith(hasUnsavedChanges: false);
+  }
+}

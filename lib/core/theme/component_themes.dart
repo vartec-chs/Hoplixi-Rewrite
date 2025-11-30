@@ -13,8 +13,6 @@ abstract final class ComponentThemes {
     );
   }
 
-  static const double _cardElevation = 0.0;
-
   /// Базовые подтемы для светлой темы
   static const FlexSubThemesData lightSubThemes = FlexSubThemesData(
     useM2StyleDividerInM3: true,
@@ -47,7 +45,7 @@ abstract final class ComponentThemes {
     inputDecoratorSuffixIconSchemeColor: SchemeColor.primary,
     fabUseShape: true,
     fabSchemeColor: SchemeColor.primary,
-    tooltipRadius: 13.000000000000002,
+    tooltipRadius: 13,
     tooltipWaitDuration: Duration(milliseconds: 100),
     tooltipShowDuration: Duration(milliseconds: 200),
     tooltipSchemeColor: SchemeColor.tertiary,
@@ -108,7 +106,7 @@ abstract final class ComponentThemes {
     inputCursorSchemeColor: SchemeColor.primary,
     fabUseShape: true,
     fabSchemeColor: SchemeColor.primary,
-    tooltipRadius: 13.000000000000002,
+    tooltipRadius: 13,
     tooltipWaitDuration: Duration(milliseconds: 100),
     tooltipShowDuration: Duration(milliseconds: 200),
     tooltipSchemeColor: SchemeColor.tertiary,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hoplixi/core/theme/colors.dart';
 
 enum SmoothButtonType { text, filled, tonal, outlined }
 
@@ -73,11 +74,12 @@ class SmoothButton extends StatelessWidget {
 
   Color _getVariantColor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     switch (variant) {
       case SmoothButtonVariant.normal:
         return colorScheme.primary;
       case SmoothButtonVariant.error:
-        return Colors.redAccent.shade400; // Яркий красный
+        return getErrorColor(context); // Яркий красный
       case SmoothButtonVariant.warning:
         return Colors.orangeAccent.shade700; // Яркий оранжевый
       case SmoothButtonVariant.info:
@@ -156,7 +158,7 @@ class SmoothButton extends StatelessWidget {
         case SmoothButtonType.outlined:
           styledWithVariant = effectiveStyle.copyWith(
             side: WidgetStateProperty.all(
-              BorderSide(color: variantColor, width: 1.5),
+              BorderSide(color: variantColor, width: 1),
             ),
             overlayColor: WidgetStateProperty.all(
               variantColor.withOpacity(0.1),

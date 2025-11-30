@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 
 part 'note_dto.freezed.dart';
 part 'note_dto.g.dart';
@@ -13,6 +15,7 @@ sealed class CreateNoteDto with _$CreateNoteDto {
     required String deltaJson,
     String? description,
     String? categoryId,
+    List<String>? tagsIds,
   }) = _CreateNoteDto;
 
   factory CreateNoteDto.fromJson(Map<String, dynamic> json) =>
@@ -52,11 +55,14 @@ sealed class NoteCardDto with _$NoteCardDto implements BaseCardDto {
     required String id,
     required String title,
     String? description,
-    String? categoryName,
     required bool isFavorite,
     required bool isPinned,
+    required bool isArchived,
+    required bool isDeleted,
     required int usedCount,
     required DateTime modifiedAt,
+    CategoryInCardDto? category,
+    List<TagInCardDto>? tags,
   }) = _NoteCardDto;
 
   factory NoteCardDto.fromJson(Map<String, dynamic> json) =>

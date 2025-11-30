@@ -2,14 +2,16 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/dto/note_dto.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
 import 'package:hoplixi/main_store/models/filter/notes_filter.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 
 part 'note_filter_dao.g.dart';
 
-@DriftAccessor(tables: [Notes, Categories, NotesTags])
+@DriftAccessor(tables: [Notes, Categories, NotesTags, Tags])
 class NoteFilterDao extends DatabaseAccessor<MainStore>
     with _$NoteFilterDaoMixin
     implements FilterDao<NotesFilter, NoteCardDto> {
@@ -37,19 +39,39 @@ class NoteFilterDao extends DatabaseAccessor<MainStore>
     // Выполняем запрос и маппим результаты
     final results = await query.get();
 
+    // Собираем ID всех заметок для загрузки тегов
+    final noteIds = results.map((row) => row.readTable(notes).id).toList();
+
+    // Загружаем теги для всех заметок (максимум 10 на заметку)
+    final tagsMap = await _loadTagsForNotes(noteIds);
+
     return results.map((row) {
       final note = row.readTable(notes);
       final category = row.readTableOrNull(categories);
+
+      // Получаем теги для текущей заметки (максимум 10)
+      final noteTags = tagsMap[note.id] ?? [];
 
       return NoteCardDto(
         id: note.id,
         title: note.title,
         description: note.description,
-        categoryName: category?.name,
+        category: category != null
+            ? CategoryInCardDto(
+                id: category.id,
+                name: category.name,
+                type: category.type.name,
+                color: category.color,
+                iconId: category.iconId,
+              )
+            : null,
         isFavorite: note.isFavorite,
         isPinned: note.isPinned,
+        isArchived: note.isArchived,
+        isDeleted: note.isDeleted,
         usedCount: note.usedCount,
         modifiedAt: note.modifiedAt,
+        tags: noteTags,
       );
     }).toList();
   }
@@ -310,5 +332,43 @@ class NoteFilterDao extends DatabaseAccessor<MainStore>
     }
 
     return orderingTerms;
+  }
+
+  /// Загружает теги для списка заметок (максимум 10 тегов на заметку)
+  Future<Map<String, List<TagInCardDto>>> _loadTagsForNotes(
+    List<String> noteIds,
+  ) async {
+    if (noteIds.isEmpty) return {};
+
+    // Запрос для получения тегов со связями
+    final query = select(notesTags).join([
+      innerJoin(tags, tags.id.equalsExp(notesTags.tagId)),
+    ])..where(notesTags.noteId.isIn(noteIds));
+
+    // Группируем теги по noteId
+    final tagsMap = <String, List<TagInCardDto>>{};
+
+    // Обрабатываем результаты с учетом лимита
+    final results = await query.get();
+
+    for (final row in results) {
+      final noteTag = row.readTable(notesTags);
+      final tag = row.readTable(tags);
+
+      final noteId = noteTag.noteId;
+
+      if (!tagsMap.containsKey(noteId)) {
+        tagsMap[noteId] = [];
+      }
+
+      // Ограничиваем максимум 10 тегами
+      if (tagsMap[noteId]!.length < 10) {
+        tagsMap[noteId]!.add(
+          TagInCardDto(id: tag.id, name: tag.name, color: tag.color),
+        );
+      }
+    }
+
+    return tagsMap;
   }
 }

@@ -89,6 +89,7 @@ dependencies:
   screen_protector: ^1.4.8
   flutter_resizable_container: ^4.2.0
   flutter_credit_card: ^4.1.0
+  flutter_quill: ^11.5.0
 
 
 dev_dependencies:

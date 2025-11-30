@@ -357,6 +357,7 @@ class BankCardFormNotifier extends Notifier<BankCardFormState> {
           cardType: state.cardType,
           cardNetwork: state.cardNetwork,
           categoryId: state.categoryId,
+          tagsIds: state.tagIds,
         );
 
         final bankCardId = await dao.createBankCard(dto);

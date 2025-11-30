@@ -9,11 +9,13 @@ import 'package:hoplixi/features/password_manager/dashboard/providers/current_vi
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card_cards.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/dashboard_list_toolbar.dart';
 import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/routing/paths.dart';
+import 'package:hoplixi/shared/ui/button.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
 const _kStatusSwitchDuration = Duration(milliseconds: 180);
@@ -563,7 +565,15 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
         );
         break;
       case EntityType.note:
-        card = const Card(child: ListTile(title: Text('Note TODO')));
+        if (item is! NoteCardDto) return const SizedBox.shrink();
+        card = NoteListCard(
+          note: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+        );
         break;
       case EntityType.bankCard:
         if (item is! BankCardCardDto) return const SizedBox.shrink();
@@ -624,6 +634,11 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
             if (GoRouter.of(context).state.matchedLocation != path) {
               context.push(path);
             }
+          } else if (item is NoteCardDto) {
+            final path = AppRoutesPaths.dashboardNoteEditWithId(item.id);
+            if (GoRouter.of(context).state.matchedLocation != path) {
+              context.push(path);
+            }
           }
 
           return false;
@@ -632,21 +647,32 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
           String itemName = 'элемент';
           if (item is PasswordCardDto) {
             itemName = item.name;
+          } else if (item is BankCardCardDto) {
+            itemName = item.name;
+          } else if (item is NoteCardDto) {
+            itemName = item.title;
           }
 
           final shouldDelete = await showDialog<bool>(
             context: context,
             builder: (dialogContext) => AlertDialog(
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerLow,
               title: const Text("Удалить?"),
               content: Text("Вы уверены, что хотите удалить '$itemName'?"),
               actions: [
-                TextButton(
+                SmoothButton(
+                  type: SmoothButtonType.text,
+
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text("Отмена"),
+                  label: "Отмена",
                 ),
-                TextButton(
+                SmoothButton(
+                  type: SmoothButtonType.filled,
+                  variant: SmoothButtonVariant.error,
                   onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text("Удалить"),
+                  label: "Удалить",
                 ),
               ],
             ),
@@ -675,7 +701,16 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
           onRestore: () => _onRestore(item.id),
         );
       case EntityType.note:
-        return const Card(child: Center(child: Text('Note Grid')));
+        if (item is! NoteCardDto) return const SizedBox.shrink();
+
+        return NoteGridCard(
+          note: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+        );
       case EntityType.bankCard:
         if (item is! BankCardCardDto) return const SizedBox.shrink();
 
