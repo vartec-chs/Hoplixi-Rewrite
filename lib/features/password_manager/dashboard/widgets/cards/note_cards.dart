@@ -451,10 +451,7 @@ class _NoteListCardState extends ConsumerState<NoteListCard>
                               type: SmoothButtonType.outlined,
                               size: SmoothButtonSize.small,
                               variant: SmoothButtonVariant.normal,
-                              icon: const Icon(
-                                Icons.open_in_new,
-                                size: 16,
-                              ),
+                              icon: const Icon(Icons.open_in_new, size: 16),
                               iconPosition: SmoothButtonIconPosition.start,
                             ),
                           ),
@@ -1000,10 +997,7 @@ class _NoteGridCardState extends ConsumerState<NoteGridCard>
                         },
                         type: SmoothButtonType.outlined,
                         variant: SmoothButtonVariant.normal,
-                        icon: const Icon(
-                          Icons.open_in_new,
-                          size: 14,
-                        ),
+                        icon: const Icon(Icons.open_in_new, size: 14),
                         iconPosition: SmoothButtonIconPosition.start,
                         size: SmoothButtonSize.small,
                       ),
