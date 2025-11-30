@@ -90,6 +90,9 @@ dependencies:
   flutter_resizable_container: ^4.2.0
   flutter_credit_card: ^4.1.0
   flutter_quill: ^11.5.0
+  otp: ^3.2.0
+  zxing2: ^0.2.4
+  image_cropper: ^11.0.0
 
 
 dev_dependencies:
