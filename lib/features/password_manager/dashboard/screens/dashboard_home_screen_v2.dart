@@ -8,6 +8,7 @@ import 'package:hoplixi/features/password_manager/dashboard/models/list_state.da
 import 'package:hoplixi/features/password_manager/dashboard/providers/current_view_mode_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/dashboard_list_toolbar.dart';
@@ -565,7 +566,15 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
         card = const Card(child: ListTile(title: Text('Note TODO')));
         break;
       case EntityType.bankCard:
-        card = const Card(child: ListTile(title: Text('BankCard TODO')));
+        if (item is! BankCardCardDto) return const SizedBox.shrink();
+        card = BankCardListCard(
+          bankCard: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+        );
         break;
       case EntityType.file:
         card = const Card(child: ListTile(title: Text('File TODO')));
@@ -610,7 +619,13 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
             if (GoRouter.of(context).state.matchedLocation != path) {
               context.push(path);
             }
+          } else if (item is BankCardCardDto) {
+            final path = AppRoutesPaths.dashboardBankCardEditWithId(item.id);
+            if (GoRouter.of(context).state.matchedLocation != path) {
+              context.push(path);
+            }
           }
+
           return false;
         } else {
           // Влево → удаление
@@ -662,7 +677,16 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
       case EntityType.note:
         return const Card(child: Center(child: Text('Note Grid')));
       case EntityType.bankCard:
-        return const Card(child: Center(child: Text('BankCard Grid')));
+        if (item is! BankCardCardDto) return const SizedBox.shrink();
+
+        return BankCardGridCard(
+          bankCard: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+        );
       case EntityType.file:
         return const Card(child: Center(child: Text('File Grid')));
       case EntityType.otp:

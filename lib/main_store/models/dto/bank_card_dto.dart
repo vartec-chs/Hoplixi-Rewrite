@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 
 part 'bank_card_dto.freezed.dart';
 part 'bank_card_dto.g.dart';
@@ -70,14 +72,20 @@ sealed class BankCardCardDto with _$BankCardCardDto implements BaseCardDto {
     required String id,
     required String name,
     required String cardholderName,
+    required String cardNumber,
+    required String expiryMonth,
+    required String expiryYear,
     String? cardType,
     String? cardNetwork,
     String? bankName,
-    String? categoryName,
+    CategoryInCardDto? category,
     required bool isFavorite,
     required bool isPinned,
+    required bool isArchived,
+    required bool isDeleted,
     required int usedCount,
     required DateTime modifiedAt,
+    List<TagInCardDto>? tags,
   }) = _BankCardCardDto;
 
   factory BankCardCardDto.fromJson(Map<String, dynamic> json) =>

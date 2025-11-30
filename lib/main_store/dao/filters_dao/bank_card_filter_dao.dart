@@ -3,6 +3,8 @@ import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/bank_card_dto.dart';
+import 'package:hoplixi/main_store/models/dto/category_dto.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/models/filter/bank_cards_filter.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
@@ -10,7 +12,7 @@ import 'package:hoplixi/main_store/tables/index.dart';
 
 part 'bank_card_filter_dao.g.dart';
 
-@DriftAccessor(tables: [BankCards, Categories, BankCardsTags])
+@DriftAccessor(tables: [BankCards, Categories, BankCardsTags, Tags])
 class BankCardFilterDao extends DatabaseAccessor<MainStore>
     with _$BankCardFilterDaoMixin
     implements FilterDao<BankCardsFilter, BankCardCardDto> {
@@ -36,22 +38,45 @@ class BankCardFilterDao extends DatabaseAccessor<MainStore>
 
     final results = await query.get();
 
+    // Собираем ID всех карт для загрузки тегов
+    final cardIds = results.map((row) => row.readTable(bankCards).id).toList();
+
+    // Загружаем теги для всех карт (максимум 10 на карту)
+    final tagsMap = await _loadTagsForBankCards(cardIds);
+
     return results.map((row) {
       final card = row.readTable(bankCards);
       final category = row.readTableOrNull(categories);
+
+      // Получаем теги для текущей карты (максимум 10)
+      final cardTags = tagsMap[card.id] ?? [];
 
       return BankCardCardDto(
         id: card.id,
         name: card.name,
         cardholderName: card.cardholderName,
+        cardNumber: card.cardNumber,
+        expiryMonth: card.expiryMonth,
+        expiryYear: card.expiryYear,
         cardType: card.cardType?.value,
         cardNetwork: card.cardNetwork?.value,
         bankName: card.bankName,
-        categoryName: category?.name,
+        category: category != null
+            ? CategoryInCardDto(
+                id: category.id,
+                name: category.name,
+                type: category.type.name,
+                color: category.color,
+                iconId: category.iconId,
+              )
+            : null,
         isFavorite: card.isFavorite,
         isPinned: card.isPinned,
+        isArchived: card.isArchived,
+        isDeleted: card.isDeleted,
         usedCount: card.usedCount,
         modifiedAt: card.modifiedAt,
+        tags: cardTags,
       );
     }).toList();
   }
@@ -382,5 +407,43 @@ class BankCardFilterDao extends DatabaseAccessor<MainStore>
     }
 
     return orderTerms;
+  }
+
+  /// Загружает теги для списка банковских карт (максимум 10 тегов на карту)
+  Future<Map<String, List<TagInCardDto>>> _loadTagsForBankCards(
+    List<String> cardIds,
+  ) async {
+    if (cardIds.isEmpty) return {};
+
+    // Запрос для получения тегов со связями
+    final query = select(bankCardsTags).join([
+      innerJoin(tags, tags.id.equalsExp(bankCardsTags.tagId)),
+    ])..where(bankCardsTags.cardId.isIn(cardIds));
+
+    // Группируем теги по cardId
+    final tagsMap = <String, List<TagInCardDto>>{};
+
+    // Обрабатываем результаты с учетом лимита
+    final results = await query.get();
+
+    for (final row in results) {
+      final bankCardTag = row.readTable(bankCardsTags);
+      final tag = row.readTable(tags);
+
+      final cardId = bankCardTag.cardId;
+
+      if (!tagsMap.containsKey(cardId)) {
+        tagsMap[cardId] = [];
+      }
+
+      // Ограничиваем максимум 10 тегами
+      if (tagsMap[cardId]!.length < 10) {
+        tagsMap[cardId]!.add(
+          TagInCardDto(id: tag.id, name: tag.name, color: tag.color),
+        );
+      }
+    }
+
+    return tagsMap;
   }
 }

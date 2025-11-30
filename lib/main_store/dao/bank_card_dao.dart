@@ -4,10 +4,12 @@ import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/bank_card_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/bank_cards.dart';
+import 'package:hoplixi/main_store/tables/bank_cards_tags.dart';
+import 'package:uuid/uuid.dart';
 
 part 'bank_card_dao.g.dart';
 
-@DriftAccessor(tables: [BankCards])
+@DriftAccessor(tables: [BankCards, BankCardsTags])
 class BankCardDao extends DatabaseAccessor<MainStore>
     with _$BankCardDaoMixin
     implements BaseMainEntityDao {
@@ -25,27 +27,7 @@ class BankCardDao extends DatabaseAccessor<MainStore>
     )..where((bc) => bc.id.equals(id))).getSingleOrNull();
   }
 
-  /// Получить карты в виде карточек
-  Future<List<BankCardCardDto>> getAllBankCardCards() {
-    return (select(bankCards)
-          ..orderBy([(bc) => OrderingTerm.desc(bc.modifiedAt)]))
-        .map(
-          (bc) => BankCardCardDto(
-            id: bc.id,
-            name: bc.name,
-            cardholderName: bc.cardholderName,
-            cardType: bc.cardType?.value,
-            cardNetwork: bc.cardNetwork?.value,
-            bankName: bc.bankName,
-            categoryName: null, // TODO: join with categories
-            isFavorite: bc.isFavorite,
-            isPinned: bc.isPinned,
-            usedCount: bc.usedCount,
-            modifiedAt: bc.modifiedAt,
-          ),
-        )
-        .get();
-  }
+  
 
   /// Переключить избранное
   @override
@@ -81,34 +63,13 @@ class BankCardDao extends DatabaseAccessor<MainStore>
     )..orderBy([(bc) => OrderingTerm.desc(bc.modifiedAt)])).watch();
   }
 
-  /// Смотреть карты карточки с автообновлением
-  Stream<List<BankCardCardDto>> watchBankCardCards() {
-    return (select(
-      bankCards,
-    )..orderBy([(bc) => OrderingTerm.desc(bc.modifiedAt)])).watch().map(
-      (bankCards) => bankCards
-          .map(
-            (bc) => BankCardCardDto(
-              id: bc.id,
-              name: bc.name,
-              cardholderName: bc.cardholderName,
-              cardType: bc.cardType?.value,
-              cardNetwork: bc.cardNetwork?.value,
-              bankName: bc.bankName,
-              categoryName: null,
-              isFavorite: bc.isFavorite,
-              isPinned: bc.isPinned,
-              usedCount: bc.usedCount,
-              modifiedAt: bc.modifiedAt,
-            ),
-          )
-          .toList(),
-    );
-  }
+  
 
   /// Создать новую карту
-  Future<String> createBankCard(CreateBankCardDto dto) {
+  Future<String> createBankCard(CreateBankCardDto dto) async {
+    final uuid = const Uuid().v4();
     final companion = BankCardsCompanion.insert(
+      id: Value(uuid),
       name: dto.name,
       cardholderName: dto.cardholderName,
       cardNumber: dto.cardNumber,
@@ -128,11 +89,8 @@ class BankCardDao extends DatabaseAccessor<MainStore>
       notes: Value(dto.notes),
       categoryId: Value(dto.categoryId),
     );
-    return into(bankCards).insert(companion).then((id) {
-      return (select(bankCards)..where((bc) => bc.id.equals(id.toString())))
-          .map((bc) => bc.id)
-          .getSingle();
-    });
+    await into(bankCards).insert(companion);
+    return uuid;
   }
 
   /// Обновить карту
@@ -220,5 +178,41 @@ class BankCardDao extends DatabaseAccessor<MainStore>
       bankCards,
     )..where((bc) => bc.id.equals(id))).go();
     return rowsAffected > 0;
+  }
+
+  /// Получить теги карты по ID
+  Future<List<String>> getBankCardTagIds(String bankCardId) async {
+    final rows = await (select(
+      db.bankCardsTags,
+    )..where((t) => t.cardId.equals(bankCardId))).get();
+    return rows.map((row) => row.tagId).toList();
+  }
+
+  /// Синхронизировать теги карты
+  Future<void> syncBankCardTags(String bankCardId, List<String> tagIds) async {
+    await db.transaction(() async {
+      final existing = await (select(
+        db.bankCardsTags,
+      )..where((t) => t.cardId.equals(bankCardId))).get();
+      final existingIds = existing.map((row) => row.tagId).toSet();
+      final newIds = tagIds.toSet();
+
+      final toDelete = existingIds.difference(newIds);
+      if (toDelete.isNotEmpty) {
+        await (delete(db.bankCardsTags)..where(
+              (t) => t.cardId.equals(bankCardId) & t.tagId.isIn(toDelete),
+            ))
+            .go();
+      }
+
+      final toInsert = newIds.difference(existingIds);
+      for (final tagId in toInsert) {
+        await db
+            .into(db.bankCardsTags)
+            .insert(
+              BankCardsTagsCompanion.insert(cardId: bankCardId, tagId: tagId),
+            );
+      }
+    });
   }
 }
