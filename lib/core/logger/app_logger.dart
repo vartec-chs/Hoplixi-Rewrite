@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:hoplixi/core/app_paths.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/core/logger/crash_report_manager.dart';
 import 'package:hoplixi/core/logger/file_manager.dart';
 import 'package:hoplixi/core/logger/log_buffer.dart';
 import 'package:hoplixi/core/logger/models.dart';
@@ -66,16 +66,22 @@ class AppLogger {
     final deviceInfo = await DeviceInfo.collect();
     _currentSession = Session.create(deviceInfo);
 
+    // Initialize crash report manager with config from LoggerConfig
+    await CrashReportManager.instance.initialize(
+      deviceInfo,
+      config: CrashReportConfig(
+        maxCount: _config.maxCrashReportCount,
+        maxFileSize: _config.maxCrashReportFileSize,
+        retentionPeriod: _config.crashReportRetentionPeriod,
+        autoCleanup: _config.autoCleanup,
+      ),
+    );
+
     // Initialize buffer
     _logBuffer = LogBuffer(_config, _fileManager);
 
     // Write session start to file
     await _fileManager.writeSessionStart(_currentSession);
-
-    // Setup crash handler
-    if (_config.enableCrashReports) {
-      _setupCrashHandler();
-    }
 
     _initialized = true;
 
@@ -85,37 +91,6 @@ class AppLogger {
   Future<void> flushLogs() async => {
     if (_initialized) {await _logBuffer.flush()},
   };
-
-  void _setupCrashHandler() {
-    FlutterError.onError = (FlutterErrorDetails details) {
-      error(
-        'Flutter Error: ${details.exception}',
-        error: details.exception,
-        stackTrace: details.stack,
-        tag: 'FlutterError',
-      );
-
-      // Write crash report
-      _fileManager.writeCrashReport(
-        details.exception,
-        details.stack ?? StackTrace.current,
-        _currentSession,
-      );
-    };
-
-    PlatformDispatcher.instance.onError = (error, stack) {
-      this.error(
-        'Platform Error: $error',
-        error: error,
-        stackTrace: stack,
-        tag: 'PlatformError',
-      );
-
-      // Write crash report
-      _fileManager.writeCrashReport(error, stack, _currentSession);
-      return true;
-    };
-  }
 
   void debug(String message, {String? tag, Map<String, dynamic>? data}) {
     if (!MainConstants.isProduction) {
@@ -294,12 +269,28 @@ class AppLogger {
   }
 
   Future<List<File>> getCrashReports() async {
-    final dir = Directory(await AppPaths.appCrashReportsPath);
-    return dir
-        .listSync()
-        .where((entity) => entity is File && entity.path.endsWith('.json'))
-        .cast<File>()
-        .toList();
+    return CrashReportManager.instance.getCrashReportFiles();
+  }
+
+  /// Запись краш-репорта
+  Future<File?> writeCrashReport({
+    required String message,
+    required dynamic error,
+    required StackTrace stackTrace,
+    String? errorType,
+    Map<String, dynamic>? additionalData,
+  }) async {
+    if (!_initialized || !_config.enableCrashReports) {
+      return null;
+    }
+
+    return CrashReportManager.instance.writeCrashReport(
+      message: message,
+      error: error,
+      stackTrace: stackTrace,
+      errorType: errorType,
+      additionalData: additionalData,
+    );
   }
 }
 
@@ -350,5 +341,32 @@ void logFatal(
     data: data,
     error: error,
     stackTrace: stackTrace,
+  );
+}
+
+/// Записывает краш-репорт в файл
+/// Возвращает [File] если запись успешна, иначе null
+Future<File?> logCrash({
+  required String message,
+  required dynamic error,
+  required StackTrace stackTrace,
+  String? errorType,
+  Map<String, dynamic>? additionalData,
+}) async {
+  // Также записываем в обычный лог как fatal
+  logFatal(
+    message,
+    error: error,
+    stackTrace: stackTrace,
+    tag: 'CrashReport',
+    data: additionalData,
+  );
+
+  return AppLogger.instance.writeCrashReport(
+    message: message,
+    error: error,
+    stackTrace: stackTrace,
+    errorType: errorType,
+    additionalData: additionalData,
   );
 }

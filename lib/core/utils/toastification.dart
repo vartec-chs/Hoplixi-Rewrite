@@ -11,11 +11,11 @@ class Toaster {
   static const toastificationStyle = ToastificationStyle.fillColored;
 
   static const EdgeInsets toastPadding = EdgeInsets.symmetric(
-    horizontal: 12,
-    vertical: 16,
+    horizontal: 8,
+    vertical: 8,
   );
   static const EdgeInsets toastMargin = EdgeInsets.symmetric(
-    horizontal: 12,
+    horizontal: 8,
     vertical: 8,
   );
 

@@ -48,6 +48,10 @@ Future<void> main() async {
           enableConsoleOutput: true,
           enableFileOutput: true,
           enableCrashReports: true,
+          // Crash report settings
+          maxCrashReportCount: 50,
+          maxCrashReportFileSize: 5 * 1024 * 1024, // 5MB
+          crashReportRetentionPeriod: Duration(days: 30),
         ),
       );
 
@@ -59,11 +63,15 @@ Future<void> main() async {
         )) {
           return;
         }
-        logError(
-          'Flutter error: ${details.exceptionAsString()}',
-          stackTrace: details.stack,
-          tag: logTag,
+
+        // Записываем краш-репорт для Flutter ошибок
+        logCrash(
+          message: 'Flutter error',
+          error: details.exception,
+          stackTrace: details.stack ?? StackTrace.current,
+          errorType: 'FlutterError',
         );
+
         Toaster.error(
           title: 'Ошибка Flutter',
           description: details.exceptionAsString(),
@@ -72,9 +80,31 @@ Future<void> main() async {
 
       // Handle platform errors
       PlatformDispatcher.instance.onError = (error, stackTrace) {
-        logError('Platform error: $error', stackTrace: stackTrace, tag: logTag);
-        Toaster.error(title: 'Ошибка', description: error.toString());
+        // Записываем краш-репорт для платформенных ошибок
+        logCrash(
+          message: 'Platform error',
+          error: error,
+          stackTrace: stackTrace,
+          errorType: 'PlatformError',
+        );
+
+        Toaster.error(title: 'Ошибка платформы', description: error.toString());
         return true;
+      };
+
+      // Optional: Catch errors in the widget tree
+      ErrorWidget.builder = (errorDetails) {
+        logCrash(
+          message: 'Widget error',
+          error: errorDetails.exception,
+          stackTrace: errorDetails.stack ?? StackTrace.current,
+          errorType: 'WidgetError',
+        );
+        Toaster.error(
+          title: 'Ошибка виджета',
+          description: errorDetails.exceptionAsString(),
+        );
+        return ErrorWidget(errorDetails.exception);
       };
 
       await WindowManager.initialize();
@@ -89,8 +119,15 @@ Future<void> main() async {
       runApp(app);
     },
     (error, stackTrace) {
-      logError('Uncaught error: $error', stackTrace: stackTrace, tag: logTag);
-      Toaster.error(title: 'Ошибка', description: error.toString());
+      // Записываем краш-репорт для неперехваченных ошибок
+      logCrash(
+        message: 'Uncaught error',
+        error: error,
+        stackTrace: stackTrace,
+        errorType: 'UncaughtError',
+      );
+
+      Toaster.error(title: 'Глобальная ошибка', description: error.toString());
     },
   );
 }
@@ -108,7 +145,7 @@ Widget setupToastificationWrapper(Widget app) {
           : Alignment.topCenter,
       marginBuilder: (context, alignment) {
         if (UniversalPlatform.isDesktop) {
-          return const EdgeInsets.symmetric(horizontal: 8, vertical: 16);
+          return const EdgeInsets.only(right: 8, bottom: 28);
         } else {
           return EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 16,

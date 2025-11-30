@@ -27,6 +27,9 @@ class LoggerConfig {
 
   // Crash reporting
   final bool enableCrashReports;
+  final int maxCrashReportCount;
+  final int maxCrashReportFileSize; // bytes
+  final Duration crashReportRetentionPeriod;
 
   const LoggerConfig({
     this.maxFileSize = 10 * 1024 * 1024, // 10MB
@@ -43,6 +46,9 @@ class LoggerConfig {
     this.enableConsoleOutput = true,
     this.enableFileOutput = true,
     this.enableCrashReports = true,
+    this.maxCrashReportCount = 50,
+    this.maxCrashReportFileSize = 5 * 1024 * 1024, // 5MB
+    this.crashReportRetentionPeriod = const Duration(days: 30),
   });
 }
 

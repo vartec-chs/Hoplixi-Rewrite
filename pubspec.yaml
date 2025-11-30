@@ -68,7 +68,7 @@ dependencies:
   path_provider: ^2.1.5
   file_picker: ^10.3.7
   flutter_dotenv: ^6.0.0
-  get_it: ^9.1.0
+  get_it: ^9.1.1
   flutter_launcher_icons: ^0.14.4
   result_dart: ^2.1.1
   universal_platform: ^1.1.0
@@ -81,12 +81,13 @@ dependencies:
   wolt_modal_sheet: ^0.11.0
   dotted_border: ^3.1.0
   infinite_scroll_pagination: ^5.1.1
-  pinput: ^6.0.0
+  pinput: ^6.0.1
   flutter_colorpicker: ^1.1.0
   image: ^4.5.4
   flutter_expandable_fab: ^2.5.2
   sliver_tools: ^0.2.12
   screen_protector: ^1.4.7
+  flutter_resizable_container: ^4.2.0
 
 
 dev_dependencies:
