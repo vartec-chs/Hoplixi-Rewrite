@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/shared/ui/titlebar.dart';
 import 'package:universal_platform/universal_platform.dart';
 
 import 'package:hoplixi/shared/ui/button.dart';
@@ -81,7 +83,7 @@ class QrScannerWidget extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
@@ -215,7 +217,26 @@ class QrScannerWidget extends StatelessWidget {
   Future<void> _openImageScanner(BuildContext context) async {
     final result = await Navigator.push<String?>(
       context,
-      MaterialPageRoute(builder: (_) => const QrScannerWithImageScreen()),
+      MaterialPageRoute(
+        builder: (_) => Column(
+          children: [
+            Consumer(
+              builder: (context, ref, _) {
+                final titlebarState = ref.watch(titlebarStateProvider);
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  height:
+                      titlebarState.hidden ||
+                          titlebarState.backgroundTransparent
+                      ? 0
+                      : 40,
+                );
+              },
+            ),
+            Expanded(child: QrScannerWithImageScreen()),
+          ],
+        ),
+      ),
     );
 
     if (result != null) {

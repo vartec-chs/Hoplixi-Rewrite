@@ -10,6 +10,7 @@ import 'package:hoplixi/features/password_manager/dashboard/providers/entity_typ
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note_cards.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password_cards.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/dashboard_list_toolbar.dart';
@@ -590,7 +591,15 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
         card = const Card(child: ListTile(title: Text('File TODO')));
         break;
       case EntityType.otp:
-        card = const Card(child: ListTile(title: Text('OTP TODO')));
+        if (item is! OtpCardDto) return const SizedBox.shrink();
+        card = TotpListCard(
+          otp: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+        );
         break;
     }
 
@@ -639,6 +648,11 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
             if (GoRouter.of(context).state.matchedLocation != path) {
               context.push(path);
             }
+          } else if (item is OtpCardDto) {
+            final path = AppRoutesPaths.dashboardOtpEditWithId(item.id);
+            if (GoRouter.of(context).state.matchedLocation != path) {
+              context.push(path);
+            }
           }
 
           return false;
@@ -651,6 +665,8 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
             itemName = item.name;
           } else if (item is NoteCardDto) {
             itemName = item.title;
+          } else if (item is OtpCardDto) {
+            itemName = item.accountName ?? 'OTP';
           }
 
           final shouldDelete = await showDialog<bool>(
@@ -725,7 +741,15 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
       case EntityType.file:
         return const Card(child: Center(child: Text('File Grid')));
       case EntityType.otp:
-        return const Card(child: Center(child: Text('OTP Grid')));
+        if (item is! OtpCardDto) return const SizedBox.shrink();
+        return TotpGridCard(
+          otp: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+        );
     }
   }
 

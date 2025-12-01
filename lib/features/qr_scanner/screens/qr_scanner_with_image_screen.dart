@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
@@ -48,79 +49,257 @@ class QrScannerWithImageScreen extends StatefulWidget {
 class _QrScannerWithImageScreenState extends State<QrScannerWithImageScreen> {
   static const String _logTag = 'QrScannerWithImageScreen';
   final ImagePicker _imagePicker = ImagePicker();
+  final FocusNode _focusNode = FocusNode();
 
   bool _isLoading = false;
   String? _errorMessage;
   File? _selectedImage;
 
   @override
+  void initState() {
+    super.initState();
+    // Request focus to receive keyboard events
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  /// Handle keyboard shortcuts (Ctrl+V for paste)
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final isCtrlPressed = HardwareKeyboard.instance.isControlPressed;
+      final isMetaPressed = HardwareKeyboard.instance.isMetaPressed;
+
+      // Ctrl+V (Windows/Linux) or Cmd+V (macOS)
+      if ((isCtrlPressed || isMetaPressed) &&
+          event.logicalKey == LogicalKeyboardKey.keyV) {
+        _handlePaste();
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
+  }
+
+  /// Handle paste from clipboard
+  Future<void> _handlePaste() async {
+    if (_isLoading) return;
+
+    try {
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+
+      // Check if clipboard has image data
+      final hasImage = await _checkClipboardForImage();
+
+      if (hasImage) {
+        await _pasteImageFromClipboard();
+      } else if (clipboardData?.text != null) {
+        // If it's text, show a toast that we need an image
+        Toaster.info(
+          title: 'Вставка текста',
+          description: 'Для сканирования вставьте изображение с QR-кодом',
+        );
+      }
+    } catch (e, stackTrace) {
+      logError(
+        'Error handling paste: $e',
+        tag: _logTag,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  /// Check if clipboard contains image
+  Future<bool> _checkClipboardForImage() async {
+    try {
+      if (UniversalPlatform.isDesktop) {
+        final imageBytes = await Pasteboard.image;
+        return imageBytes != null && imageBytes.isNotEmpty;
+      }
+      return false;
+    } catch (e) {
+      logWarning('Could not check clipboard for image: $e', tag: _logTag);
+      return false;
+    }
+  }
+
+  /// Get image bytes from clipboard using pasteboard package
+  Future<Uint8List?> _getImageFromClipboard() async {
+    try {
+      if (UniversalPlatform.isDesktop) {
+        final imageBytes = await Pasteboard.image;
+        if (imageBytes != null && imageBytes.isNotEmpty) {
+          logInfo(
+            'Got image from clipboard: ${imageBytes.length} bytes',
+            tag: _logTag,
+          );
+          return imageBytes;
+        }
+      }
+      return null;
+    } catch (e) {
+      logWarning('Could not get image from clipboard: $e', tag: _logTag);
+      return null;
+    }
+  }
+
+  /// Paste image from clipboard and process it
+  Future<void> _pasteImageFromClipboard() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final imageBytes = await _getImageFromClipboard();
+
+      if (imageBytes == null || imageBytes.isEmpty) {
+        Toaster.info(
+          title: 'Нет изображения',
+          description:
+              'В буфере обмена нет изображения. Скопируйте изображение с QR-кодом.',
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Save to temp file first
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final tempFile = File('${tempDir.path}/pasted_qr_$timestamp.png');
+      await tempFile.writeAsBytes(imageBytes);
+
+      // Open crop dialog
+      if (mounted) {
+        if (UniversalPlatform.isDesktop) {
+          final croppedFile = await _cropImageDesktop(tempFile.path);
+          if (croppedFile != null) {
+            setState(() {
+              _selectedImage = croppedFile;
+              _isLoading = false;
+            });
+            return;
+          }
+        } else {
+          final mobileCropped = await _cropImageMobile(tempFile.path);
+          if (mobileCropped != null) {
+            setState(() {
+              _selectedImage = File(mobileCropped.path);
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+
+        // User cancelled crop, use original
+        setState(() {
+          _selectedImage = tempFile;
+          _isLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      logError('Error pasting image: $e', tag: _logTag, stackTrace: stackTrace);
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Ошибка вставки изображения: $e';
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Сканер QR-кода'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Сканер QR-кода'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          actions: [
+            // Paste button
+            if (UniversalPlatform.isDesktop)
+              Tooltip(
+                message: 'Вставить из буфера (Ctrl+V)',
+                child: IconButton(
+                  icon: const Icon(Icons.content_paste),
+                  onPressed: _isLoading ? null : _handlePaste,
+                ),
+              ),
+          ],
         ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Text(
-                'Выберите изображение с QR-кодом',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Выберите изображение из галереи или сделайте фото. '
-                'После выбора вы сможете обрезать изображение для лучшего распознавания.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-
-              // Image preview area
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colorScheme.outline.withOpacity(0.3),
-                      width: 2,
-                      strokeAlign: BorderSide.strokeAlignInside,
-                    ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Text(
+                  'Выберите изображение с QR-кодом',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: _buildImagePreview(context),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Text(
+                  UniversalPlatform.isDesktop
+                      ? 'Выберите изображение из галереи, сделайте фото или вставьте из буфера (Ctrl+V). '
+                            'После выбора вы сможете обрезать изображение для лучшего распознавания.'
+                      : 'Выберите изображение из галереи или сделайте фото. '
+                            'После выбора вы сможете обрезать изображение для лучшего распознавания.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
 
-              // Error message
-              if (_errorMessage != null) ...[
-                NotificationCard(
-                  type: NotificationType.error,
-                  text: _errorMessage!,
-                  onDismiss: () => setState(() => _errorMessage = null),
+                // Image preview area
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withOpacity(
+                        0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.outline.withOpacity(0.3),
+                        width: 2,
+                        strokeAlign: BorderSide.strokeAlignInside,
+                      ),
+                    ),
+                    child: _buildImagePreview(context),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+
+                // Error message
+                if (_errorMessage != null) ...[
+                  NotificationCard(
+                    type: NotificationType.error,
+                    text: _errorMessage!,
+                    onDismiss: () => setState(() => _errorMessage = null),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Action buttons
+                _buildActionButtons(context),
               ],
-
-              // Action buttons
-              _buildActionButtons(context),
-            ],
+            ),
           ),
         ),
       ),
@@ -670,13 +849,19 @@ class _DesktopCropDialogState extends State<_DesktopCropDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final windowHeight = UniversalPlatform.isDesktop
+        ? MediaQuery.of(context).size.height
+        : double.infinity;
     final colorScheme = theme.colorScheme;
 
     return Dialog(
       backgroundColor: colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+        constraints: BoxConstraints(
+          maxWidth: 600,
+          maxHeight: windowHeight * 0.88,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

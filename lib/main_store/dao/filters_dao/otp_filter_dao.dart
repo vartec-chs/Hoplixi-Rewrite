@@ -2,14 +2,16 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
 import 'package:hoplixi/main_store/models/filter/otps_filter.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 
 part 'otp_filter_dao.g.dart';
 
-@DriftAccessor(tables: [Otps, Categories, OtpsTags])
+@DriftAccessor(tables: [Otps, Categories, OtpsTags, Tags])
 class OtpFilterDao extends DatabaseAccessor<MainStore>
     with _$OtpFilterDaoMixin
     implements FilterDao<OtpsFilter, OtpCardDto> {
@@ -37,6 +39,12 @@ class OtpFilterDao extends DatabaseAccessor<MainStore>
     // Выполняем запрос и маппим результаты
     final results = await query.get();
 
+    // Собираем ID всех OTP для загрузки тегов
+    final otpIds = results.map((row) => row.readTable(otps).id).toList();
+
+    // Загружаем теги для всех OTP одним запросом
+    final tagsMap = await _loadTagsForOtps(otpIds);
+
     return results.map((row) {
       final otp = row.readTable(otps);
       final category = row.readTableOrNull(categories);
@@ -48,13 +56,50 @@ class OtpFilterDao extends DatabaseAccessor<MainStore>
         type: otp.type.name,
         digits: otp.digits,
         period: otp.period,
-        categoryName: category?.name,
+        category: category != null
+            ? CategoryInCardDto(
+                id: category.id,
+                name: category.name,
+                type: category.type.name,
+                color: category.color,
+                iconId: category.iconId,
+              )
+            : null,
+        tags: tagsMap[otp.id] ?? [],
         isFavorite: otp.isFavorite,
         isPinned: otp.isPinned,
+        isArchived: otp.isArchived,
+        isDeleted: otp.isDeleted,
         usedCount: otp.usedCount,
         modifiedAt: otp.modifiedAt,
       );
     }).toList();
+  }
+
+  /// Загружает теги для списка OTP одним запросом
+  Future<Map<String, List<TagInCardDto>>> _loadTagsForOtps(
+    List<String> otpIds,
+  ) async {
+    if (otpIds.isEmpty) return {};
+
+    final query = select(otpsTags).join([
+      innerJoin(tags, tags.id.equalsExp(otpsTags.tagId)),
+    ])..where(otpsTags.otpId.isIn(otpIds));
+
+    final results = await query.get();
+
+    final Map<String, List<TagInCardDto>> tagsMap = {};
+
+    for (final row in results) {
+      final otpTag = row.readTable(otpsTags);
+      final tag = row.readTable(tags);
+
+      final tagDto = TagInCardDto(id: tag.id, name: tag.name, color: tag.color);
+
+      tagsMap.putIfAbsent(otpTag.otpId, () => []).add(tagDto);
+    }
+
+    return tagsMap;
   }
 
   /// Подсчитывает количество отфильтрованных паролей

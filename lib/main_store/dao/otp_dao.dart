@@ -4,10 +4,12 @@ import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/otps.dart';
+import 'package:hoplixi/main_store/tables/otp_tags.dart';
+import 'package:uuid/uuid.dart';
 
 part 'otp_dao.g.dart';
 
-@DriftAccessor(tables: [Otps])
+@DriftAccessor(tables: [Otps, OtpsTags])
 class OtpDao extends DatabaseAccessor<MainStore>
     with _$OtpDaoMixin
     implements BaseMainEntityDao {
@@ -21,27 +23,6 @@ class OtpDao extends DatabaseAccessor<MainStore>
   /// Получить OTP по ID
   Future<OtpsData?> getOtpById(String id) {
     return (select(otps)..where((o) => o.id.equals(id))).getSingleOrNull();
-  }
-
-  /// Получить OTP в виде карточек
-  Future<List<OtpCardDto>> getAllOtpCards() {
-    return (select(otps)..orderBy([(o) => OrderingTerm.desc(o.modifiedAt)]))
-        .map(
-          (o) => OtpCardDto(
-            id: o.id,
-            issuer: o.issuer,
-            accountName: o.accountName,
-            type: o.type.value,
-            digits: o.digits,
-            period: o.period,
-            categoryName: null, // TODO: join with categories
-            isFavorite: o.isFavorite,
-            isPinned: o.isPinned,
-            usedCount: o.usedCount,
-            modifiedAt: o.modifiedAt,
-          ),
-        )
-        .get();
   }
 
   // toggle favorite
@@ -81,31 +62,6 @@ class OtpDao extends DatabaseAccessor<MainStore>
     )..orderBy([(o) => OrderingTerm.desc(o.modifiedAt)])).watch();
   }
 
-  /// Смотреть OTP карточки с автообновлением
-  Stream<List<OtpCardDto>> watchOtpCards() {
-    return (select(
-      otps,
-    )..orderBy([(o) => OrderingTerm.desc(o.modifiedAt)])).watch().map(
-      (otps) => otps
-          .map(
-            (o) => OtpCardDto(
-              id: o.id,
-              issuer: o.issuer,
-              accountName: o.accountName,
-              type: o.type.value,
-              digits: o.digits,
-              period: o.period,
-              categoryName: null,
-              isFavorite: o.isFavorite,
-              isPinned: o.isPinned,
-              usedCount: o.usedCount,
-              modifiedAt: o.modifiedAt,
-            ),
-          )
-          .toList(),
-    );
-  }
-
   /// Удалить OTP (мягкое удаление)
   @override
   Future<bool> softDelete(String id) async {
@@ -133,25 +89,79 @@ class OtpDao extends DatabaseAccessor<MainStore>
   }
 
   /// Создать новый OTP
-  Future<String> createOtp(CreateOtpDto dto) {
-    final companion = OtpsCompanion.insert(
-      type: Value(OtpTypeX.fromString(dto.type)),
-      secret: Uint8List.fromList(dto.secret),
-      secretEncoding: Value(SecretEncodingX.fromString(dto.secretEncoding)),
-      issuer: Value(dto.issuer),
-      accountName: Value(dto.accountName),
-      notes: Value(dto.notes),
-      algorithm: Value(AlgorithmOtpX.fromString(dto.algorithm ?? 'SHA1')),
-      digits: Value(dto.digits ?? 6),
-      period: Value(dto.period ?? 30),
-      counter: Value(dto.counter),
-      categoryId: Value(dto.categoryId),
-      passwordId: Value(dto.passwordId),
-    );
-    return into(otps).insert(companion).then((id) {
-      return (select(
-        otps,
-      )..where((o) => o.id.equals(id.toString()))).map((o) => o.id).getSingle();
+  Future<String> createOtp(CreateOtpDto dto) async {
+    final uuid = const Uuid().v4();
+    return await db.transaction(() async {
+      final companion = OtpsCompanion.insert(
+        id: Value(uuid),
+        type: Value(OtpTypeX.fromString(dto.type)),
+        secret: Uint8List.fromList(dto.secret),
+        secretEncoding: Value(SecretEncodingX.fromString(dto.secretEncoding)),
+        issuer: Value(dto.issuer),
+        accountName: Value(dto.accountName),
+        notes: Value(dto.notes),
+        algorithm: Value(AlgorithmOtpX.fromString(dto.algorithm ?? 'SHA1')),
+        digits: Value(dto.digits ?? 6),
+        period: Value(dto.period ?? 30),
+        counter: Value(dto.counter),
+        categoryId: Value(dto.categoryId),
+        passwordId: Value(dto.passwordId),
+      );
+      await into(otps).insert(companion);
+      await _insertOtpTags(uuid, dto.tagsIds);
+      return uuid;
+    });
+  }
+
+  /// Вставить теги для OTP
+  Future<void> _insertOtpTags(String otpId, List<String>? tagIds) async {
+    if (tagIds == null || tagIds.isEmpty) return;
+    for (final tagId in tagIds) {
+      await db
+          .into(db.otpsTags)
+          .insert(OtpsTagsCompanion.insert(otpId: otpId, tagId: tagId));
+    }
+  }
+
+  /// Получить теги OTP по ID
+  Future<List<String>> getOtpTagIds(String otpId) async {
+    final rows = await (select(
+      db.otpsTags,
+    )..where((t) => t.otpId.equals(otpId))).get();
+    return rows.map((row) => row.tagId).toList();
+  }
+
+  /// Получить seкрет OTP по ID
+  Future<Uint8List?> getOtpSecretById(String id) async {
+    final qwery = (selectOnly(otps)..addColumns([otps.secret]))
+      ..where(otps.id.equals(id));
+
+    final result = await qwery.getSingleOrNull();
+    return result?.read(otps.secret);
+  }
+
+  /// Синхронизировать теги OTP
+  Future<void> syncOtpTags(String otpId, List<String> tagIds) async {
+    await db.transaction(() async {
+      final existing = await (select(
+        db.otpsTags,
+      )..where((t) => t.otpId.equals(otpId))).get();
+      final existingIds = existing.map((row) => row.tagId).toSet();
+      final newIds = tagIds.toSet();
+
+      final toDelete = existingIds.difference(newIds);
+      if (toDelete.isNotEmpty) {
+        await (delete(
+          db.otpsTags,
+        )..where((t) => t.otpId.equals(otpId) & t.tagId.isIn(toDelete))).go();
+      }
+
+      final toInsert = newIds.difference(existingIds);
+      for (final tagId in toInsert) {
+        await db
+            .into(db.otpsTags)
+            .insert(OtpsTagsCompanion.insert(otpId: otpId, tagId: tagId));
+      }
     });
   }
 

@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
+import 'package:hoplixi/main_store/models/dto/category_dto.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 
 part 'otp_dto.freezed.dart';
 part 'otp_dto.g.dart';
@@ -19,6 +21,7 @@ sealed class CreateOtpDto with _$CreateOtpDto {
     int? period,
     int? counter,
     String? categoryId,
+    List<String>? tagsIds,
     String? passwordId,
   }) = _CreateOtpDto;
 
@@ -62,16 +65,19 @@ sealed class GetOtpDto with _$GetOtpDto {
 sealed class OtpCardDto with _$OtpCardDto implements BaseCardDto {
   const factory OtpCardDto({
     required String id,
-    String? issuer,
-    String? accountName,
+    String? issuer, // Сервис
+    String? accountName, // Имя аккаунта
     required String type,
     required int digits,
     required int period,
-    String? categoryName,
     required bool isFavorite,
     required bool isPinned,
+    required bool isArchived,
+    required bool isDeleted,
     required int usedCount,
     required DateTime modifiedAt,
+    CategoryInCardDto? category,
+    List<TagInCardDto>? tags,
   }) = _OtpCardDto;
 
   factory OtpCardDto.fromJson(Map<String, dynamic> json) =>

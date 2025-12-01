@@ -36,6 +36,8 @@ class PaginatedListNotifier
     return kDefaultPageSize;
   }
 
+  final String _logTag = 'DashboardListProvider: ';
+
   ProviderSubscription<PasswordsFilter>? _passwordFilterSubscription;
   ProviderSubscription<NotesFilter>? _noteFilterSubscription;
   ProviderSubscription<BankCardsFilter>? _bankCardFilterSubscription;
@@ -366,7 +368,13 @@ class PaginatedListNotifier
           currentPage: nextPage,
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
+      logError(
+        'Error loading more items',
+        tag: '${_logTag}PaginatedListNotifier',
+        error: e,
+        stackTrace: st,
+      );
       state = AsyncValue.data(
         current.copyWith(isLoadingMore: false, error: e.toString()),
       );
