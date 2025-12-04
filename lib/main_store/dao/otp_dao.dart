@@ -166,35 +166,41 @@ class OtpDao extends DatabaseAccessor<MainStore>
   }
 
   /// Обновить OTP
-  Future<bool> updateOtp(String id, UpdateOtpDto dto) {
-    final companion = OtpsCompanion(
-      issuer: dto.issuer != null ? Value(dto.issuer) : const Value.absent(),
-      accountName: dto.accountName != null
-          ? Value(dto.accountName)
-          : const Value.absent(),
-      notes: dto.notes != null ? Value(dto.notes) : const Value.absent(),
-      algorithm: dto.algorithm != null
-          ? Value(AlgorithmOtpX.fromString(dto.algorithm!))
-          : const Value.absent(),
-      digits: dto.digits != null ? Value(dto.digits!) : const Value.absent(),
-      period: dto.period != null ? Value(dto.period!) : const Value.absent(),
-      counter: dto.counter != null ? Value(dto.counter) : const Value.absent(),
-      categoryId: dto.categoryId != null
-          ? Value(dto.categoryId)
-          : const Value.absent(),
-      passwordId: dto.passwordId != null
-          ? Value(dto.passwordId)
-          : const Value.absent(),
-      isFavorite: dto.isFavorite != null
-          ? Value(dto.isFavorite!)
-          : const Value.absent(),
-      isPinned: dto.isPinned != null
-          ? Value(dto.isPinned!)
-          : const Value.absent(),
-      modifiedAt: Value(DateTime.now()),
-    );
-    return (update(otps)..where((o) => o.id.equals(id)))
-        .write(companion)
-        .then((count) => count > 0);
+  Future<bool> updateOtp(String id, UpdateOtpDto dto) async {
+    return await db.transaction(() async {
+      final companion = OtpsCompanion(
+        // Nullable поля - затираем при любом значении (включая null)
+        issuer: Value(dto.issuer),
+        accountName: Value(dto.accountName),
+        notes: Value(dto.notes),
+        counter: Value(dto.counter),
+        categoryId: Value(dto.categoryId),
+        passwordId: Value(dto.passwordId),
+        // Поля с defaults - пропускаем если null
+        algorithm: dto.algorithm != null
+            ? Value(AlgorithmOtpX.fromString(dto.algorithm!))
+            : const Value.absent(),
+        digits: dto.digits != null ? Value(dto.digits!) : const Value.absent(),
+        period: dto.period != null ? Value(dto.period!) : const Value.absent(),
+        // Bool флаги - пропускаем если null
+        isFavorite: dto.isFavorite != null
+            ? Value(dto.isFavorite!)
+            : const Value.absent(),
+        isPinned: dto.isPinned != null
+            ? Value(dto.isPinned!)
+            : const Value.absent(),
+        modifiedAt: Value(DateTime.now()),
+      );
+
+      final result = await (update(
+        otps,
+      )..where((o) => o.id.equals(id))).write(companion);
+
+      if (dto.tagsIds != null) {
+        await syncOtpTags(id, dto.tagsIds!);
+      }
+
+      return result > 0;
+    });
   }
 }

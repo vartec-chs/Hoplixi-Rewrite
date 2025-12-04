@@ -122,33 +122,41 @@ class NoteDao extends DatabaseAccessor<MainStore>
 
   /// Обновить заметку
   Future<bool> updateNote(String id, UpdateNoteDto dto) async {
-    final companion = NotesCompanion(
-      title: dto.title != null ? Value(dto.title!) : const Value.absent(),
-      content: dto.content != null ? Value(dto.content!) : const Value.absent(),
-      deltaJson: dto.deltaJson != null
-          ? Value(dto.deltaJson!)
-          : const Value.absent(),
-      description: dto.description != null
-          ? Value(dto.description)
-          : const Value.absent(),
-      categoryId: dto.categoryId != null
-          ? Value(dto.categoryId)
-          : const Value.absent(),
-      isFavorite: dto.isFavorite != null
-          ? Value(dto.isFavorite!)
-          : const Value.absent(),
-      isArchived: dto.isArchived != null
-          ? Value(dto.isArchived!)
-          : const Value.absent(),
-      isPinned: dto.isPinned != null
-          ? Value(dto.isPinned!)
-          : const Value.absent(),
-      modifiedAt: Value(DateTime.now()),
-    );
-    final rowsAffected = await (update(
-      attachedDatabase.notes,
-    )..where((t) => t.id.equals(id))).write(companion);
-    return rowsAffected > 0;
+    return await db.transaction(() async {
+      final companion = NotesCompanion(
+        // Обязательные поля - пропускаем если null
+        title: dto.title != null ? Value(dto.title!) : const Value.absent(),
+        content: dto.content != null
+            ? Value(dto.content!)
+            : const Value.absent(),
+        deltaJson: dto.deltaJson != null
+            ? Value(dto.deltaJson!)
+            : const Value.absent(),
+        // Nullable поля - затираем при любом значении (включая null)
+        description: Value(dto.description),
+        categoryId: Value(dto.categoryId),
+        // Bool флаги - пропускаем если null
+        isFavorite: dto.isFavorite != null
+            ? Value(dto.isFavorite!)
+            : const Value.absent(),
+        isArchived: dto.isArchived != null
+            ? Value(dto.isArchived!)
+            : const Value.absent(),
+        isPinned: dto.isPinned != null
+            ? Value(dto.isPinned!)
+            : const Value.absent(),
+        modifiedAt: Value(DateTime.now()),
+      );
+      final rowsAffected = await (update(
+        attachedDatabase.notes,
+      )..where((t) => t.id.equals(id))).write(companion);
+
+      if (dto.tagsIds != null) {
+        await syncNoteTags(id, dto.tagsIds!);
+      }
+
+      return rowsAffected > 0;
+    });
   }
 
   /// Мягкое удаление заметки

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/main_store/main_store.dart';
@@ -59,8 +61,10 @@ final mainStoreManagerProvider = FutureProvider<MainStoreManager?>((ref) async {
 /// - Удаления хранилища
 class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
   static const String _logTag = 'MainStoreAsyncNotifier';
+  static const Duration _errorResetDelay = Duration(seconds: 10);
 
   late final MainStoreManager _manager;
+  Timer? _errorResetTimer;
 
   /// Получить текущее значение состояния или дефолтное
   DatabaseState get _currentState {
@@ -70,6 +74,30 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
   /// Установить новое состояние
   void _setState(DatabaseState newState) {
     state = AsyncValue.data(newState);
+  }
+
+  /// Установить состояние ошибки с автоматическим сбросом до idle через 10 секунд
+  void _setErrorState(DatabaseState errorState) {
+    _cancelErrorResetTimer();
+    _setState(errorState);
+    _scheduleErrorReset();
+  }
+
+  /// Запланировать сброс состояния ошибки до idle
+  void _scheduleErrorReset() {
+    _errorResetTimer = Timer(_errorResetDelay, () {
+      if (_currentState.hasError &&
+          _currentState.status == DatabaseStatus.error) {
+        logInfo('Автоматический сброс состояния ошибки до idle', tag: _logTag);
+        _setState(const DatabaseState(status: DatabaseStatus.idle));
+      }
+    });
+  }
+
+  /// Отменить таймер сброса ошибки
+  void _cancelErrorResetTimer() {
+    _errorResetTimer?.cancel();
+    _errorResetTimer = null;
   }
 
   @override
@@ -117,8 +145,10 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
           return true;
         },
         (error) {
-          // Ошибка - сохраняем в состоянии
-          _setState(DatabaseState(status: DatabaseStatus.error, error: error));
+          // Ошибка - сохраняем в состоянии с автосбросом
+          _setErrorState(
+            DatabaseState(status: DatabaseStatus.error, error: error),
+          );
 
           logError('Failed to create store: ${error.message}', tag: _logTag);
           return false;
@@ -131,7 +161,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         tag: _logTag,
       );
 
-      _setState(
+      _setErrorState(
         DatabaseState(
           status: DatabaseStatus.error,
           error: DatabaseError.unknown(
@@ -179,8 +209,10 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
           return true;
         },
         (error) {
-          // Ошибка - сохраняем в состоянии
-          _setState(DatabaseState(status: DatabaseStatus.error, error: error));
+          // Ошибка - сохраняем в состоянии с автосбросом
+          _setErrorState(
+            DatabaseState(status: DatabaseStatus.error, error: error),
+          );
 
           logError('Failed to open store: ${error.message}', tag: _logTag);
           return false;
@@ -193,7 +225,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         tag: _logTag,
       );
 
-      _setState(
+      _setErrorState(
         DatabaseState(
           status: DatabaseStatus.error,
           error: DatabaseError.unknown(
@@ -237,8 +269,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
           return true;
         },
         (error) {
-          // Ошибка - возвращаем предыдущее состояние с ошибкой
-          _setState(
+          // Ошибка - возвращаем предыдущее состояние с ошибкой и автосбросом
+          _setErrorState(
             _currentState.copyWith(status: DatabaseStatus.error, error: error),
           );
 
@@ -253,7 +285,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         tag: _logTag,
       );
 
-      _setState(
+      _setErrorState(
         _currentState.copyWith(
           status: DatabaseStatus.error,
           error: DatabaseError.unknown(
@@ -425,7 +457,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         tag: _logTag,
       );
 
-      _setState(
+      _setErrorState(
         _currentState.copyWith(
           status: DatabaseStatus.error,
           error: DatabaseError.unknown(
@@ -469,8 +501,10 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
           return true;
         },
         (error) {
-          // Ошибка - сохраняем в состоянии
-          _setState(DatabaseState(status: DatabaseStatus.error, error: error));
+          // Ошибка - сохраняем в состоянии с автосбросом
+          _setErrorState(
+            DatabaseState(status: DatabaseStatus.error, error: error),
+          );
 
           logError('Failed to delete store: ${error.message}', tag: _logTag);
           return false;
@@ -483,7 +517,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
         tag: _logTag,
       );
 
-      _setState(
+      _setErrorState(
         DatabaseState(
           status: DatabaseStatus.error,
           error: DatabaseError.unknown(
@@ -568,6 +602,7 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
 
   /// Очистить ошибку из состояния
   void clearError() {
+    _cancelErrorResetTimer();
     _setState(_currentState.copyWith(error: null));
   }
 

@@ -99,6 +99,7 @@ sealed class UpdateOtpDto with _$UpdateOtpDto {
     String? passwordId,
     bool? isFavorite,
     bool? isPinned,
+     List<String>? tagsIds,
   }) = _UpdateOtpDto;
 
   factory UpdateOtpDto.fromJson(Map<String, dynamic> json) =>

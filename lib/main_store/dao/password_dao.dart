@@ -99,32 +99,43 @@ class PasswordDao extends DatabaseAccessor<MainStore>
 
   /// Обновить пароль
   Future<bool> updatePassword(String id, UpdatePasswordDto dto) async {
-    final companion = PasswordsCompanion(
-      name: dto.name != null ? Value(dto.name!) : const Value.absent(),
-      password: Value(dto.password == null ? '' : dto.password!),
-      login: Value(dto.login),
-      email: Value(dto.email),
-      url: Value(dto.url),
-      description: Value(dto.description),
-      notes: Value(dto.notes),
-      categoryId: Value(dto.categoryId),
-      isFavorite: dto.isFavorite != null
-          ? Value(dto.isFavorite!)
-          : const Value.absent(),
-      isArchived: dto.isArchived != null
-          ? Value(dto.isArchived!)
-          : const Value.absent(),
-      isPinned: dto.isPinned != null
-          ? Value(dto.isPinned!)
-          : const Value.absent(),
-      modifiedAt: Value(DateTime.now()),
-    );
+    return await db.transaction(() async {
+      final companion = PasswordsCompanion(
+        // Обязательные поля - пропускаем если null
+        name: dto.name != null ? Value(dto.name!) : const Value.absent(),
+        password: dto.password != null
+            ? Value(dto.password!)
+            : const Value.absent(),
+        // Nullable поля - затираем при любом значении (включая null)
+        login: Value(dto.login),
+        email: Value(dto.email),
+        url: Value(dto.url),
+        description: Value(dto.description),
+        notes: Value(dto.notes),
+        categoryId: Value(dto.categoryId),
+        // Bool флаги - пропускаем если null
+        isFavorite: dto.isFavorite != null
+            ? Value(dto.isFavorite!)
+            : const Value.absent(),
+        isArchived: dto.isArchived != null
+            ? Value(dto.isArchived!)
+            : const Value.absent(),
+        isPinned: dto.isPinned != null
+            ? Value(dto.isPinned!)
+            : const Value.absent(),
+        modifiedAt: Value(DateTime.now()),
+      );
 
-    final result = await (update(
-      passwords,
-    )..where((p) => p.id.equals(id))).write(companion);
+      final result = await (update(
+        passwords,
+      )..where((p) => p.id.equals(id))).write(companion);
 
-    return result > 0;
+      if (dto.tagsIds != null) {
+        await syncPasswordTags(id, dto.tagsIds!);
+      }
+
+      return result > 0;
+    });
   }
 
   Future<List<String>> getPasswordTagIds(String passwordId) async {

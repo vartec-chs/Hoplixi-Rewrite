@@ -94,6 +94,7 @@ sealed class UpdatePasswordDto with _$UpdatePasswordDto {
     bool? isFavorite,
     bool? isArchived,
     bool? isPinned,
+     List<String>? tagsIds,
   }) = _UpdatePasswordDto;
 
   factory UpdatePasswordDto.fromJson(Map<String, dynamic> json) =>

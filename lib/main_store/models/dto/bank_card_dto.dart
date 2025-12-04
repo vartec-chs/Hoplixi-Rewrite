@@ -114,6 +114,7 @@ sealed class UpdateBankCardDto with _$UpdateBankCardDto {
     bool? isFavorite,
     bool? isArchived,
     bool? isPinned,
+    List<String>? tagsIds,
   }) = _UpdateBankCardDto;
 
   factory UpdateBankCardDto.fromJson(Map<String, dynamic> json) =>

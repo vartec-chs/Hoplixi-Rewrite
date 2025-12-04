@@ -108,60 +108,59 @@ class BankCardDao extends DatabaseAccessor<MainStore>
 
   /// Обновить карту
   Future<bool> updateBankCard(String id, UpdateBankCardDto dto) async {
-    final companion = BankCardsCompanion(
-      name: dto.name != null ? Value(dto.name!) : const Value.absent(),
-      cardholderName: dto.cardholderName != null
-          ? Value(dto.cardholderName!)
-          : const Value.absent(),
-      cardNumber: dto.cardNumber != null
-          ? Value(dto.cardNumber!)
-          : const Value.absent(),
-      expiryMonth: dto.expiryMonth != null
-          ? Value(dto.expiryMonth!)
-          : const Value.absent(),
-      expiryYear: dto.expiryYear != null
-          ? Value(dto.expiryYear!)
-          : const Value.absent(),
-      cardType: dto.cardType != null
-          ? Value(CardTypeX.fromString(dto.cardType!))
-          : const Value.absent(),
-      cardNetwork: dto.cardNetwork != null
-          ? Value(CardNetworkX.fromString(dto.cardNetwork!))
-          : const Value.absent(),
-      cvv: dto.cvv != null ? Value(dto.cvv) : const Value.absent(),
-      bankName: dto.bankName != null
-          ? Value(dto.bankName)
-          : const Value.absent(),
-      accountNumber: dto.accountNumber != null
-          ? Value(dto.accountNumber)
-          : const Value.absent(),
-      routingNumber: dto.routingNumber != null
-          ? Value(dto.routingNumber)
-          : const Value.absent(),
-      description: dto.description != null
-          ? Value(dto.description)
-          : const Value.absent(),
-      notes: dto.notes != null ? Value(dto.notes) : const Value.absent(),
-      categoryId: dto.categoryId != null
-          ? Value(dto.categoryId)
-          : const Value.absent(),
-      isFavorite: dto.isFavorite != null
-          ? Value(dto.isFavorite!)
-          : const Value.absent(),
-      isArchived: dto.isArchived != null
-          ? Value(dto.isArchived!)
-          : const Value.absent(),
-      isPinned: dto.isPinned != null
-          ? Value(dto.isPinned!)
-          : const Value.absent(),
-      modifiedAt: Value(DateTime.now()),
-    );
+    return await db.transaction(() async {
+      final companion = BankCardsCompanion(
+        // Обязательные поля - пропускаем если null
+        name: dto.name != null ? Value(dto.name!) : const Value.absent(),
+        cardholderName: dto.cardholderName != null
+            ? Value(dto.cardholderName!)
+            : const Value.absent(),
+        cardNumber: dto.cardNumber != null
+            ? Value(dto.cardNumber!)
+            : const Value.absent(),
+        expiryMonth: dto.expiryMonth != null
+            ? Value(dto.expiryMonth!)
+            : const Value.absent(),
+        expiryYear: dto.expiryYear != null
+            ? Value(dto.expiryYear!)
+            : const Value.absent(),
+        // Nullable поля - затираем при любом значении (включая null)
+        cardType: dto.cardType != null
+            ? Value(CardTypeX.fromString(dto.cardType!))
+            : const Value(null),
+        cardNetwork: dto.cardNetwork != null
+            ? Value(CardNetworkX.fromString(dto.cardNetwork!))
+            : const Value(null),
+        cvv: Value(dto.cvv),
+        bankName: Value(dto.bankName),
+        accountNumber: Value(dto.accountNumber),
+        routingNumber: Value(dto.routingNumber),
+        description: Value(dto.description),
+        notes: Value(dto.notes),
+        categoryId: Value(dto.categoryId),
+        // Bool флаги - пропускаем если null
+        isFavorite: dto.isFavorite != null
+            ? Value(dto.isFavorite!)
+            : const Value.absent(),
+        isArchived: dto.isArchived != null
+            ? Value(dto.isArchived!)
+            : const Value.absent(),
+        isPinned: dto.isPinned != null
+            ? Value(dto.isPinned!)
+            : const Value.absent(),
+        modifiedAt: Value(DateTime.now()),
+      );
 
-    final rowsAffected = await (update(
-      bankCards,
-    )..where((bc) => bc.id.equals(id))).write(companion);
+      final rowsAffected = await (update(
+        bankCards,
+      )..where((bc) => bc.id.equals(id))).write(companion);
 
-    return rowsAffected > 0;
+      if (dto.tagsIds != null) {
+        await syncBankCardTags(id, dto.tagsIds!);
+      }
+
+      return rowsAffected > 0;
+    });
   }
 
   /// Мягкое удаление карты
