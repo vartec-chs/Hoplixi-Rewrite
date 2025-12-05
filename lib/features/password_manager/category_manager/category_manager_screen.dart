@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/enums/entity_types.dart';
 import 'package:hoplixi/main_store/models/filter/categories_filter.dart';
@@ -121,7 +122,6 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
           ),
 
           // SliverToBoxAdapter(child: CategoryPickerField(isFilter: true)),
-
           categoryState.when(
             data: (state) {
               if (state.items.isEmpty) {
@@ -206,9 +206,9 @@ class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: primaryInputDecoration(
+            context,
             hintText: 'Введите название...',
-            border: OutlineInputBorder(),
           ),
         ),
         actions: [

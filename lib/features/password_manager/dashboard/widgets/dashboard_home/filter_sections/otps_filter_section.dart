@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 class OtpsFilterSection extends StatefulWidget {
   final OtpsFilter filter;
@@ -159,7 +160,8 @@ class _OtpsFilterSectionState extends State<OtpsFilterSection> {
           // Издатель (Issuer)
           TextField(
             controller: _issuerController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Издатель',
               hintText: 'Например: Google, GitHub...',
               prefixIcon: const Icon(Icons.business),
@@ -172,7 +174,6 @@ class _OtpsFilterSectionState extends State<OtpsFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();
@@ -186,7 +187,8 @@ class _OtpsFilterSectionState extends State<OtpsFilterSection> {
           // Имя аккаунта
           TextField(
             controller: _accountNameController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Имя аккаунта',
               hintText: 'Например: user@example.com',
               prefixIcon: const Icon(Icons.account_circle),
@@ -199,7 +201,6 @@ class _OtpsFilterSectionState extends State<OtpsFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();

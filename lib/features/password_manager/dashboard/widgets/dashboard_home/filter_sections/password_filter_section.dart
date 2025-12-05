@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 class PasswordFilterSection extends StatefulWidget {
   final PasswordsFilter filter;
@@ -131,7 +132,8 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
           // Название
           TextField(
             controller: _nameController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Название',
               hintText: 'Введите название...',
               prefixIcon: const Icon(Icons.title),
@@ -144,7 +146,6 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();
@@ -158,7 +159,8 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
           // Логин
           TextField(
             controller: _loginController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Логин',
               hintText: 'Введите логин...',
               prefixIcon: const Icon(Icons.person),
@@ -171,7 +173,6 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();
@@ -185,7 +186,8 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
           // Email
           TextField(
             controller: _emailController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Email',
               hintText: 'Введите email...',
               prefixIcon: const Icon(Icons.email),
@@ -198,7 +200,6 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
               errorText: !widget.filter.isValidEmail
                   ? 'Неверный формат email'
                   : null,
@@ -216,7 +217,8 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
           // URL
           TextField(
             controller: _urlController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'URL',
               hintText: 'Введите URL...',
               prefixIcon: const Icon(Icons.link),
@@ -229,7 +231,6 @@ class _PasswordFilterSectionState extends State<PasswordFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
               errorText: !widget.filter.isValidUrl
                   ? 'Неверный формат URL'
                   : null,

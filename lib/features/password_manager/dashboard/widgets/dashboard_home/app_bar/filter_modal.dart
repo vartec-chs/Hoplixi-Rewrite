@@ -5,6 +5,8 @@ import 'package:hoplixi/features/password_manager/category_manager/features/cate
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
+import 'package:hoplixi/shared/ui/modal_sheet_close_button.dart';
+import 'package:universal_platform/universal_platform.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 // Модели и провайдеры
@@ -53,6 +55,7 @@ class FilterModal {
 
     await WoltModalSheet.show<void>(
       context: context,
+
       pageListBuilder: (modalSheetContext) {
         return [_buildMainFilterPage(modalSheetContext, onFilterApplied)];
       },
@@ -82,11 +85,8 @@ class FilterModal {
           );
         },
       ),
-      trailingNavBarWidget: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () => Navigator.of(context).pop(),
-        tooltip: 'Закрыть',
-      ),
+      trailingNavBarWidget: const ModalSheetCloseButton(),
+
       child: _FilterModalContent(onFilterApplied: onFilterApplied),
     );
   }
@@ -203,9 +203,15 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   @override
   Widget build(BuildContext context) {
     final entityType = ref.watch(entityTypeProvider).currentType;
+    final windowHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 400),
+      constraints: BoxConstraints(
+        minHeight: UniversalPlatform.isDesktop ? windowHeight * 0.8 : 0,
+        maxHeight: UniversalPlatform.isDesktop
+            ? windowHeight * 0.9
+            : double.infinity,
+      ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(

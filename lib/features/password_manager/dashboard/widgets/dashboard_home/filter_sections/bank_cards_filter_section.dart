@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 class BankCardsFilterSection extends StatefulWidget {
   final BankCardsFilter filter;
@@ -137,7 +138,8 @@ class _BankCardsFilterSectionState extends State<BankCardsFilterSection> {
           // Название банка
           TextField(
             controller: _bankNameController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Название банка',
               hintText: 'Например: Сбербанк, Тинькофф...',
               prefixIcon: const Icon(Icons.account_balance),
@@ -150,7 +152,6 @@ class _BankCardsFilterSectionState extends State<BankCardsFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();
@@ -164,7 +165,8 @@ class _BankCardsFilterSectionState extends State<BankCardsFilterSection> {
           // Имя держателя карты
           TextField(
             controller: _cardholderNameController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Имя держателя карты',
               hintText: 'Например: IVAN IVANOV',
               prefixIcon: const Icon(Icons.person),
@@ -177,7 +179,6 @@ class _BankCardsFilterSectionState extends State<BankCardsFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();

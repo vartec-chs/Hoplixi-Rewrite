@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 class NotesFilterSection extends StatefulWidget {
   final NotesFilter filter;
@@ -148,7 +149,8 @@ class _NotesFilterSectionState extends State<NotesFilterSection> {
           // Заголовок
           TextField(
             controller: _titleController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Заголовок',
               hintText: 'Введите заголовок заметки...',
               prefixIcon: const Icon(Icons.title),
@@ -161,7 +163,6 @@ class _NotesFilterSectionState extends State<NotesFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();
@@ -175,7 +176,8 @@ class _NotesFilterSectionState extends State<NotesFilterSection> {
           // Содержимое
           TextField(
             controller: _contentController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               labelText: 'Содержимое',
               hintText: 'Введите текст для поиска в содержимом...',
               prefixIcon: const Icon(Icons.text_fields),
@@ -188,7 +190,6 @@ class _NotesFilterSectionState extends State<NotesFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             maxLines: 3,
             onChanged: (value) {
@@ -338,9 +339,9 @@ class _NotesFilterSectionState extends State<NotesFilterSection> {
                   Expanded(
                     child: TextField(
                       controller: _minContentLengthController,
-                      decoration: InputDecoration(
+                      decoration: primaryInputDecoration(
+                        context,
                         labelText: 'Минимум символов',
-                        border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.arrow_upward),
                         errorText: !widget.filter.isValidContentLengthRange
                             ? 'Неверный диапазон'
@@ -360,9 +361,9 @@ class _NotesFilterSectionState extends State<NotesFilterSection> {
                   Expanded(
                     child: TextField(
                       controller: _maxContentLengthController,
-                      decoration: InputDecoration(
+                      decoration: primaryInputDecoration(
+                        context,
                         labelText: 'Максимум символов',
-                        border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.arrow_downward),
                         errorText: !widget.filter.isValidContentLengthRange
                             ? 'Неверный диапазон'

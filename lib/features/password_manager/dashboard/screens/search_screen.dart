@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -31,7 +32,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             TextField(
               controller: _searchController,
-              decoration: InputDecoration(
+              decoration: primaryInputDecoration(
+                context,
                 hintText: 'Поиск записей...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
@@ -44,9 +46,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         },
                       )
                     : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
               ),
               onChanged: (value) {
                 setState(() {});

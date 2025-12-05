@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 import 'package:intl/intl.dart';
 
 class BaseFilterSection extends StatefulWidget {
@@ -145,7 +146,8 @@ class _BaseFilterSectionState extends State<BaseFilterSection> {
           const SizedBox(height: 12),
           TextField(
             controller: _queryController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               hintText: 'Поиск по ${widget.entityTypeName.toLowerCase()}...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _queryController.text.isNotEmpty
@@ -157,7 +159,6 @@ class _BaseFilterSectionState extends State<BaseFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               _updateFilter((f) => f.copyWith(query: value.trim()));
@@ -443,19 +444,15 @@ class _BaseFilterSectionState extends State<BaseFilterSection> {
       onTap: () => _selectDate(date, onChanged),
       borderRadius: BorderRadius.circular(8),
       child: InputDecorator(
-        decoration: InputDecoration(
+        decoration: primaryInputDecoration(
+          context,
           labelText: label,
-          border: const OutlineInputBorder(),
           suffixIcon: date != null
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 18),
                   onPressed: () => onChanged(null),
                 )
               : const Icon(Icons.calendar_today, size: 18),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
         ),
         child: Text(
           date != null ? _dateFormat.format(date) : 'Не выбрано',
@@ -512,10 +509,10 @@ class _BaseFilterSectionState extends State<BaseFilterSection> {
               Expanded(
                 child: TextField(
                   controller: _minUsedCountController,
-                  decoration: const InputDecoration(
+                  decoration: primaryInputDecoration(
+                    context,
                     labelText: 'Минимум',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.arrow_upward),
+                    prefixIcon: const Icon(Icons.arrow_upward),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -529,10 +526,10 @@ class _BaseFilterSectionState extends State<BaseFilterSection> {
               Expanded(
                 child: TextField(
                   controller: _maxUsedCountController,
-                  decoration: const InputDecoration(
+                  decoration: primaryInputDecoration(
+                    context,
                     labelText: 'Максимум',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.arrow_downward),
+                    prefixIcon: const Icon(Icons.arrow_downward),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],

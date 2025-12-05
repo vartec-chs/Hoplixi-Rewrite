@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/main_store/models/filter/index.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 class FilesFilterSection extends StatefulWidget {
   final FilesFilter filter;
@@ -190,7 +191,8 @@ class _FilesFilterSectionState extends State<FilesFilterSection> {
           const SizedBox(height: 12),
           TextField(
             controller: _fileNameController,
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               hintText: 'Введите имя файла...',
               prefixIcon: const Icon(Icons.text_fields),
               suffixIcon: _fileNameController.text.isNotEmpty
@@ -202,7 +204,6 @@ class _FilesFilterSectionState extends State<FilesFilterSection> {
                       },
                     )
                   : null,
-              border: const OutlineInputBorder(),
             ),
             onChanged: (value) {
               final trimmed = value.trim();
@@ -423,9 +424,9 @@ class _FilesFilterSectionState extends State<FilesFilterSection> {
                   Expanded(
                     child: TextField(
                       controller: _minFileSizeController,
-                      decoration: InputDecoration(
+                      decoration: primaryInputDecoration(
+                        context,
                         labelText: 'Минимум',
-                        border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.arrow_upward),
                         errorText: !widget.filter.isValidFileSizeRange
                             ? 'Неверный диапазон'
@@ -441,9 +442,9 @@ class _FilesFilterSectionState extends State<FilesFilterSection> {
                   Expanded(
                     child: TextField(
                       controller: _maxFileSizeController,
-                      decoration: InputDecoration(
+                      decoration: primaryInputDecoration(
+                        context,
                         labelText: 'Максимум',
-                        border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.arrow_downward),
                         errorText: !widget.filter.isValidFileSizeRange
                             ? 'Неверный диапазон'
