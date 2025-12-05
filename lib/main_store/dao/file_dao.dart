@@ -35,6 +35,8 @@ class FileDao extends DatabaseAccessor<MainStore>
             categoryName: null, // TODO: join with categories
             isFavorite: f.isFavorite,
             isPinned: f.isPinned,
+            isArchived: f.isArchived,
+            isDeleted: f.isDeleted,
             usedCount: f.usedCount,
             modifiedAt: f.modifiedAt,
           ),
@@ -95,6 +97,8 @@ class FileDao extends DatabaseAccessor<MainStore>
               categoryName: null,
               isFavorite: f.isFavorite,
               isPinned: f.isPinned,
+              isArchived: f.isArchived,
+              isDeleted: f.isDeleted,
               usedCount: f.usedCount,
               modifiedAt: f.modifiedAt,
             ),

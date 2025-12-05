@@ -48,6 +48,8 @@ class FileFilterDao extends DatabaseAccessor<MainStore>
         categoryName: category?.name,
         isFavorite: file.isFavorite,
         isPinned: file.isPinned,
+        isArchived: file.isArchived,
+        isDeleted: file.isDeleted,
         usedCount: file.usedCount,
         modifiedAt: file.modifiedAt,
       );

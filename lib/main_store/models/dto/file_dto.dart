@@ -65,6 +65,8 @@ sealed class FileCardDto with _$FileCardDto implements BaseCardDto {
     String? categoryName,
     required bool isFavorite,
     required bool isPinned,
+    required bool isArchived,
+    required bool isDeleted,
     required int usedCount,
     required DateTime modifiedAt,
   }) = _FileCardDto;

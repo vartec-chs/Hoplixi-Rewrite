@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/data_refresh_state.dart';
@@ -409,7 +407,7 @@ class PaginatedListNotifier
     if (index == -1) return;
 
     final item = cur.items[index];
-    final newFav = !(item.isFavorite ?? false);
+    final newFav = !item.isFavorite;
 
     final updated = [...cur.items];
     updated[index] = item.copyWithBase(isFavorite: newFav);
@@ -449,7 +447,7 @@ class PaginatedListNotifier
     if (index == -1) return;
 
     final item = cur.items[index];
-    final newPin = !(item.isPinned ?? false);
+    final newPin = !item.isPinned;
 
     final updated = [...cur.items];
     updated[index] = item.copyWithBase(isPinned: newPin);
@@ -488,25 +486,52 @@ class PaginatedListNotifier
     if (index == -1) return;
 
     final item = cur.items[index];
-    final newArchive = !(item.isArchived ?? false);
+
+    logDebug(
+      'Toggling archive for item $id, current isArchived: ${item}',
+      tag: '${_logTag} toggleArchive',
+    );
+    final newArchive = !item.isArchived;
 
     final updated = [...cur.items];
     updated[index] = item.copyWithBase(isArchived: newArchive);
 
     state = AsyncValue.data(cur.copyWith(items: updated));
 
+    logInfo(
+      'Toggling archive for item $id to $newArchive',
+      tag: '${_logTag} toggleArchive',
+    );
+
     try {
       final dao = await _crudDaoForType();
       bool success = false;
       success = await dao.toggleArchive(id, newArchive);
 
+      logInfo(
+        'Toggle archive result for item $id: $success',
+        tag: '${_logTag} toggleArchive',
+      );
+
       if (!success) {
         // откат
         updated[index] = item;
         state = AsyncValue.data(cur.copyWith(items: updated));
+      } else {
+        ref
+            .read(dataRefreshTriggerProvider.notifier)
+            .triggerEntityUpdate(
+              ref.read(entityTypeProvider).currentType,
+              entityId: id,
+            );
       }
     } catch (e) {
       // откат
+      logError(
+        'Error toggling archive',
+        tag: '${_logTag} toggleArchive',
+        error: e,
+      );
       updated[index] = item;
       state = AsyncValue.data(cur.copyWith(items: updated));
     }
