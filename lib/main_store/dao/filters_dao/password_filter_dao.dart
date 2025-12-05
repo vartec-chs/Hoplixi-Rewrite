@@ -157,6 +157,9 @@ class PasswordFilterDao extends DatabaseAccessor<MainStore>
 
     if (base.isArchived != null) {
       expression = expression & passwords.isArchived.equals(base.isArchived!);
+    } else {
+      // По умолчанию исключаем архивные
+      expression = expression & passwords.isArchived.equals(false);
     }
 
     if (base.isDeleted != null) {

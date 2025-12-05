@@ -192,6 +192,9 @@ class BankCardFilterDao extends DatabaseAccessor<MainStore>
     // Фильтр по архивным
     if (base.isArchived != null) {
       expressions.add(bankCards.isArchived.equals(base.isArchived!));
+    } else {
+      // По умолчанию исключаем архивные
+      expressions.add(bankCards.isArchived.equals(false));
     }
 
     // Фильтр по часто используемым

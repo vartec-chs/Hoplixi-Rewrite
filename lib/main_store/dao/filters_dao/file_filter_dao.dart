@@ -162,6 +162,9 @@ class FileFilterDao extends DatabaseAccessor<MainStore>
     // Фильтр по архивным
     if (base.isArchived != null) {
       expressions.add(files.isArchived.equals(base.isArchived!));
+    } else {
+      // По умолчанию исключаем архивные
+      expressions.add(files.isArchived.equals(false));
     }
 
     // Фильтр по часто используемым

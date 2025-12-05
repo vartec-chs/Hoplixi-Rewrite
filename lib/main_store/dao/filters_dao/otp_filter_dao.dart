@@ -167,10 +167,16 @@ class OtpFilterDao extends DatabaseAccessor<MainStore>
 
     if (base.isArchived != null) {
       expression = expression & otps.isArchived.equals(base.isArchived!);
+    } else {
+      // По умолчанию исключаем архивные
+      expression = expression & otps.isArchived.equals(false);
     }
 
     if (base.isDeleted != null) {
       expression = expression & otps.isDeleted.equals(base.isDeleted!);
+    } else {
+      // По умолчанию исключаем удалённые
+      expression = expression & otps.isDeleted.equals(false);
     }
 
     if (base.isPinned != null) {

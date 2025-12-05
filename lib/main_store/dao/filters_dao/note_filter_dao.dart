@@ -140,10 +140,16 @@ class NoteFilterDao extends DatabaseAccessor<MainStore>
 
     if (base.isArchived != null) {
       expression = expression & notes.isArchived.equals(base.isArchived!);
+    } else {
+      // По умолчанию исключаем архивные
+      expression = expression & notes.isArchived.equals(false);
     }
 
     if (base.isDeleted != null) {
       expression = expression & notes.isDeleted.equals(base.isDeleted!);
+    } else {
+      // По умолчанию исключаем удалённые
+      expression = expression & notes.isDeleted.equals(false);
     }
 
     if (base.isPinned != null) {
