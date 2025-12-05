@@ -8,10 +8,15 @@ import 'package:hoplixi/features/password_manager/dashboard/models/list_state.da
 import 'package:hoplixi/features/password_manager/dashboard/providers/current_view_mode_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card_cards.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note_cards.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp_cards.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password_cards.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card/bank_card_grid.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card/bank_card_list_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note/note_grid.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note/note_list_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp/otp_grid.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp/otp_list_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password/password_grid.dart';
+
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password/password_list_card.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/dashboard_list_toolbar.dart';
 import 'package:hoplixi/main_store/models/dto/index.dart';
