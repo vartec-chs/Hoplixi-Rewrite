@@ -1,6 +1,3 @@
----
-applyTo: '**'
----
 # Riverpod - Reactive State Management Framework
 
 Riverpod is a reactive caching and data-binding framework for Dart and Flutter applications. It provides a robust solution for managing application state by handling asynchronous code, errors, and loading states automatically. The framework separates business logic from UI components, ensuring testable, scalable, and reusable code that works seamlessly across Flutter widgets, pure Dart applications, and backend services.
