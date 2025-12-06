@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:async';
 import 'dart:convert';
-import 'package:riverpod/riverpod.dart';
+import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/app_paths.dart';
 import 'package:hoplixi/core/logger/models.dart';
 import 'package:hoplixi/features/logs_viewer/models/log_parser.dart';
@@ -84,22 +85,6 @@ final selectedLogFileProvider =
       SelectedLogFileNotifier.new,
     );
 
-/// Провайдер для парсированного содержимого логов
-final parsedLogsProvider = FutureProvider<List<dynamic>>((ref) async {
-  final selectedFile = ref.watch(selectedLogFileProvider);
-
-  if (selectedFile == null) {
-    return [];
-  }
-
-  try {
-    final content = await selectedFile.readAsString();
-    return LogParser.parseJsonl(content);
-  } catch (e) {
-    return [];
-  }
-});
-
 /// Провайдер для фильтрации логов по уровню
 final logLevelFilterProvider =
     NotifierProvider<LogLevelFilterNotifier, LogLevel?>(
@@ -116,56 +101,183 @@ final logSearchQueryProvider = NotifierProvider<LogSearchQueryNotifier, String>(
   LogSearchQueryNotifier.new,
 );
 
-/// Провайдер для отфильтрованных логов
-final filteredLogsProvider = FutureProvider<List<LogEntry>>((ref) async {
-  final logs = await ref.watch(parsedLogsProvider.future);
-  final levelFilter = ref.watch(logLevelFilterProvider);
-  final tagFilter = ref.watch(logTagFilterProvider);
-  final searchQuery = ref.watch(logSearchQueryProvider).toLowerCase();
+// ============================================================================
+// Pagination Logic
+// ============================================================================
 
-  final logEntries = logs.whereType<LogEntry>().toList();
+class LogsPaginationState {
+  final List<LogEntry> logs;
+  final bool hasMore;
+  final bool isLoadingMore;
 
-  return logEntries.where((log) {
-      // Фильтр по уровню
-      if (levelFilter != null && log.level != levelFilter) {
-        return false;
+  const LogsPaginationState({
+    this.logs = const [],
+    this.hasMore = true,
+    this.isLoadingMore = false,
+  });
+
+  LogsPaginationState copyWith({
+    List<LogEntry>? logs,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
+    return LogsPaginationState(
+      logs: logs ?? this.logs,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+}
+
+class PaginatedLogsNotifier extends AsyncNotifier<LogsPaginationState> {
+  StreamIterator<String>? _lineIterator;
+  static const int _pageSize = 50;
+
+  @override
+  Future<LogsPaginationState> build() async {
+    final file = ref.watch(selectedLogFileProvider);
+    // Watch filters to trigger rebuild
+    ref.watch(logLevelFilterProvider);
+    ref.watch(logTagFilterProvider);
+    ref.watch(logSearchQueryProvider);
+
+    if (file == null) {
+      return const LogsPaginationState(hasMore: false);
+    }
+
+    // Close previous iterator if any
+    await _lineIterator?.cancel();
+
+    // Create new iterator
+    final stream = file
+        .openRead()
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+    _lineIterator = StreamIterator(stream);
+
+    return _loadNextPage(isInitial: true);
+  }
+
+  Future<void> loadMore() async {
+    final currentState = state.value;
+    if (currentState == null ||
+        !currentState.hasMore ||
+        state.isLoading ||
+        state.isRefreshing ||
+        currentState.isLoadingMore) {
+      return;
+    }
+
+    // Set loading state
+    state = AsyncData(currentState.copyWith(isLoadingMore: true));
+
+    try {
+      final newState = await _loadNextPage(previousLogs: currentState.logs);
+      state = AsyncData(newState);
+    } catch (e) {
+      // Revert loading state on error
+      state = AsyncData(currentState.copyWith(isLoadingMore: false));
+      // Ideally we would expose the error, but without copyWithPrevious it's tricky to keep data.
+      // We rely on the UI to handle stream errors or we could add error field to state.
+    }
+  }
+
+  Future<LogsPaginationState> _loadNextPage({
+    List<LogEntry> previousLogs = const [],
+    bool isInitial = false,
+  }) async {
+    final iterator = _lineIterator;
+    if (iterator == null) return const LogsPaginationState(hasMore: false);
+
+    final levelFilter = ref.read(logLevelFilterProvider);
+    final tagFilter = ref.read(logTagFilterProvider);
+    final searchQuery = ref.read(logSearchQueryProvider).toLowerCase();
+
+    final newLogs = <LogEntry>[];
+    bool hasMore = true;
+
+    // We need to find _pageSize matching logs
+    while (newLogs.length < _pageSize) {
+      if (!await iterator.moveNext()) {
+        hasMore = false;
+        break;
       }
 
-      // Фильтр по тегу
-      if (tagFilter != null && log.tag != tagFilter) {
-        return false;
+      final line = iterator.current;
+      final entry = LogParser.parseLine(line);
+
+      if (entry is LogEntry) {
+        if (_matchesFilter(entry, levelFilter, tagFilter, searchQuery)) {
+          newLogs.add(entry);
+        }
       }
+    }
 
-      // Фильтр по поисковому запросу
-      if (searchQuery.isNotEmpty) {
-        final messageMatch = log.message.toLowerCase().contains(searchQuery);
-        final tagMatch = (log.tag ?? '').toLowerCase().contains(searchQuery);
-        final errorMatch = (log.error?.toString() ?? '').toLowerCase().contains(
-          searchQuery,
-        );
+    return LogsPaginationState(
+      logs: [...previousLogs, ...newLogs],
+      hasMore: hasMore,
+    );
+  }
 
-        return messageMatch || tagMatch || errorMatch;
-      }
+  bool _matchesFilter(
+    LogEntry log,
+    LogLevel? levelFilter,
+    String? tagFilter,
+    String searchQuery,
+  ) {
+    // Фильтр по уровню
+    if (levelFilter != null && log.level != levelFilter) {
+      return false;
+    }
 
-      return true;
-    }).toList()
-    ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Новые логи первыми
-});
+    // Фильтр по тегу
+    if (tagFilter != null && log.tag != tagFilter) {
+      return false;
+    }
 
-/// Провайдер для получения уникальных тегов
+    // Фильтр по поисковому запросу
+    if (searchQuery.isNotEmpty) {
+      final messageMatch = log.message.toLowerCase().contains(searchQuery);
+      final tagMatch = (log.tag ?? '').toLowerCase().contains(searchQuery);
+      final errorMatch = (log.error?.toString() ?? '').toLowerCase().contains(
+        searchQuery,
+      );
+
+      return messageMatch || tagMatch || errorMatch;
+    }
+
+    return true;
+  }
+}
+
+/// Провайдер для пагинированных логов
+final paginatedLogsProvider =
+    AsyncNotifierProvider<PaginatedLogsNotifier, LogsPaginationState>(
+      PaginatedLogsNotifier.new,
+    );
+
+/// Провайдер для получения уникальных тегов (читает весь файл)
 final availableTagsProvider = FutureProvider<List<String>>((ref) async {
-  final logs = await ref.watch(parsedLogsProvider.future);
-  final tags =
-      logs
-          .whereType<LogEntry>()
-          .map((log) => log.tag)
-          .where((tag) => tag != null)
-          .cast<String>()
-          .toSet()
-          .toList()
-        ..sort();
+  final file = ref.watch(selectedLogFileProvider);
+  if (file == null) return [];
 
-  return tags;
+  try {
+    final content = await file.readAsString();
+    final logs = LogParser.parseJsonl(content);
+    final tags =
+        logs
+            .whereType<LogEntry>()
+            .map((log) => log.tag)
+            .where((tag) => tag != null)
+            .cast<String>()
+            .toSet()
+            .toList()
+          ..sort();
+
+    return tags;
+  } catch (e) {
+    return [];
+  }
 });
 
 /// Провайдер для получения файлов отчетов о падениях
@@ -177,7 +289,7 @@ final crashReportsProvider = FutureProvider<List<File>>((ref) async {
 
   return dir
       .listSync()
-      .where((entity) => entity is File && entity.path.endsWith('.json'))
+      .where((entity) => entity is File && entity.path.endsWith('.jsonl'))
       .cast<File>()
       .toList()
     ..sort((a, b) => b.path.compareTo(a.path)); // Новые файлы первыми
@@ -206,3 +318,37 @@ final crashReportContentProvider = FutureProvider<Map<String, dynamic>?>((
     return null;
   }
 });
+
+/// Удаляет файл логов
+Future<void> deleteLogFile(WidgetRef ref, File file) async {
+  try {
+    if (await file.exists()) {
+      await file.delete();
+      ref.invalidate(logFilesProvider);
+
+      final selectedFile = ref.read(selectedLogFileProvider);
+      if (selectedFile?.path == file.path) {
+        ref.read(selectedLogFileProvider.notifier).setFile(null);
+      }
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
+/// Удаляет файл отчета о падении
+Future<void> deleteCrashReport(WidgetRef ref, File file) async {
+  try {
+    if (await file.exists()) {
+      await file.delete();
+      ref.invalidate(crashReportsProvider);
+
+      final selectedReport = ref.read(selectedCrashReportProvider);
+      if (selectedReport?.path == file.path) {
+        ref.read(selectedCrashReportProvider.notifier).setFile(null);
+      }
+    }
+  } catch (e) {
+    rethrow;
+  }
+}

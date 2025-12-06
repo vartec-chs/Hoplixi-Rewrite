@@ -204,6 +204,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         .setBackgroundTransparent(false);
                   },
                 ),
+                const SizedBox(height: 12),
+
+                // logs viewer
+                ActionButton(
+                  icon: CupertinoIcons.doc,
+                  label: 'Просмотр логов',
+                  description: 'Открыть просмотрщик логов',
+                  onTap: () {
+                    context.push(AppRoutesPaths.logs);
+                  },
+                ),
               ],
             ),
           );
@@ -261,6 +272,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ref
                       .read(titlebarStateProvider.notifier)
                       .setBackgroundTransparent(false);
+                },
+              ),
+              const SizedBox(height: 12),
+              ActionButton(
+                icon: CupertinoIcons.doc,
+                label: 'Просмотр логов',
+                description: 'Открыть просмотрщик логов',
+                onTap: () {
+                  context.push(AppRoutesPaths.logs);
                 },
               ),
             ],

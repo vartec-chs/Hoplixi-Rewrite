@@ -11,6 +11,7 @@ The framework consists of three main packages: `riverpod` for pure Dart state ma
 - StreamProvider
 - NotifierProvider
 - AsyncNotifierProvider
+- StreamNotifierProvider
 - StateProvider (Deprecated, use NotifierProvider or AsyncNotifierProvider instead)
 - StateNotifierProvider (Deprecated, use NotifierProvider or AsyncNotifierProvider instead)
 - ChangeNotifierProvider (Deprecated, use NotifierProvider or AsyncNotifierProvider instead)
@@ -138,6 +139,15 @@ class LiveDataWidget extends ConsumerWidget {
   }
 }
 ```
+
+## StreamNotifierProvider - Real-Time Data Streams with Notifier
+
+StreamNotifierProvider<NotifierT extends StreamNotifier<ValueT>, ValueT> class final Providers
+A provider which creates and listen to an StreamNotifier.
+
+This is similar to FutureProvider but allows to perform side-effects.
+
+The syntax for using this provider is slightly different from the others in that the provider's function doesn't receive a "ref" (and in case of family, doesn't receive an argument either). Instead the ref (and argument) are directly accessible in the associated StreamNotifier.
 
 ## NotifierProvider - Mutable State with Business Logic
 

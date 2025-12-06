@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/models.dart';
 import 'package:hoplixi/features/logs_viewer/providers/logs_provider.dart';
+import 'package:hoplixi/shared/ui/text_field.dart';
 
 /// Виджет для фильтрации и поиска логов
 class LogsFilterBar extends ConsumerWidget {
@@ -13,11 +14,10 @@ class LogsFilterBar extends ConsumerWidget {
     final tagFilter = ref.watch(logTagFilterProvider);
     final searchQuery = ref.watch(logSearchQueryProvider);
     final availableTags = ref.watch(availableTagsProvider);
+    final theme = Theme.of(context);
 
     return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-      ),
+      decoration: BoxDecoration(color: theme.colorScheme.surface),
       padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -28,7 +28,8 @@ class LogsFilterBar extends ConsumerWidget {
             onChanged: (value) {
               ref.read(logSearchQueryProvider.notifier).setQuery(value);
             },
-            decoration: InputDecoration(
+            decoration: primaryInputDecoration(
+              context,
               hintText: 'Поиск по сообщению, тегу или ошибке...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: searchQuery.isNotEmpty
@@ -39,13 +40,6 @@ class LogsFilterBar extends ConsumerWidget {
                       },
                     )
                   : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -56,6 +50,7 @@ class LogsFilterBar extends ConsumerWidget {
             children: [
               // Фильтр по уровню
               PopupMenuButton<LogLevel?>(
+                tooltip: 'Фильтр по уровню',
                 child: FilterChip(
                   label: Text(
                     levelFilter == null
@@ -100,6 +95,7 @@ class LogsFilterBar extends ConsumerWidget {
                   }
 
                   return PopupMenuButton<String?>(
+                    tooltip: 'Фильтр по тегу',
                     child: FilterChip(
                       label: Text(
                         tagFilter == null ? 'Теги' : 'Теги: $tagFilter',
@@ -139,7 +135,10 @@ class LogsFilterBar extends ConsumerWidget {
                     ref.read(logTagFilterProvider.notifier).setTag(null);
                     ref.read(logSearchQueryProvider.notifier).setQuery('');
                   },
-                  backgroundColor: Colors.red.shade50,
+                  backgroundColor: theme.colorScheme.errorContainer,
+                  labelStyle: TextStyle(
+                    color: theme.colorScheme.onErrorContainer,
+                  ),
                 ),
             ],
           ),

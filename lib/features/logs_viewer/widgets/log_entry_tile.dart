@@ -15,7 +15,7 @@ class LogEntryTile extends StatefulWidget {
 class _LogEntryTileState extends State<LogEntryTile> {
   bool _expanded = false;
 
-  Color _getLogLevelColor() {
+  Color _getLogLevelColor(BuildContext context) {
     switch (widget.entry.level) {
       case LogLevel.debug:
         return Colors.grey;
@@ -24,7 +24,7 @@ class _LogEntryTileState extends State<LogEntryTile> {
       case LogLevel.warning:
         return Colors.orange;
       case LogLevel.error:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
       case LogLevel.trace:
         return Colors.cyan;
       case LogLevel.fatal:
@@ -51,6 +51,7 @@ class _LogEntryTileState extends State<LogEntryTile> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final timeStr = DateFormat('HH:mm:ss.SSS').format(widget.entry.timestamp);
     final hasError =
         widget.entry.error != null || widget.entry.stackTrace != null;
@@ -60,8 +61,16 @@ class _LogEntryTileState extends State<LogEntryTile> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: _expanded ? Colors.grey.shade50 : null,
+      color: _expanded ? theme.colorScheme.surfaceContainerHighest : null,
+      elevation: _expanded ? 2 : 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+        ),
+      ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           setState(() {
             _expanded = !_expanded;
@@ -74,12 +83,13 @@ class _LogEntryTileState extends State<LogEntryTile> {
             children: [
               // Основная информация
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _getLogLevelEmoji(),
                     style: const TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +102,7 @@ class _LogEntryTileState extends State<LogEntryTile> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: _getLogLevelColor(),
+                                color: _getLogLevelColor(context),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -112,41 +122,43 @@ class _LogEntryTileState extends State<LogEntryTile> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
+                                  color: theme.colorScheme.surfaceContainer,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   widget.entry.tag!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
+                                    color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ),
                             const SizedBox(width: 8),
                             Text(
                               timeStr,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: Colors.grey.shade600),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                             if (hasError || hasData) const SizedBox(width: 8),
                             if (hasError)
-                              const Tooltip(
+                              Tooltip(
                                 message: 'Содержит информацию об ошибке',
                                 child: Icon(
                                   Icons.warning_amber,
                                   size: 16,
-                                  color: Colors.red,
+                                  color: theme.colorScheme.error,
                                 ),
                               ),
                             if (hasData) const SizedBox(width: 4),
                             if (hasData)
-                              const Tooltip(
+                              Tooltip(
                                 message: 'Содержит дополнительные данные',
                                 child: Icon(
                                   Icons.data_object,
                                   size: 16,
-                                  color: Colors.blue,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                           ],
@@ -154,9 +166,13 @@ class _LogEntryTileState extends State<LogEntryTile> {
                         const SizedBox(height: 4),
                         Text(
                           widget.entry.message,
-                          maxLines: _expanded ? null : 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: _expanded ? null : 2,
+                          overflow: _expanded
+                              ? TextOverflow.visible
+                              : TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontFamily: 'monospace',
+                          ),
                         ),
                       ],
                     ),
@@ -164,100 +180,105 @@ class _LogEntryTileState extends State<LogEntryTile> {
                   if (hasError || hasData || _expanded)
                     Icon(
                       _expanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.grey,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                 ],
               ),
               // Развернутая информация
               if (_expanded) ...[
                 const SizedBox(height: 12),
-                const Divider(),
+                Divider(color: theme.colorScheme.outlineVariant),
                 const SizedBox(height: 8),
                 // Ошибка
                 if (widget.entry.error != null) ...[
                   Text(
                     'Ошибка:',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.red,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.error,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: theme.colorScheme.errorContainer.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.red.shade200),
+                      border: Border.all(
+                        color: theme.colorScheme.errorContainer,
+                      ),
                     ),
-                    child: Text(
+                    child: SelectableText(
                       widget.entry.error.toString(),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.red.shade900,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onErrorContainer,
                         fontFamily: 'monospace',
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
                 ],
-                // Stack trace
+                // Stack Trace
                 if (widget.entry.stackTrace != null) ...[
                   Text(
                     'Stack Trace:',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.purple,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.tertiary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.purple.shade50,
+                      color: theme.colorScheme.tertiaryContainer.withOpacity(
+                        0.3,
+                      ),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.purple.shade200),
+                      border: Border.all(
+                        color: theme.colorScheme.tertiaryContainer,
+                      ),
                     ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Text(
-                        widget.entry.stackTrace.toString(),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.purple.shade900,
-                          fontFamily: 'monospace',
-                          fontSize: 10,
-                        ),
+                    child: SelectableText(
+                      widget.entry.stackTrace.toString(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onTertiaryContainer,
+                        fontFamily: 'monospace',
+                        fontSize: 10,
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
                 ],
-                // Дополнительные данные
-                if (widget.entry.additionalData != null &&
-                    widget.entry.additionalData!.isNotEmpty) ...[
+                // Additional Data
+                if (hasData) ...[
                   Text(
                     'Дополнительные данные:',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.blue,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: theme.colorScheme.primaryContainer.withOpacity(
+                        0.3,
+                      ),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.blue.shade200),
+                      border: Border.all(
+                        color: theme.colorScheme.primaryContainer,
+                      ),
                     ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Text(
-                        widget.entry.additionalData.toString(),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.blue.shade900,
-                          fontFamily: 'monospace',
-                          fontSize: 10,
-                        ),
+                    child: SelectableText(
+                      widget.entry.additionalData.toString(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontFamily: 'monospace',
                       ),
                     ),
                   ),

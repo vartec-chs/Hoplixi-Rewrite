@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/logs_viewer/providers/logs_provider.dart';
+import 'package:hoplixi/shared/ui/button.dart';
 
 /// Экран для просмотра отчетов о падениях
 class CrashReportsScreen extends ConsumerWidget {
@@ -11,18 +16,48 @@ class CrashReportsScreen extends ConsumerWidget {
     final crashReports = ref.watch(crashReportsProvider);
     final selectedReport = ref.watch(selectedCrashReportProvider);
     final reportContent = ref.watch(crashReportContentProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Отчеты о падениях'), elevation: 2),
+      appBar: AppBar(
+        title: const Text('Отчеты о падениях'),
+        elevation: 0,
+        scrolledUnderElevation: 2,
+        backgroundColor: theme.colorScheme.surface,
+        actions: [
+          if (selectedReport != null) ...[
+            IconButton(
+              icon: const Icon(Icons.copy),
+              tooltip: 'Копировать содержимое',
+              onPressed: () => _copyReportContent(context, selectedReport),
+            ),
+            IconButton(
+              icon: Icon(Icons.delete, color: theme.colorScheme.error),
+              tooltip: 'Удалить отчет',
+              onPressed: () => _deleteReport(context, ref, selectedReport),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
       body: crashReports.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: theme.colorScheme.error,
+              ),
               const SizedBox(height: 16),
-              Text('Ошибка загрузки: $error'),
+              Text(
+                'Ошибка загрузки: $error',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
             ],
           ),
         ),
@@ -32,13 +67,18 @@ class CrashReportsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle_outline,
                     size: 48,
-                    color: Colors.green,
+                    color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
-                  const Text('Отчеты о падениях не найдены'),
+                  Text(
+                    'Отчеты о падениях не найдены',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
                 ],
               ),
             );
@@ -47,26 +87,74 @@ class CrashReportsScreen extends ConsumerWidget {
           return Row(
             children: [
               // Список отчетов
-              SizedBox(
-                width: 300,
-                child: ListView.builder(
-                  itemCount: reports.length,
-                  itemBuilder: (context, index) {
-                    final report = reports[index];
-                    final fileName = report.path.split('\\').last;
-                    final isSelected = selectedReport?.path == report.path;
+              Container(
+                width: 280,
+                color: theme.colorScheme.surface,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        'Отчеты (${reports.length})',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        itemCount: reports.length,
+                        itemBuilder: (context, index) {
+                          final report = reports[index];
+                          final fileName = report.path
+                              .split(Platform.pathSeparator)
+                              .last;
+                          final isSelected =
+                              selectedReport?.path == report.path;
 
-                    return ListTile(
-                      title: Text(fileName, overflow: TextOverflow.ellipsis),
-                      selected: isSelected,
-                      onTap: () {
-                        ref
-                            .read(selectedCrashReportProvider.notifier)
-                            .setFile(report);
-                      },
-                      trailing: const Icon(Icons.chevron_right),
-                    );
-                  },
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: ListTile(
+                              title: Text(
+                                fileName,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              selected: isSelected,
+                              selectedTileColor: theme
+                                  .colorScheme
+                                  .primaryContainer
+                                  .withOpacity(0.1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              onTap: () {
+                                ref
+                                    .read(selectedCrashReportProvider.notifier)
+                                    .setFile(report);
+                              },
+                              dense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 0,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
               // Детали отчета
@@ -74,21 +162,30 @@ class CrashReportsScreen extends ConsumerWidget {
                 child: reportContent.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, stackTrace) =>
-                      Center(child: Text('Ошибка загрузки отчета: $error')),
+                  error: (error, stackTrace) => Center(
+                    child: Text(
+                      'Ошибка загрузки отчета: $error',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                  ),
                   data: (data) {
                     if (data == null) {
-                      return const Center(
+                      return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.select_all,
                               size: 48,
-                              color: Colors.grey,
+                              color: theme.colorScheme.secondary,
                             ),
-                            SizedBox(height: 16),
-                            Text('Выберите отчет для просмотра деталей'),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Выберите отчет для просмотра деталей',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                           ],
                         ),
                       );
@@ -103,19 +200,24 @@ class CrashReportsScreen extends ConsumerWidget {
                           if (data['timestamp'] != null) ...[
                             Text(
                               'Время падения',
-                              style: Theme.of(context).textTheme.labelLarge,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: Text(
+                              child: SelectableText(
                                 data['timestamp'] ?? 'N/A',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(fontFamily: 'monospace'),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontFamily: 'monospace',
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -124,24 +226,27 @@ class CrashReportsScreen extends ConsumerWidget {
                           if (data['error'] != null) ...[
                             Text(
                               'Ошибка',
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(color: Colors.red),
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
+                                color: theme.colorScheme.errorContainer
+                                    .withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: Colors.red.shade200),
+                                border: Border.all(
+                                  color: theme.colorScheme.errorContainer,
+                                ),
                               ),
-                              child: Text(
+                              child: SelectableText(
                                 data['error'],
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Colors.red.shade900,
-                                      fontFamily: 'monospace',
-                                    ),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.error,
+                                  fontFamily: 'monospace',
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -150,29 +255,30 @@ class CrashReportsScreen extends ConsumerWidget {
                           if (data['stackTrace'] != null) ...[
                             Text(
                               'Stack Trace',
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(color: Colors.purple),
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.tertiary,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.purple.shade50,
+                                color: theme.colorScheme.tertiaryContainer
+                                    .withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: Colors.purple.shade200,
+                                  color: theme.colorScheme.tertiaryContainer,
                                 ),
                               ),
                               child: SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
-                                child: Text(
+                                child: SelectableText(
                                   data['stackTrace'],
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Colors.purple.shade900,
-                                        fontFamily: 'monospace',
-                                        fontSize: 10,
-                                      ),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.tertiary,
+                                    fontFamily: 'monospace',
+                                    fontSize: 10,
+                                  ),
                                 ),
                               ),
                             ),
@@ -202,26 +308,32 @@ class CrashReportsScreen extends ConsumerWidget {
 
   Widget _buildSessionInfo(BuildContext context, Map<String, dynamic> session) {
     final deviceInfo = session['deviceInfo'] ?? {};
+    final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow('Session ID:', session['id'] ?? 'N/A'),
+          _buildInfoRow(context, 'Session ID:', session['id'] ?? 'N/A'),
           const SizedBox(height: 8),
-          _buildInfoRow('Платформа:', deviceInfo['platform'] ?? 'N/A'),
+          _buildInfoRow(context, 'Платформа:', deviceInfo['platform'] ?? 'N/A'),
           const SizedBox(height: 8),
-          _buildInfoRow('Модель:', deviceInfo['deviceModel'] ?? 'N/A'),
-          const SizedBox(height: 8),
-          _buildInfoRow('Версия ОС:', deviceInfo['platformVersion'] ?? 'N/A'),
+          _buildInfoRow(context, 'Модель:', deviceInfo['deviceModel'] ?? 'N/A'),
           const SizedBox(height: 8),
           _buildInfoRow(
+            context,
+            'Версия ОС:',
+            deviceInfo['platformVersion'] ?? 'N/A',
+          ),
+          const SizedBox(height: 8),
+          _buildInfoRow(
+            context,
             'Версия приложения:',
             deviceInfo['appVersion'] ?? 'N/A',
           ),
@@ -230,18 +342,96 @@ class CrashReportsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
     return Row(
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: SelectableText(
             value,
-            style: const TextStyle(fontFamily: 'monospace'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: 'monospace',
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _copyReportContent(BuildContext context, File file) async {
+    try {
+      final content = await file.readAsString();
+      await Clipboard.setData(ClipboardData(text: content));
+      if (context.mounted) {
+        Toaster.success(
+          title: 'Скопировано',
+          description: 'Содержимое отчета скопировано в буфер обмена',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Toaster.error(
+          title: 'Ошибка',
+          description: 'Не удалось скопировать отчет: $e',
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteReport(
+    BuildContext context,
+    WidgetRef ref,
+    File file,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Удалить отчет?'),
+        content: Text(
+          'Вы уверены, что хотите удалить отчет ${file.path.split(Platform.pathSeparator).last}?',
+        ),
+        actions: [
+          SmoothButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            label: 'Отмена',
+            type: SmoothButtonType.text,
+          ),
+          SmoothButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            label: 'Удалить',
+            type: SmoothButtonType.filled,
+            variant: SmoothButtonVariant.error,
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await deleteCrashReport(ref, file);
+        if (context.mounted) {
+          Toaster.success(
+            title: 'Удалено',
+            description: 'Отчет успешно удален',
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Toaster.error(
+            title: 'Ошибка',
+            description: 'Не удалось удалить отчет: $e',
+          );
+        }
+      }
+    }
   }
 }
