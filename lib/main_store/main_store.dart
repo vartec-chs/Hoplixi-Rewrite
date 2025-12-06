@@ -67,9 +67,12 @@ class MainStore extends _$MainStore {
 
   MainStore(super.e);
 
+  
+
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
+
       onCreate: (Migrator m) async {
         await m.createAll();
       },
@@ -93,6 +96,7 @@ class MainStore extends _$MainStore {
 
         logInfo('Migration completed', tag: '${_logTag}Migration');
       },
+
     );
   }
 

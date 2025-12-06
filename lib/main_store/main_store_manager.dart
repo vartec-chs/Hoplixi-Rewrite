@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui_web';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:hoplixi/core/app_paths.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
@@ -14,7 +16,14 @@ import 'package:hoplixi/main_store/models/dto/main_store_dto.dart';
 import 'package:hoplixi/main_store/services/db_history_services.dart';
 import 'package:path/path.dart' as p;
 import 'package:result_dart/result_dart.dart';
+import 'package:sqlite3/open.dart';
+import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
 import 'package:uuid/uuid.dart';
+
+Future<void> setupSqlCipher() async {
+  await applyWorkaroundToOpenSqlCipherOnOldAndroidVersions();
+  open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
+}
 
 /// Менеджер для управления хранилищами MainStore
 ///
@@ -681,9 +690,14 @@ class MainStoreManager {
   ) async {
     try {
       logInfo('Creating database connection', tag: _logTag);
+      final token = RootIsolateToken.instance!;
 
       final executor = NativeDatabase.createInBackground(
         File(dbFilePath),
+        isolateSetup: () async {
+          BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+          await setupSqlCipher();
+        },
         setup: (rawDb) {
           // Установка ключа шифрования SQLCipher
           rawDb.execute("PRAGMA key = '$password'");
