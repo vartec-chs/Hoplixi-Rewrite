@@ -2,14 +2,16 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/main_store/dao/filters_dao/filter.dart';
 import 'package:hoplixi/main_store/main_store.dart';
+import 'package:hoplixi/main_store/models/dto/category_dto.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 import 'package:hoplixi/main_store/models/filter/base_filter.dart';
 import 'package:hoplixi/main_store/models/filter/files_filter.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 
 part 'file_filter_dao.g.dart';
 
-@DriftAccessor(tables: [Files, Categories, FilesTags])
+@DriftAccessor(tables: [Files, Categories, FilesTags, Tags])
 class FileFilterDao extends DatabaseAccessor<MainStore>
     with _$FileFilterDaoMixin
     implements FilterDao<FilesFilter, FileCardDto> {
@@ -35,9 +37,18 @@ class FileFilterDao extends DatabaseAccessor<MainStore>
 
     final results = await query.get();
 
+    // Собираем ID всех файлов для загрузки тегов
+    final fileIds = results.map((row) => row.readTable(files).id).toList();
+
+    // Загружаем теги для всех файлов (максимум 10 на файл)
+    final tagsMap = await _loadTagsForFiles(fileIds);
+
     return results.map((row) {
       final file = row.readTable(files);
       final category = row.readTableOrNull(categories);
+
+      // Получаем теги для текущего файла
+      final fileTags = tagsMap[file.id] ?? [];
 
       return FileCardDto(
         id: file.id,
@@ -45,13 +56,22 @@ class FileFilterDao extends DatabaseAccessor<MainStore>
         fileName: file.fileName,
         fileExtension: file.fileExtension,
         fileSize: file.fileSize,
-        categoryName: category?.name,
+        category: category != null
+            ? CategoryInCardDto(
+                id: category.id,
+                name: category.name,
+                type: category.type.name,
+                color: category.color,
+                iconId: category.iconId,
+              )
+            : null,
         isFavorite: file.isFavorite,
         isPinned: file.isPinned,
         isArchived: file.isArchived,
         isDeleted: file.isDeleted,
         usedCount: file.usedCount,
         modifiedAt: file.modifiedAt,
+        tags: fileTags,
       );
     }).toList();
   }
@@ -344,5 +364,43 @@ class FileFilterDao extends DatabaseAccessor<MainStore>
     }
 
     return orderTerms;
+  }
+
+  /// Загружает теги для списка файлов (максимум 10 тегов на файл)
+  Future<Map<String, List<TagInCardDto>>> _loadTagsForFiles(
+    List<String> fileIds,
+  ) async {
+    if (fileIds.isEmpty) return {};
+
+    // Запрос для получения тегов со связями
+    final query = select(filesTags).join([
+      innerJoin(tags, tags.id.equalsExp(filesTags.tagId)),
+    ])..where(filesTags.fileId.isIn(fileIds));
+
+    // Группируем теги по fileId
+    final tagsMap = <String, List<TagInCardDto>>{};
+
+    // Обрабатываем результаты
+    final results = await query.get();
+
+    for (final row in results) {
+      final fileTag = row.readTable(filesTags);
+      final tag = row.readTable(tags);
+
+      final fileId = fileTag.fileId;
+
+      if (!tagsMap.containsKey(fileId)) {
+        tagsMap[fileId] = [];
+      }
+
+      // Ограничиваем максимум 10 тегами
+      if (tagsMap[fileId]!.length < 10) {
+        tagsMap[fileId]!.add(
+          TagInCardDto(id: tag.id, name: tag.name, color: tag.color),
+        );
+      }
+    }
+
+    return tagsMap;
   }
 }

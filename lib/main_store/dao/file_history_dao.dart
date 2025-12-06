@@ -126,7 +126,7 @@ class FileHistoryDao extends DatabaseAccessor<MainStore>
       filePath: dto.filePath,
       mimeType: dto.mimeType,
       fileSize: dto.fileSize,
-      fileHash: dto.fileHash,
+      fileHash: Value(dto.fileHash),
       description: Value(dto.description),
       categoryName: Value(dto.categoryName),
       usedCount: Value(dto.usedCount),

@@ -19,7 +19,8 @@ class FilesHistory extends Table {
   TextColumn get filePath => text()(); // Relative path from files directory
   TextColumn get mimeType => text()(); // MIME type
   IntColumn get fileSize => integer()(); // File size in bytes
-  TextColumn get fileHash => text()(); // SHA256 hash for integrity check
+  TextColumn get fileHash =>
+      text().nullable()(); // SHA256 hash for integrity check
 
   // Relations
   TextColumn get categoryId => text().nullable()();

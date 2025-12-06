@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hoplixi/main_store/models/dto/base_card_dto.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
+import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
 
 part 'file_dto.freezed.dart';
 part 'file_dto.g.dart';
@@ -17,6 +19,7 @@ sealed class CreateFileDto with _$CreateFileDto {
     required String fileHash,
     String? description,
     String? categoryId,
+    required List<String> tagsIds,
   }) = _CreateFileDto;
 
   factory CreateFileDto.fromJson(Map<String, dynamic> json) =>
@@ -62,13 +65,14 @@ sealed class FileCardDto with _$FileCardDto implements BaseCardDto {
     required String fileName,
     required String fileExtension,
     required int fileSize,
-    String? categoryName,
     required bool isFavorite,
     required bool isPinned,
     required bool isArchived,
     required bool isDeleted,
     required int usedCount,
     required DateTime modifiedAt,
+    CategoryInCardDto? category,
+    List<TagInCardDto>? tags,
   }) = _FileCardDto;
 
   factory FileCardDto.fromJson(Map<String, dynamic> json) =>

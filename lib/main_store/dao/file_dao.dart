@@ -22,28 +22,6 @@ class FileDao extends DatabaseAccessor<MainStore>
     return (select(files)..where((f) => f.id.equals(id))).getSingleOrNull();
   }
 
-  /// Получить файлы в виде карточек
-  Future<List<FileCardDto>> getAllFileCards() {
-    return (select(files)..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)]))
-        .map(
-          (f) => FileCardDto(
-            id: f.id,
-            name: f.name,
-            fileName: f.fileName,
-            fileExtension: f.fileExtension,
-            fileSize: f.fileSize,
-            categoryName: null, // TODO: join with categories
-            isFavorite: f.isFavorite,
-            isPinned: f.isPinned,
-            isArchived: f.isArchived,
-            isDeleted: f.isDeleted,
-            usedCount: f.usedCount,
-            modifiedAt: f.modifiedAt,
-          ),
-        )
-        .get();
-  }
-
   /// Переключить избранное
   @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
@@ -81,32 +59,6 @@ class FileDao extends DatabaseAccessor<MainStore>
     )..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)])).watch();
   }
 
-  /// Смотреть файлы карточки с автообновлением
-  Stream<List<FileCardDto>> watchFileCards() {
-    return (select(
-      files,
-    )..orderBy([(f) => OrderingTerm.desc(f.modifiedAt)])).watch().map(
-      (files) => files
-          .map(
-            (f) => FileCardDto(
-              id: f.id,
-              name: f.name,
-              fileName: f.fileName,
-              fileExtension: f.fileExtension,
-              fileSize: f.fileSize,
-              categoryName: null,
-              isFavorite: f.isFavorite,
-              isPinned: f.isPinned,
-              isArchived: f.isArchived,
-              isDeleted: f.isDeleted,
-              usedCount: f.usedCount,
-              modifiedAt: f.modifiedAt,
-            ),
-          )
-          .toList(),
-    );
-  }
-
   /// Создать новый файл
   Future<String> createFile(CreateFileDto dto) {
     final companion = FilesCompanion.insert(
@@ -116,7 +68,7 @@ class FileDao extends DatabaseAccessor<MainStore>
       filePath: dto.filePath,
       mimeType: dto.mimeType,
       fileSize: dto.fileSize,
-      fileHash: dto.fileHash,
+      fileHash: Value(dto.fileHash),
       description: Value(dto.description),
       categoryId: Value(dto.categoryId),
     );
