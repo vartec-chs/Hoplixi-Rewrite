@@ -3,6 +3,7 @@ import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/tables/files.dart';
+import 'package:uuid/uuid.dart';
 
 part 'file_dao.g.dart';
 
@@ -61,7 +62,9 @@ class FileDao extends DatabaseAccessor<MainStore>
 
   /// Создать новый файл
   Future<String> createFile(CreateFileDto dto) {
+    final uuid = const Uuid().v4();
     final companion = FilesCompanion.insert(
+      id: Value(uuid),
       name: dto.name,
       fileName: dto.fileName,
       fileExtension: dto.fileExtension,
@@ -72,11 +75,7 @@ class FileDao extends DatabaseAccessor<MainStore>
       description: Value(dto.description),
       categoryId: Value(dto.categoryId),
     );
-    return into(files).insert(companion).then((id) {
-      return (select(
-        files,
-      )..where((f) => f.id.equals(id.toString()))).map((f) => f.id).getSingle();
-    });
+    return into(files).insert(companion).then((_) => uuid);
   }
 
   /// Обновить файл

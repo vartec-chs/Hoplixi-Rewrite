@@ -89,6 +89,7 @@ sealed class UpdateFileDto with _$UpdateFileDto {
     bool? isFavorite,
     bool? isArchived,
     bool? isPinned,
+    List<String>? tagsIds,
   }) = _UpdateFileDto;
 
   factory UpdateFileDto.fromJson(Map<String, dynamic> json) =>
