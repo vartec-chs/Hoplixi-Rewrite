@@ -99,6 +99,9 @@ dependencies:
   cryptography: ^2.9.0
   mime: ^2.0.0
 
+  file_crypto: 
+    path: ./packages/file_crypto
+
 
 dev_dependencies:
   flutter_test:

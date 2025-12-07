@@ -417,6 +417,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+  file_crypto:
+    dependency: "direct main"
+    description:
+      path: "packages/file_crypto"
+      relative: true
+    source: path
+    version: "1.0.0"
   file_picker:
     dependency: "direct main"
     description:
