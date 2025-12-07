@@ -13,7 +13,7 @@ sealed class CreateFileDto with _$CreateFileDto {
     required String name,
     required String fileName,
     required String fileExtension,
-    required String filePath,
+    String? filePath,
     required String mimeType,
     required int fileSize,
     required String fileHash,

@@ -9,8 +9,12 @@ final fileStorageServiceProvider = FutureProvider<FileStorageService>((
 ) async {
   final manager = await ref.watch(mainStoreManagerProvider.future);
   final store = manager?.currentStore;
-  if (store == null) {
+  if (store == null || manager == null) {
     throw DatabaseError.notInitialized(timestamp: DateTime.now());
   }
-  return FileStorageService(store);
+
+  final attachmentsPathResult = await manager.getAttachmentsPath();
+  final attachmentsPath = attachmentsPathResult.getOrThrow();
+
+  return FileStorageService(store, attachmentsPath);
 });

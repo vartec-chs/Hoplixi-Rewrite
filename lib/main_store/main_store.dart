@@ -82,15 +82,6 @@ class MainStore extends _$MainStore {
           tag: '${_logTag}Migration',
         );
 
-        // Migration v2 -> v3: Add is_archived column to otps table
-        if (from < 3) {
-          await m.addColumn(otps, otps.isArchived);
-          logInfo(
-            'Added is_archived column to otps table',
-            tag: '${_logTag}Migration',
-          );
-        }
-
         logInfo('Migration completed', tag: '${_logTag}Migration');
       },
     );

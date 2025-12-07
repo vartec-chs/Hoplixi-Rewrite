@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
-import 'package:hoplixi/core/app_paths.dart';
-import 'package:hoplixi/core/lib/file_crypto/file_crypto.dart';
-import 'package:hoplixi/core/lib/file_crypto/interfaces/encryptor.dart';
+import 'package:file_crypto/file_crypto.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:mime/mime.dart';
@@ -12,8 +10,10 @@ import 'package:uuid/uuid.dart';
 class FileStorageService {
   final MainStore _db;
   final ArchiveEncryptor _encryptor;
+  final String _attachmentsPath;
 
-  FileStorageService(this._db) : _encryptor = ArchiveEncryptor();
+  FileStorageService(this._db, this._attachmentsPath)
+    : _encryptor = ArchiveEncryptor();
 
   /// Получить ключ шифрования из метаданных хранилища
   Future<String> _getAttachmentKey() async {
@@ -23,13 +23,11 @@ class FileStorageService {
 
   /// Получить путь к директории вложений
   Future<String> _getAttachmentsPath() async {
-    final storagePath = await AppPaths.appStoragePath;
-    final attachmentsPath = p.join(storagePath, 'attachments');
-    final directory = Directory(attachmentsPath);
+    final directory = Directory(_attachmentsPath);
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
-    return attachmentsPath;
+    return _attachmentsPath;
   }
 
   /// Импортировать файл: шифрует и сохраняет в БД
@@ -39,7 +37,7 @@ class FileStorageService {
     String? description,
     String? categoryId,
     required List<String> tagsIds,
-    ProgressCallback? onProgress,
+    void Function(int, int)? onProgress,
   }) async {
     if (!await sourceFile.exists()) {
       throw Exception('Source file not found');
@@ -61,8 +59,7 @@ class FileStorageService {
     );
 
     // Вычисляем хеш оригинального файла
-    final fileBytes = await sourceFile.readAsBytes();
-    final digest = sha256.convert(fileBytes);
+    final digest = await sha256.bind(sourceFile.openRead()).first;
     final fileHash = digest.toString();
 
     final fileSize = await sourceFile.length();
@@ -75,7 +72,6 @@ class FileStorageService {
       name: name,
       fileName: fileName,
       fileExtension: extension,
-      filePath: encryptedFileName, // Сохраняем только имя файла
       mimeType: mimeType,
       fileSize: fileSize,
       fileHash: fileHash,
@@ -91,7 +87,7 @@ class FileStorageService {
   Future<void> decryptFile({
     required String fileId,
     required String destinationPath,
-    ProgressCallback? onProgress,
+    void Function(int, int)? onProgress,
   }) async {
     final fileData = await _db.fileDao.getFileById(fileId);
     if (fileData == null) {
@@ -106,12 +102,36 @@ class FileStorageService {
       throw Exception('Encrypted file not found on disk');
     }
 
-    await _encryptor.decrypt(
-      inputPath: encryptedFilePath,
-      outputPath: destinationPath,
-      password: key,
-      onProgress: onProgress,
-    );
+    // Создаем временную директорию для расшифровки, так как ArchiveEncryptor
+    // восстанавливает оригинальное имя файла, а нам нужно сохранить в destinationPath
+    final tempDir = await Directory.systemTemp.createTemp('hoplixi_decrypt_');
+    try {
+      final result = await _encryptor.decrypt(
+        inputPath: encryptedFilePath,
+        outputPath: tempDir.path,
+        password: key,
+        onProgress: onProgress,
+      );
+
+      final decryptedFile = File(result.outputPath);
+      if (await decryptedFile.exists()) {
+        // Копируем файл в целевой путь
+        // Убедимся, что директория назначения существует
+        final destParent = Directory(p.dirname(destinationPath));
+        if (!await destParent.exists()) {
+          await destParent.create(recursive: true);
+        }
+        await decryptedFile.copy(destinationPath);
+      } else {
+        throw Exception(
+          'Decryption finished but file not found at ${result.outputPath}',
+        );
+      }
+    } finally {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+    }
   }
 
   /// Удалить файл с диска (используется при удалении из БД)

@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:file_crypto/file_crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/core/app_paths.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
@@ -802,8 +802,7 @@ class MainStoreManager {
   ///
   /// Возвращает Base64-закодированный ключ
   String _generateSecureKey() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(32, (index) => random.nextInt(256));
+    final bytes = KeyDerivationService.generateSecureRandomBytes(32);
     return base64Encode(bytes);
   }
 }

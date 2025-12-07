@@ -9,7 +9,8 @@ class Files extends Table {
   TextColumn get description => text().nullable()();
   TextColumn get fileName => text()(); // Original file name
   TextColumn get fileExtension => text()(); // File extension (e.g., .pdf, .txt)
-  TextColumn get filePath => text()(); // Relative path from files directory
+  TextColumn get filePath =>
+      text().nullable()(); // Relative path from files directory
   TextColumn get mimeType => text()(); // MIME type (e.g., application/pdf)
   IntColumn get fileSize => integer()(); // File size in bytes
   TextColumn get fileHash =>

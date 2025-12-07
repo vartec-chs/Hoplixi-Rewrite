@@ -68,7 +68,7 @@ class FileDao extends DatabaseAccessor<MainStore>
       name: dto.name,
       fileName: dto.fileName,
       fileExtension: dto.fileExtension,
-      filePath: dto.filePath,
+      filePath: Value(dto.filePath),
       mimeType: dto.mimeType,
       fileSize: dto.fileSize,
       fileHash: Value(dto.fileHash),
