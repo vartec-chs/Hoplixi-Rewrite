@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'widgets/action_button.dart';
+import 'widgets/recent_database_card.dart';
 import 'package:hoplixi/shared/ui/titlebar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -143,10 +144,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                   padding: EdgeInsets.symmetric(
-                    horizontal: 16,
+                    horizontal: 12,
                     vertical: (UniversalPlatform.isMobile && _offset < 160)
                         ? MediaQuery.of(context).padding.top + 12
-                        : 16,
+                        : 12,
                   ),
                   child: _buildContentSection(),
                 ),
@@ -167,6 +168,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return SingleChildScrollView(
             child: Column(
               children: [
+                const RecentDatabaseCard(),
+                const SizedBox(height: 12),
                 ActionButton(
                   icon: CupertinoIcons.folder_open,
                   label: 'Открыть',
@@ -223,6 +226,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return SingleChildScrollView(
           child: Column(
             children: [
+              const RecentDatabaseCard(),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(

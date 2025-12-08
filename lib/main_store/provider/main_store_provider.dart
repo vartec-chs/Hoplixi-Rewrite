@@ -9,7 +9,6 @@ import 'package:hoplixi/main_store/models/db_state.dart';
 import 'package:hoplixi/main_store/models/dto/main_store_dto.dart';
 import 'package:hoplixi/main_store/provider/db_history_provider.dart';
 
-
 final _mainStoreManagerProvider = FutureProvider<MainStoreManager>((ref) async {
   final dbHistoryService = await ref.read(dbHistoryProvider.future);
   final manager = MainStoreManager(dbHistoryService);
@@ -263,6 +262,8 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
       return result.fold(
         (_) {
           // Успех - переводим в idle состояние
+          _setState(const DatabaseState(status: DatabaseStatus.closed));
+
           _setState(const DatabaseState(status: DatabaseStatus.idle));
 
           logInfo('Store closed successfully', tag: _logTag);

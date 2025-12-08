@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/theme/index.dart';
-// import 'package:hoplixi/shared/widgets/close_database_button.dart';
+import 'package:hoplixi/shared/widgets/close_database_button.dart';
 // import 'package:hoplixi/app/constants/main_constants.dart';
 // import 'package:hoplixi/app/theme/index.dart';
 // import 'package:hoplixi/hoplixi_store/providers/hoplixi_store_providers.dart';
@@ -120,7 +120,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                   //       ),
                   //     ),
                   //   ),
-                  // CloseDatabaseButton(),
+                  const CloseDatabaseButton(type: CloseDatabaseButtonType.icon),
                   ThemeSwitcher(size: 26),
                   IconButton(
                     padding: const EdgeInsets.all(6),
