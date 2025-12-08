@@ -255,8 +255,16 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
         const SizedBox(height: 12),
         CategoryPickerField(
           isFilter: true,
-          selectedCategoryIds: _selectedCategoryIds,
-          selectedCategoryNames: _selectedCategoryNames,
+          selectedCategoryIds:
+              _selectedCategoryIds.isEmpty &&
+                  ref.read(baseFilterProvider).categoryIds.isNotEmpty
+              ? ref.read(baseFilterProvider).categoryIds
+              : _selectedCategoryIds,
+          selectedCategoryNames:
+              _selectedCategoryNames.isEmpty &&
+                  ref.read(baseFilterProvider).categoryIds.isNotEmpty
+              ? ref.read(baseFilterProvider).categoryIds
+              : _selectedCategoryNames,
           filterByType: _getCategoryType(entityType),
           onCategoriesSelected: (ids, names) {
             setState(() {
@@ -287,8 +295,16 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
         const SizedBox(height: 12),
         TagPickerField(
           isFilter: true,
-          selectedTagIds: _selectedTagIds,
-          selectedTagNames: _selectedTagNames,
+          selectedTagIds:
+              _selectedTagIds.isEmpty &&
+                  ref.read(baseFilterProvider).tagIds.isNotEmpty
+              ? ref.read(baseFilterProvider).tagIds
+              : _selectedTagIds,
+          selectedTagNames:
+              _selectedTagNames.isEmpty &&
+                  ref.read(baseFilterProvider).tagIds.isNotEmpty
+              ? ref.read(baseFilterProvider).tagIds
+              : _selectedTagNames,
           filterByType: _getTagType(entityType),
           onTagsSelected: (ids, names) {
             setState(() {

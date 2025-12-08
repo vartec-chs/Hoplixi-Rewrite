@@ -11,8 +11,6 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import 'package:drift/drift.dart';
-import 'package:hoplixi/main_store/tables/files.dart';
-import 'package:hoplixi/main_store/tables/files_history.dart';
 
 class FileStorageService {
   final MainStore _db;

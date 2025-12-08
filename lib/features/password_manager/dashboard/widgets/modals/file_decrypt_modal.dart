@@ -8,6 +8,7 @@ import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/provider/service_providers.dart';
 import 'package:hoplixi/shared/ui/button.dart';
+import 'package:hoplixi/shared/ui/slider_button.dart';
 import 'package:open_file/open_file.dart';
 import 'package:watcher/watcher.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
@@ -266,15 +267,17 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
             ),
           ] else ...[
             if (_isFileModified) ...[
-              SizedBox(
-                width: double.infinity,
-                child: SmoothButton(
-                  label: 'Обновить файл',
-                  onPressed: _isUpdating ? null : _updateFile,
-                  loading: _isUpdating,
-                  icon: Icon(Icons.save),
-                  variant: SmoothButtonVariant.normal,
-                ),
+              Text(
+                'Замечено обновление файла, хотите ли вы обновить его в хранилище?',
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              SliderButton(
+                type: SliderButtonType.confirm,
+                text: 'Обновить файл',
+                onSlideCompleteAsync: _updateFile,
+                showLoading: _isUpdating,
               ),
               const SizedBox(height: 12),
             ],

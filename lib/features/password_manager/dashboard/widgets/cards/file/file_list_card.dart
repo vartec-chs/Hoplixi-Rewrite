@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/shared/index.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
+import 'package:hoplixi/shared/ui/button.dart';
 
 class FileListCard extends ConsumerStatefulWidget {
   final FileCardDto file;
@@ -214,11 +215,6 @@ class _FileListCardState extends ConsumerState<FileListCard>
                       ? 'Убрать из избранного'
                       : 'В избранное',
                 ),
-                IconButton(
-                  icon: const Icon(Icons.lock_open_rounded),
-                  onPressed: widget.onDecrypt,
-                  tooltip: 'Расшифровать',
-                ),
               ],
             ),
           ),
@@ -294,57 +290,55 @@ class _FileListCardState extends ConsumerState<FileListCard>
           children: [
             const Divider(),
             const SizedBox(height: 8),
-            Row(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildMetaRow(
-                        theme,
-                        label: 'Имя файла',
-                        value: file.fileName,
-                        icon: Icons.description,
-                      ),
-                      const SizedBox(height: 8),
-                      _buildMetaRow(
-                        theme,
-                        label: 'Размер',
-                        value: _formatFileSize(file.fileSize),
-                        icon: Icons.data_usage,
-                      ),
-                    ],
-                  ),
+                _buildMetaRow(
+                  theme,
+                  label: 'Имя файла',
+                  value: file.fileName,
+                  icon: Icons.description,
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CardMetaInfo(
-                        usedCount: file.usedCount,
-                        modifiedAt: file.modifiedAt,
-                      ),
-                      const SizedBox(height: 8),
-                      if (file.category != null)
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.folder,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 8),
-                            CardCategoryBadge(
-                              name: file.category!.name,
-                              color: file.category!.color,
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
+                const SizedBox(height: 8),
+                _buildMetaRow(
+                  theme,
+                  label: 'Размер',
+                  value: _formatFileSize(file.fileSize),
+                  icon: Icons.data_usage,
                 ),
               ],
+            ),
+
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CardMetaInfo(
+                  usedCount: file.usedCount,
+                  modifiedAt: file.modifiedAt,
+                ),
+                const SizedBox(height: 8),
+                if (file.category != null)
+                  Row(
+                    children: [
+                      const Icon(Icons.folder, size: 16, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      CardCategoryBadge(
+                        name: file.category!.name,
+                        color: file.category!.color,
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SmoothButton(
+              isFullWidth: true,
+              size: SmoothButtonSize.small,
+              label: 'Расшифровать',
+              onPressed: widget.onDecrypt,
+              variant: SmoothButtonVariant.normal,
+              type: SmoothButtonType.outlined,
             ),
           ],
         ),
