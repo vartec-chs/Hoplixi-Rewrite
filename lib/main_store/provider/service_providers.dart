@@ -15,6 +15,8 @@ final fileStorageServiceProvider = FutureProvider<FileStorageService>((
 
   final attachmentsPathResult = await manager.getAttachmentsPath();
   final attachmentsPath = attachmentsPathResult.getOrThrow();
+  final decryptedAttachmentsPathResult = await manager.getDecryptedAttachmentsDirPath();
+  final decryptedAttachmentsPath = decryptedAttachmentsPathResult.getOrThrow();
 
-  return FileStorageService(store, attachmentsPath);
+  return FileStorageService(store, attachmentsPath, decryptedAttachmentsPath);
 });

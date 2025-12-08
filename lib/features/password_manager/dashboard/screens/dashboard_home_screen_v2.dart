@@ -10,6 +10,9 @@ import 'package:hoplixi/features/password_manager/dashboard/providers/entity_typ
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card/bank_card_grid.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card/bank_card_list_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/file/file_grid_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/file/file_list_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/modals/file_decrypt_modal.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note/note_grid.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note/note_list_card.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp/otp_grid.dart';
@@ -593,7 +596,16 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
         );
         break;
       case EntityType.file:
-        card = const Card(child: ListTile(title: Text('File TODO')));
+        if (item is! FileCardDto) return const SizedBox.shrink();
+        card = FileListCard(
+          file: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+          onDecrypt: () => showFileDecryptModal(context, item),
+        );
         break;
       case EntityType.otp:
         if (item is! OtpCardDto) return const SizedBox.shrink();
@@ -658,6 +670,11 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
             if (GoRouter.of(context).state.matchedLocation != path) {
               context.push(path);
             }
+          } else if (item is FileCardDto) {
+            final path = AppRoutesPaths.dashboardFileEditWithId(item.id);
+            if (GoRouter.of(context).state.matchedLocation != path) {
+              context.push(path);
+            }
           }
 
           return false;
@@ -672,6 +689,8 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
             itemName = item.title;
           } else if (item is OtpCardDto) {
             itemName = item.accountName ?? 'OTP';
+          } else if (item is FileCardDto) {
+            itemName = item.name;
           }
 
           final shouldDelete = await showDialog<bool>(
@@ -744,7 +763,16 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
           onRestore: () => _onRestore(item.id),
         );
       case EntityType.file:
-        return const Card(child: Center(child: Text('File Grid')));
+        if (item is! FileCardDto) return const SizedBox.shrink();
+        return FileGridCard(
+          file: item,
+          onToggleFavorite: () => _onToggleFavorite(item.id),
+          onTogglePin: () => _onTogglePin(item.id),
+          onToggleArchive: () => _onToggleArchive(item.id),
+          onDelete: () => _onDelete(item.id, item.isDeleted),
+          onRestore: () => _onRestore(item.id),
+          onDecrypt: () => showFileDecryptModal(context, item),
+        );
       case EntityType.otp:
         if (item is! OtpCardDto) return const SizedBox.shrink();
         return TotpGridCard(

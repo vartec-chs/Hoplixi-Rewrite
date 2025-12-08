@@ -32,6 +32,7 @@ class MainStoreManager {
   static const String _logTag = 'MainStoreManager';
   static const String _dbExtension = MainConstants.dbExtension;
   static const String _attachmentsFolder = 'attachments';
+  static const String _decryptedAttachmentsFolder = 'attachments_decrypted';
 
   final DatabaseHistoryService _dbHistoryService;
   final _uuid = const Uuid();
@@ -625,6 +626,34 @@ class MainStoreManager {
       return Failure(
         DatabaseError.unknown(
           message: 'Не удалось получить путь к вложениям: $e',
+          timestamp: DateTime.now(),
+        ),
+      );
+    }
+  }
+
+  /// Получить путь к папке вложений расшифрованного файла
+  AsyncResultDart<String, DatabaseError>
+  getDecryptedAttachmentsDirPath() async {
+    try {
+      if (!isStoreOpen || _currentStorePath == null) {
+        return Failure(
+          DatabaseError.notInitialized(
+            message: 'Хранилище не открыто',
+            timestamp: DateTime.now(),
+          ),
+        );
+      }
+
+      final decryptedAttachmentsPath = p.join(
+        _currentStorePath!,
+        _decryptedAttachmentsFolder,
+      );
+      return Success(decryptedAttachmentsPath);
+    } catch (e) {
+      return Failure(
+        DatabaseError.unknown(
+          message: 'Не удалось получить путь к расшифрованным вложениям: $e',
           timestamp: DateTime.now(),
         ),
       );

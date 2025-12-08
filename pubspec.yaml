@@ -101,6 +101,7 @@ dependencies:
 
   file_crypto: 
     path: ./packages/file_crypto
+  open_file: ^3.5.10
 
 
 dev_dependencies:

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:file_crypto/file_crypto.dart';
+import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:mime/mime.dart';
@@ -11,9 +12,13 @@ class FileStorageService {
   final MainStore _db;
   final ArchiveEncryptor _encryptor;
   final String _attachmentsPath;
+  final String _decryptedAttachmentsPath;
 
-  FileStorageService(this._db, this._attachmentsPath)
-    : _encryptor = ArchiveEncryptor();
+  FileStorageService(
+    this._db,
+    this._attachmentsPath,
+    this._decryptedAttachmentsPath,
+  ) : _encryptor = ArchiveEncryptor();
 
   /// Получить ключ шифрования из метаданных хранилища
   Future<String> _getAttachmentKey() async {
@@ -80,13 +85,12 @@ class FileStorageService {
       tagsIds: tagsIds,
     );
 
-    return _db.fileDao.createFile(dto);
+    return _db.fileDao.createFile(fileUuid, dto);
   }
 
   /// Расшифровать файл в указанный путь
-  Future<void> decryptFile({
+  Future<String> decryptFile({
     required String fileId,
-    required String destinationPath,
     void Function(int, int)? onProgress,
   }) async {
     final fileData = await _db.fileDao.getFileById(fileId);
@@ -96,7 +100,9 @@ class FileStorageService {
 
     final key = await _getAttachmentKey();
     final attachmentsPath = await _getAttachmentsPath();
-    final encryptedFilePath = p.join(attachmentsPath, fileData.filePath);
+    final encryptedFilePath = p.join(attachmentsPath, '${fileData.id}.enc');
+
+    logDebug('Decrypting file: $encryptedFilePath');
 
     if (!await File(encryptedFilePath).exists()) {
       throw Exception('Encrypted file not found on disk');
@@ -117,11 +123,16 @@ class FileStorageService {
       if (await decryptedFile.exists()) {
         // Копируем файл в целевой путь
         // Убедимся, что директория назначения существует
-        final destParent = Directory(p.dirname(destinationPath));
-        if (!await destParent.exists()) {
-          await destParent.create(recursive: true);
+        final destDir = Directory(_decryptedAttachmentsPath);
+        if (!await destDir.exists()) {
+          await destDir.create(recursive: true);
         }
+        final destinationPath = p.join(
+          _decryptedAttachmentsPath,
+          p.basename(decryptedFile.path),
+        );
         await decryptedFile.copy(destinationPath);
+        return destinationPath;
       } else {
         throw Exception(
           'Decryption finished but file not found at ${result.outputPath}',
