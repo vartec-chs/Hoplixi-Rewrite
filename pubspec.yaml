@@ -102,6 +102,7 @@ dependencies:
 
   file_crypto: 
     path: ./packages/file_crypto
+  watcher: ^1.1.4
   
 
 

@@ -2,13 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/provider/service_providers.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 void showFileDecryptModal(BuildContext context, FileCardDto file) {
@@ -57,8 +56,23 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
       if (await file.exists()) {
         try {
           await file.delete();
-        } catch (e) {
-          debugPrint('Error deleting file: $e');
+          logInfo(
+            "Deleted decrypted file: $_decryptedFilePath",
+            tag: 'FileDecryptModal',
+          );
+          Toaster.info(title: 'Временный файл удален');
+        } catch (e, st) {
+          Toaster.error(
+            title: 'Ошибка удаления файла',
+            description:
+                'Не удалось удалить временный файл по пути $_decryptedFilePath. Попробуйте удалить его вручную.',
+          );
+          logError(
+            "Failed to delete decrypted file: $_decryptedFilePath",
+            tag: 'FileDecryptModal',
+            stackTrace: st,
+            error: e,
+          );
         }
       }
     }
@@ -72,12 +86,6 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
 
     try {
       final storageService = await ref.read(fileStorageServiceProvider.future);
-
-      // Удаляем если уже есть (на всякий случай)
-      // final existingFile = File(destPath);
-      // if (await existingFile.exists()) {
-      //   await existingFile.delete();
-      // }
 
       final decryptedFilePath = await storageService.decryptFile(
         fileId: widget.file.id,
