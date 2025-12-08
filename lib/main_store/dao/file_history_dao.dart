@@ -3,6 +3,7 @@ import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/file_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/files_history.dart';
+import 'package:uuid/uuid.dart';
 
 part 'file_history_dao.g.dart';
 
@@ -117,7 +118,9 @@ class FileHistoryDao extends DatabaseAccessor<MainStore>
 
   /// Создать запись истории
   Future<String> createFileHistory(CreateFileHistoryDto dto) {
+    final uuid = const Uuid().v4();
     final companion = FilesHistoryCompanion.insert(
+      id: Value(uuid),
       originalFileId: dto.originalFileId,
       action: ActionInHistoryX.fromString(dto.action),
       name: dto.name,
@@ -138,11 +141,8 @@ class FileHistoryDao extends DatabaseAccessor<MainStore>
       originalModifiedAt: Value(dto.originalModifiedAt),
       originalLastAccessedAt: Value(dto.originalLastAccessedAt),
     );
-    return into(filesHistory).insert(companion).then((id) {
-      return (select(filesHistory)..where((fh) => fh.id.equals(id.toString())))
-          .map((fh) => fh.id)
-          .getSingle();
-    });
+
+    return into(filesHistory).insert(companion).then((_) => uuid);
   }
 
   /// Удалить историю для файла

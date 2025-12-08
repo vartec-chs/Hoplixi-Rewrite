@@ -4,9 +4,15 @@ import 'package:file_crypto/file_crypto.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
+import 'package:hoplixi/main_store/models/dto/file_history_dto.dart';
+import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+
+import 'package:drift/drift.dart';
+import 'package:hoplixi/main_store/tables/files.dart';
+import 'package:hoplixi/main_store/tables/files_history.dart';
 
 class FileStorageService {
   final MainStore _db;
@@ -50,9 +56,9 @@ class FileStorageService {
 
     final key = await _getAttachmentKey();
     final attachmentsPath = await _getAttachmentsPath();
-    final fileUuid = const Uuid().v4();
+    final filePathUuid = const Uuid().v4();
     final extension = p.extension(sourceFile.path);
-    final encryptedFileName = '$fileUuid.enc';
+    final encryptedFileName = '$filePathUuid.enc';
     final encryptedFilePath = p.join(attachmentsPath, encryptedFileName);
 
     // Шифруем файл
@@ -77,6 +83,7 @@ class FileStorageService {
       name: name,
       fileName: fileName,
       fileExtension: extension,
+      filePath: encryptedFileName,
       mimeType: mimeType,
       fileSize: fileSize,
       fileHash: fileHash,
@@ -85,7 +92,7 @@ class FileStorageService {
       tagsIds: tagsIds,
     );
 
-    return _db.fileDao.createFile(fileUuid, dto);
+    return _db.fileDao.createFile(dto);
   }
 
   /// Расшифровать файл в указанный путь
@@ -100,7 +107,7 @@ class FileStorageService {
 
     final key = await _getAttachmentKey();
     final attachmentsPath = await _getAttachmentsPath();
-    final encryptedFilePath = p.join(attachmentsPath, '${fileData.id}.enc');
+    final encryptedFilePath = p.join(attachmentsPath, '${fileData.filePath}');
 
     logDebug('Decrypting file: $encryptedFilePath');
 
@@ -143,6 +150,79 @@ class FileStorageService {
         await tempDir.delete(recursive: true);
       }
     }
+  }
+
+  /// Обновить содержимое файла: старый файл в историю, новый шифруется и сохраняется
+  Future<void> updateFileContent({
+    required String fileId,
+    required File newFile,
+    void Function(int, int)? onProgress,
+  }) async {
+    final currentFile = await _db.fileDao.getFileById(fileId);
+    if (currentFile == null) throw Exception('File not found');
+
+    // 1. Создаем запись в истории
+    String? categoryName;
+    if (currentFile.categoryId != null) {
+      final cat = await _db.categoryDao.getCategoryById(
+        currentFile.categoryId!,
+      );
+      categoryName = cat?.name;
+    }
+
+    final historyDto = CreateFileHistoryDto(
+      originalFileId: currentFile.id,
+      action: ActionInHistory.modified.value,
+      name: currentFile.name,
+      fileName: currentFile.fileName,
+      fileExtension: currentFile.fileExtension,
+      filePath: currentFile.filePath!,
+      mimeType: currentFile.mimeType,
+      fileSize: currentFile.fileSize,
+      fileHash: currentFile.fileHash ?? '',
+      description: currentFile.description,
+      categoryName: categoryName,
+      usedCount: currentFile.usedCount,
+      isFavorite: currentFile.isFavorite,
+      isArchived: currentFile.isArchived,
+      isPinned: currentFile.isPinned,
+      isDeleted: currentFile.isDeleted,
+      originalCreatedAt: currentFile.createdAt,
+      originalModifiedAt: currentFile.modifiedAt,
+      originalLastAccessedAt: currentFile.lastAccessedAt,
+    );
+    await _db.fileHistoryDao.createFileHistory(historyDto);
+
+    // 2. Шифруем новый файл
+    final key = await _getAttachmentKey();
+    final attachmentsPath = await _getAttachmentsPath();
+    final newFilePathUuid = const Uuid().v4();
+    final newEncryptedFileName = '$newFilePathUuid.enc';
+    final newEncryptedFilePath = p.join(attachmentsPath, newEncryptedFileName);
+
+    await _encryptor.encrypt(
+      inputPath: newFile.path,
+      outputPath: newEncryptedFilePath,
+      password: key,
+      onProgress: onProgress,
+    );
+
+    // 3. Вычисляем новые метаданные
+    final digest = await sha256.bind(newFile.openRead()).first;
+    final newFileHash = digest.toString();
+    final newFileSize = await newFile.length();
+
+    // 4. Обновляем запись в таблице Files
+    final updateQuery = _db.update(_db.files)
+      ..where((f) => f.id.equals(fileId));
+    await updateQuery.write(
+      FilesCompanion(
+        filePath: Value(newEncryptedFileName),
+        fileSize: Value(newFileSize),
+        fileHash: Value(newFileHash),
+        modifiedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   /// Удалить файл с диска (используется при удалении из БД)

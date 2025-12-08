@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/provider/service_providers.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:open_file/open_file.dart';
+import 'package:watcher/watcher.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 void showFileDecryptModal(BuildContext context, FileCardDto file) {
@@ -41,11 +43,15 @@ class _FileDecryptContent extends ConsumerStatefulWidget {
 
 class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
   bool _isDecrypting = false;
+  bool _isUpdating = false;
+  bool _isFileModified = false;
   String? _decryptedFilePath;
   String? _error;
+  StreamSubscription<WatchEvent>? _fileWatcher;
 
   @override
   void dispose() {
+    _fileWatcher?.cancel();
     _deleteDecryptedFile();
     super.dispose();
   }
@@ -96,6 +102,7 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
           _decryptedFilePath = decryptedFilePath;
           _isDecrypting = false;
         });
+        _setupFileWatcher(decryptedFilePath);
         Toaster.success(title: 'Файл успешно расшифрован');
       }
     } catch (e) {
@@ -105,6 +112,54 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
           _isDecrypting = false;
         });
         Toaster.error(title: 'Ошибка расшифровки', description: e.toString());
+      }
+    }
+  }
+
+  void _setupFileWatcher(String path) {
+    _fileWatcher?.cancel();
+    _fileWatcher = FileWatcher(path).events.listen((event) {
+      if (event.type == ChangeType.MODIFY) {
+        if (mounted) {
+          setState(() {
+            _isFileModified = true;
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _updateFile() async {
+    if (_decryptedFilePath == null) return;
+
+    setState(() {
+      _isUpdating = true;
+      _error = null;
+    });
+
+    try {
+      final storageService = await ref.read(fileStorageServiceProvider.future);
+      final file = File(_decryptedFilePath!);
+
+      await storageService.updateFileContent(
+        fileId: widget.file.id,
+        newFile: file,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+          _isFileModified = false;
+        });
+        Toaster.success(title: 'Файл успешно обновлен');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isUpdating = false;
+        });
+        Toaster.error(title: 'Ошибка обновления', description: e.toString());
       }
     }
   }
@@ -210,6 +265,19 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
               ),
             ),
           ] else ...[
+            if (_isFileModified) ...[
+              SizedBox(
+                width: double.infinity,
+                child: SmoothButton(
+                  label: 'Обновить файл',
+                  onPressed: _isUpdating ? null : _updateFile,
+                  loading: _isUpdating,
+                  icon: Icon(Icons.save),
+                  variant: SmoothButtonVariant.normal,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             SizedBox(
               width: double.infinity,
               child: SmoothButton(

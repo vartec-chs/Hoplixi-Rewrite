@@ -61,8 +61,8 @@ class FileDao extends DatabaseAccessor<MainStore>
   }
 
   /// Создать новый файл
-  Future<String> createFile(String id, CreateFileDto dto) {
-    final uuid = id.isNotEmpty ? id : const Uuid().v4();
+  Future<String> createFile(CreateFileDto dto) {
+    final uuid = const Uuid().v4();
     final companion = FilesCompanion.insert(
       id: Value(uuid),
       name: dto.name,
