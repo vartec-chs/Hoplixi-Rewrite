@@ -12,6 +12,7 @@ import 'package:hoplixi/features/password_manager/dashboard/forms/note_form/scre
 import 'package:hoplixi/features/password_manager/dashboard/forms/bank_card_form/screens/bank_card_form_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/forms/file_form/screens/file_form_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/forms/otp_form/screens/otp_form_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/screens/import_otp_screen.dart';
 import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
@@ -170,6 +171,12 @@ final List<RouteBase> appRoutes = [
         path: AppRoutesPaths.dashboardOtpCreate,
         builder: (context, state) {
           return const OtpFormScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutesPaths.dashboardMigrateOtp,
+        builder: (context, state) {
+          return const ImportOtpScreen();
         },
       ),
 

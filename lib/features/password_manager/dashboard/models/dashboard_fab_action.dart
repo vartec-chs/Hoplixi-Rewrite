@@ -104,7 +104,7 @@ enum DashboardFabAction {
       case DashboardFabAction.createIcon:
         return AppRoutesPaths.dashboardIconManager;
       case DashboardFabAction.importOtp:
-        return null; // TODO: Implement OTP import path
+        return AppRoutesPaths.dashboardMigrateOtp;
       case DashboardFabAction.migratePasswords:
         return null; // TODO: Implement password migration path
       case DashboardFabAction.createEntity:

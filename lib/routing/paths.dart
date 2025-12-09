@@ -54,6 +54,7 @@ class AppRoutesPaths {
 
   // OTP forms
   static const String dashboardOtpCreate = '/dashboard/otp/create';
+  static const String dashboardMigrateOtp = '/dashboard/migrate/otp';
   static const String dashboardOtpEdit = '/dashboard/otp/edit/:id';
 
   /// Генерирует путь для редактирования OTP с конкретным ID

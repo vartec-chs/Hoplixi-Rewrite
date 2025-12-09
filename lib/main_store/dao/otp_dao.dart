@@ -113,6 +113,35 @@ class OtpDao extends DatabaseAccessor<MainStore>
     });
   }
 
+  /// Создать множество OTP
+  Future<List<String>> createManyOtps(List<CreateOtpDto> dtos) async {
+    return await db.transaction(() async {
+      final List<String> createdIds = [];
+      for (final dto in dtos) {
+        final uuid = const Uuid().v4();
+        final companion = OtpsCompanion.insert(
+          id: Value(uuid),
+          type: Value(OtpTypeX.fromString(dto.type)),
+          secret: Uint8List.fromList(dto.secret),
+          secretEncoding: Value(SecretEncodingX.fromString(dto.secretEncoding)),
+          issuer: Value(dto.issuer),
+          accountName: Value(dto.accountName),
+          notes: Value(dto.notes),
+          algorithm: Value(AlgorithmOtpX.fromString(dto.algorithm ?? 'SHA1')),
+          digits: Value(dto.digits ?? 6),
+          period: Value(dto.period ?? 30),
+          counter: Value(dto.counter),
+          categoryId: Value(dto.categoryId),
+          passwordId: Value(dto.passwordId),
+        );
+        await into(otps).insert(companion);
+        await _insertOtpTags(uuid, dto.tagsIds);
+        createdIds.add(uuid);
+      }
+      return createdIds;
+    });
+  }
+
   /// Вставить теги для OTP
   Future<void> _insertOtpTags(String otpId, List<String>? tagIds) async {
     if (tagIds == null || tagIds.isEmpty) return;

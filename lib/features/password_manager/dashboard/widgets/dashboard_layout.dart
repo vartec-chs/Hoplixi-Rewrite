@@ -66,8 +66,8 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   void _protectDataLeakageOff() async =>
       await ScreenProtector.protectDataLeakageOff();
 
-  // Отслеживание предыдущего состояния формы
-  bool _wasFormRoute = false;
+  // Отслеживание предыдущего состояния sidebar
+  bool _wasSidebarRoute = false;
 
   // ===========================================================================
   // FAB Actions Handler
@@ -138,23 +138,26 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   /// Получить индекс выбранного destination по текущему пути
   ///
   /// Использует [DashboardDestination.fromPath] для определения активного элемента.
-  /// Если открыта форма — возвращает индекс home (0), но sidebar открывается.
+  /// Если открыт sidebar route — возвращает индекс home (0), но sidebar открывается.
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
 
-    // Если открыта форма — остаёмся на home, sidebar откроется отдельно
-    if (_isFormRoute(location)) {
+    // Если открыт sidebar route — остаёмся на home, sidebar откроется отдельно
+    if (_shouldOpenSidebar(location)) {
       return DashboardDestination.home.index;
     }
 
     return DashboardDestination.fromPath(location).index;
   }
 
-  /// Проверяет, является ли путь маршрутом формы
+  /// Проверяет, должен ли путь открывать sidebar
   ///
-  /// Использует [EntityTypeRouting.isAnyFormRoute] для централизованной проверки
-  bool _isFormRoute(String location) {
-    return EntityTypeRouting.isAnyFormRoute(location);
+  /// Использует [EntityTypeRouting.shouldOpenSidebar] для централизованной проверки.
+  /// Sidebar открывается для:
+  /// - Всех форм создания/редактирования
+  /// - Дополнительных путей, определённых в [EntityTypeRouting._sidebarRoutes]
+  bool _shouldOpenSidebar(String location) {
+    return EntityTypeRouting.shouldOpenSidebar(location);
   }
 
   /// Публичный метод для закрытия sidebar
@@ -212,23 +215,23 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
         final isDesktop = constraints.maxWidth >= 900;
         final selectedIndex = _getSelectedIndex(context);
         final location = GoRouterState.of(context).uri.toString();
-        final isFormRoute = _isFormRoute(location);
+        final isSidebarRoute = _shouldOpenSidebar(location);
 
         // Управление анимацией при изменении выбранного индекса или маршрута
         WidgetsBinding.instance.addPostFrameCallback((_) {
           // Открываем sidebar если:
           // 1. selectedIndex > 0 (категории, иконки, теги)
-          // 2. isFormRoute == true (любая форма создания/редактирования)
-          final shouldOpenSidebar = selectedIndex > 0 || isFormRoute;
+          // 2. isSidebarRoute == true (любые формы и другие настроенные пути)
+          final shouldOpenSidebar = selectedIndex > 0 || isSidebarRoute;
 
           // Проверяем, изменилось ли состояние
           final stateChanged = _previousIndex != selectedIndex;
 
-          // Проверяем, закрылась ли форма (был isFormRoute, а теперь нет)
-          final formClosed =
-              _wasFormRoute && !isFormRoute && selectedIndex == 0;
+          // Проверяем, закрылся ли sidebar route (был isSidebarRoute, а теперь нет)
+          final sidebarClosed =
+              _wasSidebarRoute && !isSidebarRoute && selectedIndex == 0;
 
-          if (stateChanged || isFormRoute || formClosed) {
+          if (stateChanged || isSidebarRoute || sidebarClosed) {
             if (shouldOpenSidebar && _animationController.value != 1.0) {
               _animationController.forward();
             } else if (!shouldOpenSidebar &&
@@ -239,8 +242,8 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
             _previousIndex = selectedIndex;
           }
 
-          // Сохраняем текущее состояние формы для следующего кадра
-          _wasFormRoute = isFormRoute;
+          // Сохраняем текущее состояние sidebar для следующего кадра
+          _wasSidebarRoute = isSidebarRoute;
         });
 
         if (isDesktop) {
@@ -248,10 +251,10 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
             context,
             constraints,
             selectedIndex,
-            isFormRoute,
+            isSidebarRoute,
           );
         } else {
-          return _buildMobileLayout(context, selectedIndex, isFormRoute);
+          return _buildMobileLayout(context, selectedIndex, isSidebarRoute);
         }
       },
     );
@@ -261,7 +264,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
     BuildContext context,
     BoxConstraints constraints,
     int selectedIndex,
-    bool isFormRoute,
+    bool isSidebarRoute,
   ) {
     return Scaffold(
       body: Row(
@@ -296,8 +299,8 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
                       ),
                       // Показываем контент если:
                       // 1. selectedIndex != 0 (категории, иконки, теги)
-                      // 2. isFormRoute == true (любая форма)
-                      child: (selectedIndex != 0 || isFormRoute)
+                      // 2. isSidebarRoute == true (формы и другие настроенные пути)
+                      child: (selectedIndex != 0 || isSidebarRoute)
                           ? widget.child
                           : const SizedBox.shrink(),
                     ),
@@ -314,16 +317,16 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
   Widget _buildMobileLayout(
     BuildContext context,
     int selectedIndex,
-    bool isFormRoute,
+    bool isSidebarRoute,
   ) {
     return Scaffold(
       body: widget.child,
-      // Скрываем BottomNavigationBar когда открыта форма
-      bottomNavigationBar: isFormRoute
+      // Скрываем BottomNavigationBar когда открыт sidebar route
+      bottomNavigationBar: isSidebarRoute
           ? null
           : _buildBottomNavigationBar(context, selectedIndex),
-      // Скрываем FAB когда открыта форма
-      floatingActionButton: (selectedIndex == 0 && !isFormRoute)
+      // Скрываем FAB когда открыт sidebar route
+      floatingActionButton: (selectedIndex == 0 && !isSidebarRoute)
           ? ExpandableFAB(
               key: _mobileFabKey,
               direction: FABExpandDirection.up,

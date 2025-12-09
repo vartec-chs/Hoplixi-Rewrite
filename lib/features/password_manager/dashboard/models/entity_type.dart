@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hoplixi/core/app_paths.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/routing/paths.dart';
 
@@ -116,4 +117,41 @@ extension EntityTypeRouting on EntityType {
     }
     return null;
   }
+
+  /// Проверить, должен ли путь открывать sidebar
+  ///
+  /// Sidebar открывается для:
+  /// - Любых форм создания/редактирования (через [isAnyFormRoute])
+  /// - Других путей, добавленных в [_sidebarRoutes]
+  ///
+  /// Для добавления нового пути, который должен открывать sidebar,
+  /// добавьте его в список [_sidebarRoutes]
+  static bool shouldOpenSidebar(String location) {
+    // Проверяем формы
+    if (isAnyFormRoute(location)) {
+      return true;
+    }
+
+    // Проверяем другие пути из списка
+    return _sidebarRoutes.any((route) => location.contains(route));
+  }
+
+  /// Список дополнительных путей, которые должны открывать sidebar
+  ///
+  /// Добавьте сюда любые пути, которые должны открывать боковую панель.
+  /// Используется проверка через [String.contains], поэтому можно
+  /// указывать как полные пути, так и их части.
+  ///
+  /// Пример:
+  /// ```dart
+  /// static const List<String> _sidebarRoutes = [
+  ///   '/dashboard/detail/',
+  ///   '/dashboard/preview/',
+  /// ];
+  /// ```
+  static const List<String> _sidebarRoutes = [
+    // Добавьте здесь пути, которые должны открывать sidebar
+    // Например: '/dashboard/detail/', '/dashboard/preview/'
+    AppRoutesPaths.dashboardMigrateOtp,
+  ];
 }

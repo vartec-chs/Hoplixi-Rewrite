@@ -1,0 +1,191 @@
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hoplixi/core/utils/toastification.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/otp_extractor.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/providers/import_otp_notifier.dart';
+import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/widgets/otp_import_list_item.dart';
+import 'package:hoplixi/features/qr_scanner/widgets/qr_scanner_widget.dart';
+import 'package:hoplixi/shared/ui/slider_button.dart';
+
+class ImportOtpScreen extends ConsumerWidget {
+  const ImportOtpScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(importOtpProvider);
+    final notifier = ref.read(importOtpProvider.notifier);
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Import OTPs'),
+        actions: [
+          if (state.importedOtps.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.select_all),
+              onPressed: notifier.selectAll,
+              tooltip: 'Select All',
+            ),
+          if (state.importedOtps.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.deselect),
+              onPressed: notifier.deselectAll,
+              tooltip: 'Deselect All',
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (state.importedOtps.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.qr_code_scanner,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No OTPs imported yet',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Scan a QR code or pick an image to start',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: QrScannerWidget(
+                        title: 'Импорт OTP',
+                        subtitle: 'Выберите способ сканирования QR-кода',
+                        onResult: (data) async {
+                          await notifier.importOtp(
+                            Uint8List.fromList(data.codeUnits),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: state.importedOtps.length,
+                itemBuilder: (context, index) {
+                  final otp = state.importedOtps[index];
+                  final isSelected = state.selectedIndices.contains(index);
+                  final isExpanded = state.expandedIndices.contains(index);
+
+                  // Calculate current code for preview
+                  String currentCode = '------';
+                  try {
+                    // We need raw secret for totp generation.
+                    // OtpData has secretBase32.
+                    // We can decode it.
+                    final secret = base32Decode(otp.secretBase32);
+                    currentCode = totp(
+                      secret,
+                      digits: otp.digits,
+                      algo: otp.algorithm,
+                    );
+                  } catch (_) {}
+
+                  return OtpImportListItem(
+                    otp: otp,
+                    isSelected: isSelected,
+                    isExpanded: isExpanded,
+                    onToggleSelection: () => notifier.toggleSelection(index),
+                    onToggleExpanded: () => notifier.toggleExpanded(index),
+                    currentCode: currentCode,
+                    remainingSeconds: state.remainingSeconds,
+                  );
+                },
+              ),
+            ),
+          if (state.importedOtps.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${state.selectedIndices.length} selected',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final result = await showQrScannerDialog(
+                              context: context,
+                              title: 'Scan Another QR',
+                            );
+                            if (result != null) {
+                              await notifier.importOtp(
+                                Uint8List.fromList(result.codeUnits),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add More'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SliderButton(
+                      text: 'Save to Database',
+                      type: SliderButtonType.confirm,
+                      onSlideCompleteAsync: () async {
+                        try {
+                          await notifier.saveSelectedOtps();
+                          if (context.mounted) {
+                            Toaster.success(
+                              title: 'Success',
+                              description: 'Selected OTPs saved successfully',
+                            );
+                            if (state.importedOtps.isEmpty) {
+                              context.pop();
+                            }
+                          }
+                        } catch (e) {
+                          Toaster.error(
+                            title: 'Error',
+                            description: 'Failed to save selected OTPs: $e',
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

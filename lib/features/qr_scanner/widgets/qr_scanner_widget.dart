@@ -204,8 +204,8 @@ class QrScannerWidget extends StatelessWidget {
   }
 
   Future<void> _openCameraScanner(BuildContext context) async {
-    final result = await Navigator.push<String?>(
-      context,
+    final globalNavigator = Navigator.of(context, rootNavigator: true);
+    final result = await globalNavigator.push<String?>(
       MaterialPageRoute(builder: (_) => const QrScannerWithCameraScreen()),
     );
 
@@ -215,8 +215,8 @@ class QrScannerWidget extends StatelessWidget {
   }
 
   Future<void> _openImageScanner(BuildContext context) async {
-    final result = await Navigator.push<String?>(
-      context,
+    final globalNavigator = Navigator.of(context, rootNavigator: true);
+    final result = await globalNavigator.push<String?>(
       MaterialPageRoute(
         builder: (_) => Column(
           children: [
