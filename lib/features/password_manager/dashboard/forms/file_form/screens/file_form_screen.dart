@@ -148,9 +148,36 @@ class _FileFormScreenState extends ConsumerState<FileFormScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Информация о существующем файле (режим редактирования)
+                        // Информация о файле (режим редактирования)
                         if (state.isEditMode) ...[
-                          _buildExistingFileInfo(theme, state),
+                          Text(
+                            'Файл',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (state.selectedFile != null)
+                            _buildSelectedFileCard(theme, state)
+                          else
+                            _buildExistingFileInfo(theme, state),
+                          if (state.selectedFile == null) ...[
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                onPressed: _handlePickFile,
+                                icon: const Icon(Icons.file_upload_outlined),
+                                label: const Text('Заменить файл'),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 16),
                         ],
 

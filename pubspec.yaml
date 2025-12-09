@@ -57,7 +57,7 @@ dependencies:
   toastification: ^3.0.3
   flutter_svg: ^2.2.3
   tray_manager: ^0.5.2
-  shared_preferences: ^2.5.3
+  shared_preferences: ^2.5.4
   hive_ce: ^2.15.1
   hive_ce_flutter: ^2.3.3
   permission_handler: ^12.0.1
@@ -99,10 +99,11 @@ dependencies:
   cryptography: ^2.9.0
   mime: ^2.0.0
   open_file: ^3.5.10
+  watcher: ^1.1.4
 
   file_crypto: 
     path: ./packages/file_crypto
-  watcher: ^1.1.4
+  
   
 
 

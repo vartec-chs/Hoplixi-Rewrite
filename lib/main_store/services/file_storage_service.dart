@@ -209,6 +209,10 @@ class FileStorageService {
     final digest = await sha256.bind(newFile.openRead()).first;
     final newFileHash = digest.toString();
     final newFileSize = await newFile.length();
+    final newFileName = p.basename(newFile.path);
+    final newFileExtension = p.extension(newFile.path);
+    final newMimeType =
+        lookupMimeType(newFile.path) ?? 'application/octet-stream';
 
     // 4. Обновляем запись в таблице Files
     final updateQuery = _db.update(_db.files)
@@ -218,6 +222,9 @@ class FileStorageService {
         filePath: Value(newEncryptedFileName),
         fileSize: Value(newFileSize),
         fileHash: Value(newFileHash),
+        fileName: Value(newFileName),
+        fileExtension: Value(newFileExtension),
+        mimeType: Value(newMimeType),
         modifiedAt: Value(DateTime.now()),
       ),
     );

@@ -19,7 +19,7 @@ class DesktopShell extends StatelessWidget {
               builder: (context, ref, _) {
                 final titlebarState = ref.watch(titlebarStateProvider);
                 return AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
+                  duration: const Duration(milliseconds: 150),
                   height:
                       titlebarState.hidden ||
                           titlebarState.backgroundTransparent
@@ -34,7 +34,7 @@ class DesktopShell extends StatelessWidget {
               builder: (context, ref, _) {
                 final statusBarState = ref.watch(statusBarStateProvider);
                 return AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
+                  duration: const Duration(milliseconds: 150),
                   height: statusBarState.hidden ? 0 : 28,
                   child: StatusBar(),
                 );

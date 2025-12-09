@@ -49,7 +49,6 @@ class FileFormNotifier extends Notifier<FileFormState> {
 
       // Получаем теги файла
       final tagDao = await ref.read(tagDaoProvider.future);
-      // TODO: Добавить метод для получения тегов файла по ID
       final tagIds = <String>[];
       final tagRecords = await tagDao.getTagsByIds(tagIds);
 
@@ -207,11 +206,32 @@ class FileFormNotifier extends Notifier<FileFormState> {
               ? null
               : state.description.trim(),
           categoryId: state.categoryId,
+          tagsIds: state.tagIds,
         );
 
         final success = await dao.updateFile(state.editingFileId!, dto);
 
         if (success) {
+          // Если выбран новый файл, обновляем содержимое
+          if (state.selectedFile != null) {
+            final fileStorageService = await ref.read(
+              fileStorageServiceProvider.future,
+            );
+
+            await fileStorageService.updateFileContent(
+              fileId: state.editingFileId!,
+              newFile: state.selectedFile!,
+              onProgress: (processed, total) {
+                final progress = total > 0 ? processed / total : 0.0;
+                state = state.copyWith(uploadProgress: progress);
+              },
+            );
+            logInfo(
+              'File content updated: ${state.editingFileId}',
+              tag: _logTag,
+            );
+          }
+
           // TODO: Синхронизировать теги файла
           // await dao.syncFileTags(state.editingFileId!, state.tagIds);
 

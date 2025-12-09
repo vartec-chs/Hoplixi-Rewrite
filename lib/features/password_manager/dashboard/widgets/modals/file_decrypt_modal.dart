@@ -8,6 +8,7 @@ import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
 import 'package:hoplixi/main_store/provider/service_providers.dart';
 import 'package:hoplixi/shared/ui/button.dart';
+import 'package:hoplixi/shared/ui/notification_card.dart';
 import 'package:hoplixi/shared/ui/slider_button.dart';
 import 'package:open_file/open_file.dart';
 import 'package:watcher/watcher.dart';
@@ -16,6 +17,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 void showFileDecryptModal(BuildContext context, FileCardDto file) {
   WoltModalSheet.show(
     context: context,
+
     pageListBuilder: (context) {
       return [
         WoltModalSheetPage(
@@ -190,6 +192,12 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          NotificationCard(
+            type: .warning,
+            text:
+                'Не закрывайте это окно, пока не закончите работу с расшифрованным файлом для безопасности. В противном случае временный файл будет принудительно удален.',
+          ),
+          const SizedBox(height: 16),
           // Информация о файле
           Container(
             padding: const EdgeInsets.all(12),
@@ -227,7 +235,7 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           if (_error != null) ...[
             Container(
@@ -251,8 +259,35 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
           ],
+
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+
+            child: _isFileModified
+                ? Column(
+                    children: [
+                      Divider(),
+                      const SizedBox(height: 8),
+                      NotificationCard(
+                        type: .info,
+                        text:
+                            'Файл был изменен. Протяните "Обновить файл", чтобы сохранить изменения в хранилище.',
+                      ),
+                      const SizedBox(height: 16),
+                      SliderButton(
+                        type: SliderButtonType.confirm,
+                        text: 'Обновить файл',
+                        onSlideCompleteAsync: _updateFile,
+                        showLoading: _isUpdating,
+                      ),
+                      const SizedBox(height: 12),
+                      Divider(),
+                      const SizedBox(height: 16),
+                    ],
+                  )
+                : SizedBox.shrink(),
+          ),
 
           // Кнопки действий
           if (_decryptedFilePath == null) ...[
@@ -266,21 +301,6 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
               ),
             ),
           ] else ...[
-            if (_isFileModified) ...[
-              Text(
-                'Замечено обновление файла, хотите ли вы обновить его в хранилище?',
-                style: theme.textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              SliderButton(
-                type: SliderButtonType.confirm,
-                text: 'Обновить файл',
-                onSlideCompleteAsync: _updateFile,
-                showLoading: _isUpdating,
-              ),
-              const SizedBox(height: 12),
-            ],
             SizedBox(
               width: double.infinity,
               child: SmoothButton(
@@ -302,7 +322,6 @@ class _FileDecryptContentState extends ConsumerState<_FileDecryptContent> {
               ),
             ),
           ],
-          const SizedBox(height: 16),
         ],
       ),
     );
