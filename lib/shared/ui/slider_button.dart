@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 /// Типы Slider Button для различных действий
 enum SliderButtonType { confirm, delete, unlock, send }
+
+/// Варианты цветов для Slider Button
+enum SliderButtonVariant { normal, error, warning, info, success }
+
+/// Типы анимации завершения
+enum SliderButtonCompletionAnimation {
+  /// Стандартная анимация заполнения
+  fill,
+
+  /// Новая анимация: уменьшение к центру и превращение в круг с галочкой
+  shrinkToCircle,
+
+  /// Современная анимация: слайдер уезжает вправо с затуханием, затем появляется галочка с отскоком
+  slideAndFade,
+}
 
 /// Данные темы для Slider Button
 class SliderButtonThemeData {
@@ -14,7 +30,7 @@ class SliderButtonThemeData {
   final double height;
   final double borderRadius;
   final TextStyle textStyle;
-  final double thumbSize;
+  final double thumbSize; // Диаметр ползунка
   final Duration animationDuration;
   final IconData icon;
 
@@ -104,6 +120,9 @@ class SliderButton extends StatefulWidget {
   final Duration resetDelay;
   final bool showLoading;
   final Future<void> Function()? onSlideCompleteAsync;
+  final SliderButtonVariant variant;
+  final SliderButtonCompletionAnimation completionAnimation;
+  final bool shimmerText;
 
   const SliderButton({
     super.key,
@@ -117,6 +136,9 @@ class SliderButton extends StatefulWidget {
     this.resetAfterComplete = true,
     this.resetDelay = const Duration(milliseconds: 500),
     this.showLoading = false,
+    this.variant = SliderButtonVariant.normal,
+    this.completionAnimation = SliderButtonCompletionAnimation.fill,
+    this.shimmerText = false,
   });
 
   @override
@@ -127,8 +149,17 @@ class _SliderButtonState extends State<SliderButton>
     with TickerProviderStateMixin {
   late AnimationController _slideController;
   late AnimationController _pulseController;
+  late AnimationController _shrinkController;
+  late AnimationController _fadeController;
   late Animation<double> _slideAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _shrinkAnimation;
+  late Animation<double> _circleAnimation;
+  late Animation<double> _checkAnimation;
+  late Animation<double> _fadeSlideAnimation;
+  late Animation<double> _fadeOpacityAnimation;
+  late Animation<double> _fadeCheckScaleAnimation;
+  late Animation<double> _fadeCheckRotationAnimation;
 
   double _dragPosition = 0.0;
   bool _isDragging = false;
@@ -140,22 +171,83 @@ class _SliderButtonState extends State<SliderButton>
     super.initState();
 
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _shrinkController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
     _slideAnimation = CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutCubic,
     );
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // Анимация для shrinkToCircle
+    _shrinkAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _shrinkController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeInOutCubic),
+      ),
+    );
+
+    _circleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _shrinkController,
+        curve: const Interval(0.4, 0.8, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _checkAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _shrinkController,
+        curve: const Interval(0.6, 1.0, curve: Curves.elasticOut),
+      ),
+    );
+
+    // Анимации для slideAndFade
+    _fadeSlideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeInCubic),
+      ),
+    );
+
+    _fadeOpacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
+    );
+
+    _fadeCheckScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
+      ),
+    );
+
+    _fadeCheckRotationAnimation = Tween<double>(begin: -0.5, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: const Interval(0.4, 0.8, curve: Curves.easeOutBack),
+      ),
     );
 
     // Запускаем пульсацию при инициализации
@@ -166,6 +258,8 @@ class _SliderButtonState extends State<SliderButton>
   void dispose() {
     _slideController.dispose();
     _pulseController.dispose();
+    _shrinkController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -210,7 +304,7 @@ class _SliderButtonState extends State<SliderButton>
     });
 
     // Проверяем, достиг ли слайдер конца
-    if (_dragPosition >= maxWidth * 0.8) {
+    if (_dragPosition >= maxWidth * 0.85) {
       _completeSlide(theme);
     } else {
       _resetSlide();
@@ -240,7 +334,15 @@ class _SliderButtonState extends State<SliderButton>
           _isCompleted = true;
         });
 
-        _slideController.forward();
+        if (widget.completionAnimation ==
+            SliderButtonCompletionAnimation.shrinkToCircle) {
+          _shrinkController.forward();
+        } else if (widget.completionAnimation ==
+            SliderButtonCompletionAnimation.slideAndFade) {
+          _fadeController.forward();
+        } else {
+          _slideController.forward();
+        }
       } catch (e) {
         // В случае ошибки сбрасываем состояние
         setState(() {
@@ -257,7 +359,16 @@ class _SliderButtonState extends State<SliderButton>
       });
 
       HapticFeedback.mediumImpact();
-      _slideController.forward();
+
+      if (widget.completionAnimation ==
+          SliderButtonCompletionAnimation.shrinkToCircle) {
+        _shrinkController.forward();
+      } else if (widget.completionAnimation ==
+          SliderButtonCompletionAnimation.slideAndFade) {
+        _fadeController.forward();
+      } else {
+        _slideController.forward();
+      }
 
       if (widget.onSlideCompleteAsync != null) {
         widget.onSlideCompleteAsync!();
@@ -276,7 +387,16 @@ class _SliderButtonState extends State<SliderButton>
   }
 
   void _resetSlide() {
-    _slideController.reverse().then((_) {
+    final controller =
+        widget.completionAnimation ==
+            SliderButtonCompletionAnimation.shrinkToCircle
+        ? _shrinkController
+        : widget.completionAnimation ==
+              SliderButtonCompletionAnimation.slideAndFade
+        ? _fadeController
+        : _slideController;
+
+    controller.reverse().then((_) {
       if (mounted) {
         setState(() {
           _dragPosition = 0.0;
@@ -296,9 +416,191 @@ class _SliderButtonState extends State<SliderButton>
     return renderBox.size.width - theme.thumbSize;
   }
 
+  Color _getVariantColor(BuildContext context, SliderButtonThemeData theme) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    switch (widget.variant) {
+      case SliderButtonVariant.normal:
+        return theme.fillColor;
+      case SliderButtonVariant.error:
+        return colorScheme.error;
+      case SliderButtonVariant.warning:
+        return Colors.orangeAccent.shade700;
+      case SliderButtonVariant.info:
+        return Colors.blueAccent.shade700;
+      case SliderButtonVariant.success:
+        return Colors.greenAccent.shade700;
+    }
+  }
+
+  Widget _buildTextWidget(SliderButtonThemeData theme) {
+    final textWidget = Text(
+      widget.text,
+      style: theme.textStyle.copyWith(
+        color: widget.enabled
+            ? theme.textColor
+            : theme.textColor.withOpacity(0.5),
+      ),
+    );
+
+    if (widget.shimmerText && widget.enabled && !_isLoading) {
+      return AnimatedTextKit(
+        animatedTexts: [
+          ColorizeAnimatedText(
+            widget.text,
+            textStyle: theme.textStyle,
+            colors: [
+              theme.textColor,
+              theme.textColor.withOpacity(0.6),
+              theme.fillColor,
+              theme.textColor.withOpacity(0.6),
+              theme.textColor,
+            ],
+            speed: const Duration(milliseconds: 2000),
+          ),
+        ],
+        repeatForever: true,
+        isRepeatingAnimation: true,
+      );
+    }
+
+    return textWidget;
+  }
+
+  // Анимация slideAndFade: слайдер уезжает вправо с затуханием
+  Widget _buildSlideAndFadeAnimation(
+    BuildContext context,
+    BoxConstraints constraints,
+    SliderButtonThemeData theme,
+    Color variantColor,
+  ) {
+    return AnimatedBuilder(
+      animation: _fadeController,
+      builder: (context, child) {
+        final slideValue = _fadeSlideAnimation.value;
+        final opacityValue = _fadeOpacityAnimation.value;
+        final checkScale = _fadeCheckScaleAnimation.value;
+        final checkRotation = _fadeCheckRotationAnimation.value;
+
+        return Stack(
+          children: [
+            // Уезжающий слайдер
+            if (opacityValue > 0.01)
+              Positioned(
+                left: constraints.maxWidth * slideValue * 0.3,
+                child: Opacity(
+                  opacity: opacityValue,
+                  child: Container(
+                    width: constraints.maxWidth,
+                    height: theme.height,
+                    decoration: BoxDecoration(
+                      color: variantColor.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(theme.borderRadius),
+                    ),
+                  ),
+                ),
+              ),
+            // Появляющаяся галочка с эффектами
+            if (checkScale > 0.01)
+              Center(
+                child: Transform.scale(
+                  scale: checkScale,
+                  child: Transform.rotate(
+                    angle: checkRotation,
+                    child: Container(
+                      width: theme.height,
+                      height: theme.height,
+                      decoration: BoxDecoration(
+                        color: variantColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: variantColor.withOpacity(0.6 * checkScale),
+                            blurRadius: 20 * checkScale,
+                            spreadRadius: 4 * checkScale,
+                          ),
+                          BoxShadow(
+                            color: variantColor.withOpacity(0.3 * checkScale),
+                            blurRadius: 40 * checkScale,
+                            spreadRadius: 8 * checkScale,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: theme.iconColor,
+                        size: theme.thumbSize * 0.7,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Анимация уменьшения до круга с галочкой
+  Widget _buildShrinkToCircleAnimation(
+    BuildContext context,
+    BoxConstraints constraints,
+    SliderButtonThemeData theme,
+    Color variantColor,
+  ) {
+    return AnimatedBuilder(
+      animation: _shrinkController,
+      builder: (context, child) {
+        final shrinkValue = _shrinkAnimation.value;
+        final circleValue = _circleAnimation.value;
+        final checkValue = _checkAnimation.value;
+
+        // Рассчитываем ширину и высоту
+        final targetSize = theme.height;
+        final currentWidth =
+            constraints.maxWidth -
+            (constraints.maxWidth - targetSize) * shrinkValue;
+
+        // Рассчитываем borderRadius для плавного превращения в круг
+        final borderRadius =
+            theme.borderRadius +
+            (targetSize / 2 - theme.borderRadius) * circleValue;
+
+        return Center(
+          child: Container(
+            width: currentWidth,
+            height: theme.height,
+            decoration: BoxDecoration(
+              color: variantColor.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(borderRadius),
+              boxShadow: [
+                BoxShadow(
+                  color: variantColor.withOpacity(0.3 * circleValue),
+                  blurRadius: 12 * circleValue,
+                  spreadRadius: 2 * circleValue,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Transform.scale(
+                scale: checkValue,
+                child: Icon(
+                  Icons.check,
+                  color: theme.iconColor,
+                  size: theme.thumbSize * 0.7,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme ?? SliderButtonTheme.of(context);
+    final variantColor = _getVariantColor(context, theme);
 
     return Opacity(
       opacity: widget.enabled ? 1.0 : 0.5,
@@ -310,6 +612,7 @@ class _SliderButtonState extends State<SliderButton>
             final maxDragDistance = constraints.maxWidth - theme.thumbSize;
 
             return Container(
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: widget.enabled
                     ? theme.backgroundColor
@@ -333,8 +636,8 @@ class _SliderButtonState extends State<SliderButton>
                     height: theme.height,
                     decoration: BoxDecoration(
                       color: widget.enabled
-                          ? theme.fillColor.withOpacity(0.3)
-                          : theme.fillColor.withOpacity(0.3),
+                          ? variantColor.withOpacity(0.3)
+                          : variantColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(theme.borderRadius),
                     ),
                   ),
@@ -373,16 +676,8 @@ class _SliderButtonState extends State<SliderButton>
                                 color: theme.textColor,
                               ),
                             ),
-                          ] else ...[
-                            Text(
-                              widget.text,
-                              style: theme.textStyle.copyWith(
-                                color: widget.enabled
-                                    ? theme.textColor
-                                    : theme.textColor.withOpacity(0.5),
-                              ),
-                            ),
-                          ],
+                          ] else
+                            _buildTextWidget(theme),
                         ],
                       ),
                     ),
@@ -394,7 +689,8 @@ class _SliderButtonState extends State<SliderButton>
                         ? Duration.zero
                         : theme.animationDuration,
                     left: _dragPosition,
-                    top: (theme.height - theme.thumbSize) / 2,
+                    top: (theme.height - (theme.thumbSize)) / 2,
+
                     child: GestureDetector(
                       onPanStart: _onPanStart,
                       onPanUpdate: (details) =>
@@ -405,17 +701,22 @@ class _SliderButtonState extends State<SliderButton>
                         animation: _pulseAnimation,
                         builder: (context, child) {
                           return Transform.scale(
-                            scale: _isDragging ? 1.1 : _pulseAnimation.value,
+                            scale: _isDragging ? 1.15 : _pulseAnimation.value,
                             child: Container(
                               width: theme.thumbSize,
                               height: theme.thumbSize,
                               decoration: BoxDecoration(
                                 color: widget.enabled
-                                    ? theme.thumbColor
-                                    : theme.thumbColor.withOpacity(0.3),
+                                    ? variantColor
+                                    : variantColor.withOpacity(0.3),
                                 shape: BoxShape.circle,
                                 boxShadow: widget.enabled
                                     ? [
+                                        BoxShadow(
+                                          color: variantColor.withOpacity(0.4),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        ),
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.2),
                                           blurRadius: 4,
@@ -425,15 +726,17 @@ class _SliderButtonState extends State<SliderButton>
                                     : [],
                               ),
                               child: _isLoading
-                                  ? SizedBox(
-                                      width: theme.thumbSize * 0.6,
-                                      height: theme.thumbSize * 0.6,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.0,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              theme.iconColor,
-                                            ),
+                                  ? Center(
+                                      child: SizedBox(
+                                        width: theme.thumbSize * 0.6,
+                                        height: theme.thumbSize * 0.6,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.0,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                theme.iconColor,
+                                              ),
+                                        ),
                                       ),
                                     )
                                   : Icon(
@@ -452,28 +755,49 @@ class _SliderButtonState extends State<SliderButton>
 
                   // Анимация завершения
                   if (_isCompleted)
-                    AnimatedBuilder(
-                      animation: _slideAnimation,
-                      builder: (context, child) {
-                        return Container(
-                          width: constraints.maxWidth * _slideAnimation.value,
-                          height: theme.height,
-                          decoration: BoxDecoration(
-                            color: theme.fillColor.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(
-                              theme.borderRadius,
-                            ),
+                    widget.completionAnimation ==
+                            SliderButtonCompletionAnimation.shrinkToCircle
+                        ? _buildShrinkToCircleAnimation(
+                            context,
+                            constraints,
+                            theme,
+                            variantColor,
+                          )
+                        : widget.completionAnimation ==
+                              SliderButtonCompletionAnimation.slideAndFade
+                        ? _buildSlideAndFadeAnimation(
+                            context,
+                            constraints,
+                            theme,
+                            variantColor,
+                          )
+                        : AnimatedBuilder(
+                            animation: _slideAnimation,
+                            builder: (context, child) {
+                              return Container(
+                                width:
+                                    constraints.maxWidth *
+                                    _slideAnimation.value,
+                                height: theme.height,
+                                decoration: BoxDecoration(
+                                  color: variantColor.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(
+                                    theme.borderRadius,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Transform.scale(
+                                    scale: _slideAnimation.value,
+                                    child: Icon(
+                                      Icons.check,
+                                      color: theme.iconColor,
+                                      size: theme.thumbSize * 0.6,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          child: Center(
-                            child: Icon(
-                              Icons.check,
-                              color: theme.iconColor,
-                              size: theme.thumbSize * 0.6,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                 ],
               ),
             );

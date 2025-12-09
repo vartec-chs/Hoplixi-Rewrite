@@ -172,6 +172,215 @@ class _SliderButtonShowcaseScreenState
             ),
           ],
         ),
+        const SizedBox(height: 32),
+        _buildSection(
+          context,
+          title: 'Color Variants',
+          children: [
+            SliderButton(
+              type: SliderButtonType.confirm,
+              text: 'Normal Variant',
+              variant: SliderButtonVariant.normal,
+              onSlideComplete: () {
+                _showAction('Normal variant completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.delete,
+              text: 'Error Variant',
+              variant: SliderButtonVariant.error,
+              onSlideComplete: () {
+                _showAction('Error variant completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.send,
+              text: 'Warning Variant',
+              variant: SliderButtonVariant.warning,
+              onSlideComplete: () {
+                _showAction('Warning variant completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.unlock,
+              text: 'Info Variant',
+              variant: SliderButtonVariant.info,
+              onSlideComplete: () {
+                _showAction('Info variant completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.confirm,
+              text: 'Success Variant',
+              variant: SliderButtonVariant.success,
+              onSlideComplete: () {
+                _showAction('Success variant completed!');
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        _buildSection(
+          context,
+          title: 'Shrink to Circle Animation',
+          children: [
+            SliderButton(
+              type: SliderButtonType.confirm,
+              text: 'Slide to Confirm',
+              variant: SliderButtonVariant.success,
+              completionAnimation:
+                  SliderButtonCompletionAnimation.shrinkToCircle,
+              onSlideComplete: () {
+                _showAction('Shrink animation completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.delete,
+              text: 'Slide to Delete',
+              variant: SliderButtonVariant.error,
+              completionAnimation:
+                  SliderButtonCompletionAnimation.shrinkToCircle,
+              showLoading: true,
+              onSlideCompleteAsync: () async {
+                await Future.delayed(const Duration(seconds: 2));
+                _showAction('Delete with shrink animation!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.send,
+              text: 'Slide to Send',
+              variant: SliderButtonVariant.info,
+              completionAnimation:
+                  SliderButtonCompletionAnimation.shrinkToCircle,
+              resetAfterComplete: true,
+              onSlideComplete: () {
+                _showAction('Send with shrink animation!');
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        _buildSection(
+          context,
+          title: 'Slide and Fade Animation',
+          children: [
+            SliderButton(
+              type: SliderButtonType.confirm,
+              text: 'Modern Slide Effect',
+              variant: SliderButtonVariant.success,
+              completionAnimation: SliderButtonCompletionAnimation.slideAndFade,
+              onSlideComplete: () {
+                _showAction('Slide and fade completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.send,
+              text: 'Send with Style',
+              variant: SliderButtonVariant.info,
+              completionAnimation: SliderButtonCompletionAnimation.slideAndFade,
+              showLoading: true,
+              onSlideCompleteAsync: () async {
+                await Future.delayed(const Duration(seconds: 2));
+                _showAction('Sent with fade animation!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.unlock,
+              text: 'Unlock Premium',
+              variant: SliderButtonVariant.warning,
+              completionAnimation: SliderButtonCompletionAnimation.slideAndFade,
+              shimmerText: true,
+              onSlideComplete: () {
+                _showAction('Premium unlocked with style!');
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        _buildSection(
+          context,
+          title: 'Shimmer Text Effect',
+          children: [
+            SliderButton(
+              type: SliderButtonType.confirm,
+              text: 'Shimmer Text',
+              shimmerText: true,
+              variant: SliderButtonVariant.success,
+              onSlideComplete: () {
+                _showAction('Shimmer text completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.unlock,
+              text: 'Unlock with Shimmer',
+              shimmerText: true,
+              variant: SliderButtonVariant.info,
+              completionAnimation:
+                  SliderButtonCompletionAnimation.shrinkToCircle,
+              onSlideComplete: () {
+                _showAction('Shimmer unlock completed!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.send,
+              text: 'Send with Effects',
+              shimmerText: true,
+              variant: SliderButtonVariant.warning,
+              showLoading: true,
+              completionAnimation:
+                  SliderButtonCompletionAnimation.shrinkToCircle,
+              onSlideCompleteAsync: () async {
+                await Future.delayed(const Duration(seconds: 2));
+                _showAction('Send with all effects!');
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        _buildSection(
+          context,
+          title: 'Combined Features',
+          children: [
+            SliderButton(
+              type: SliderButtonType.confirm,
+              text: 'Ultimate Slider (Shrink)',
+              shimmerText: true,
+              variant: SliderButtonVariant.success,
+              completionAnimation:
+                  SliderButtonCompletionAnimation.shrinkToCircle,
+              showLoading: true,
+              resetAfterComplete: true,
+              onSlideCompleteAsync: () async {
+                await Future.delayed(const Duration(seconds: 2));
+                _showAction('All features with shrink!');
+              },
+            ),
+            const SizedBox(height: 16),
+            SliderButton(
+              type: SliderButtonType.send,
+              text: 'Ultimate Slider (Fade)',
+              shimmerText: true,
+              variant: SliderButtonVariant.info,
+              completionAnimation: SliderButtonCompletionAnimation.slideAndFade,
+              showLoading: true,
+              resetAfterComplete: true,
+              onSlideCompleteAsync: () async {
+                await Future.delayed(const Duration(seconds: 2));
+                _showAction('All features with fade!');
+              },
+            ),
+          ],
+        ),
       ],
     );
   }
