@@ -100,9 +100,12 @@ dependencies:
   mime: ^2.0.0
   open_file: ^3.5.10
   watcher: ^1.1.4
+  protobuf: ^6.0.0
 
+  
   file_crypto: 
     path: ./packages/file_crypto
+  
   
   
 
