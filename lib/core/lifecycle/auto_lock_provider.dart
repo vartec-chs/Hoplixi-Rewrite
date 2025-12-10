@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/app_preferences/app_preference_keys.dart';
 import 'package:hoplixi/core/lifecycle/app_lifecycle_provider.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/settings/providers/settings_provider.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
 
 /// Состояние автоблокировки
@@ -39,6 +41,29 @@ class AutoLockNotifier extends Notifier<AutoLockState> {
 
   @override
   AutoLockState build() {
+    // Загружаем таймаут из настроек
+    final settings = ref.watch(settingsProvider);
+    final timeout = settings[AppKeys.autoLockTimeout.key] as int? ?? 300;
+
+    // Слушаем изменения настроек таймаута
+    ref.listen(settingsProvider, (previous, next) {
+      final newTimeout = next[AppKeys.autoLockTimeout.key] as int? ?? 300;
+      final oldTimeout = previous?[AppKeys.autoLockTimeout.key] as int? ?? 300;
+
+      if (newTimeout != oldTimeout) {
+        logInfo(
+          'Auto-lock timeout changed: $oldTimeout -> $newTimeout',
+          tag: _tag,
+        );
+        setDuration(newTimeout);
+
+        // Если таймаут установлен в 0, останавливаем таймер
+        if (newTimeout == 0) {
+          stopTimer();
+        }
+      }
+    });
+
     // Слушаем изменения жизненного цикла
     ref.listen(appLifecycleProvider, (previous, next) {
       _handleLifecycleChange(next);
@@ -54,7 +79,7 @@ class AutoLockNotifier extends Notifier<AutoLockState> {
       });
     });
 
-    return const AutoLockState();
+    return AutoLockState(totalDuration: timeout);
   }
 
   void setDuration(int seconds) {
@@ -66,6 +91,12 @@ class AutoLockNotifier extends Notifier<AutoLockState> {
     final dbState = ref.read(mainStoreProvider).value;
     final isDbOpen = dbState?.isOpen ?? false;
 
+    // Проверяем, что таймаут не равен 0 (отключено)
+    if (state.totalDuration == 0) {
+      logInfo('Auto-lock is disabled (timeout = 0)', tag: _tag);
+      return;
+    }
+
     if (lifecycleState != AppLifecycleState.resumed && isDbOpen) {
       startTimer();
     } else {
@@ -74,6 +105,12 @@ class AutoLockNotifier extends Notifier<AutoLockState> {
   }
 
   void startTimer() {
+    // Не запускаем таймер, если автоблокировка отключена
+    if (state.totalDuration == 0) {
+      logInfo('Auto-lock timer not started (disabled)', tag: _tag);
+      return;
+    }
+
     stopTimer();
     logInfo('Starting auto-lock timer (${state.totalDuration}s)', tag: _tag);
 

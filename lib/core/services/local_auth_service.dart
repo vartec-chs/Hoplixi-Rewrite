@@ -48,7 +48,7 @@ class LocalAuthService {
   /// Пытается аутентифицировать пользователя
   ///
   /// [localizedReason] - сообщение, которое увидит пользователь
-  AsyncResult<bool> authenticate({
+  AsyncResultDart<bool, LocalAuthFailure> authenticate({
     required String localizedReason,
     bool sensitiveTransaction = false,
     bool persistAcrossBackgrounding = true,

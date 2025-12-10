@@ -1,9 +1,11 @@
 # App Preferences
 
-Типизированные обертки для `shared_preferences` и `flutter_secure_storage` с поддержкой категорий и настройками видимости для UI.
+Унифицированные обертки для `shared_preferences` и `flutter_secure_storage` с единым API и автоматическим выбором хранилища.
 
 ## Возможности
 
+✅ **Унифицированный ключ AppKey** - один класс для обоих типов хранилищ  
+✅ **Флаг isProtected** - автоматический выбор между SharedPreferences и SecureStorage  
 ✅ **Типизированные ключи** - безопасность типов на уровне компиляции  
 ✅ **Категории настроек** - группировка настроек для UI  
 ✅ **Контроль видимости** - скрытие системных настроек от пользователя  
@@ -16,12 +18,10 @@
 ```
 lib/core/app_preferences/
 ├── pref_category.dart          # Enum категорий настроек
-├── pref_key.dart               # Типизированный ключ для SharedPreferences
-├── secure_key.dart             # Типизированный ключ для FlutterSecureStorage
-├── preferences_service.dart    # Сервис для работы с SharedPreferences
-├── secure_storage_service.dart # Сервис для работы с FlutterSecureStorage
-├── app_preference_keys.dart    # Примеры ключей приложения
-├── usage_examples.dart         # Примеры использования
+├── app_key.dart                # Унифицированный типизированный ключ
+├── app_storage_service.dart    # Унифицированный сервис хранения
+├── app_preference_keys.dart    # Ключи приложения
+├── settings_key.dart           # UI-ориентированные ключи
 └── app_preferences.dart        # Главный экспорт
 ```
 
@@ -37,105 +37,93 @@ import 'package:hoplixi/core/app_preferences/app_preferences.dart';
 
 ```dart
 // В main() или при запуске приложения
-final prefsService = await PreferencesService.init();
-final secureStorage = SecureStorageService.init();
+final storage = await AppStorageService.init(
+  secureStorage: const FlutterSecureStorage(),
+);
 ```
 
 ### 3. Определение ключей
 
 ```dart
-// Ключ для SharedPreferences
-const themeMode = PrefKey<String>(
+// Обычный ключ (SharedPreferences)
+const themeMode = AppKey<String>(
   'theme_mode',
   category: PrefCategory.appearance,
   editable: true,
   isHiddenUI: false,
 );
 
-// Ключ для FlutterSecureStorage
-const masterPassword = SecureKey<String>(
+// Защищённый ключ (FlutterSecureStorage)
+const masterPassword = AppKey<String>(
   'master_password',
+  isProtected: true,  // <- Ключевой флаг!
   category: PrefCategory.security,
   editable: false,
   isHiddenUI: true,
 );
 ```
 
-### 4. Работа с SharedPreferences
+### 4. Работа с хранилищем
 
 ```dart
-// Сохранение
-await prefsService.set(themeMode, 'dark');
-await prefsService.setInt(autoLockTimeout, 300);
-await prefsService.setBool(biometricEnabled, true);
+// Сохранение (автоматически выбирает хранилище)
+await storage.set(themeMode, 'dark');
+await storage.setInt(autoLockTimeout, 300);
+await storage.setBool(biometricEnabled, true);
+
+// Защищённые данные автоматически идут в SecureStorage
+await storage.setString(masterPassword, 'secret123');
 
 // Чтение
-final theme = prefsService.get(themeMode);
-final timeout = prefsService.getOrDefault(autoLockTimeout, 60);
+final theme = await storage.get(themeMode);
+final timeout = await storage.getOrDefault(autoLockTimeout, 60);
 
 // Удаление
-await prefsService.remove(themeMode);
+await storage.remove(themeMode);
 
 // Проверка
-if (prefsService.containsKey(themeMode)) {
+if (await storage.containsKey(themeMode)) {
   // ключ существует
 }
 ```
 
-### 5. Работа с FlutterSecureStorage
+### 5. Работа с JSON
 
 ```dart
-// Сохранение
-await secureStorage.setString(masterPassword, 'secret123');
-await secureStorage.setInt(pinAttempts, 0);
-
-// Чтение
-final password = await secureStorage.getString(masterPassword);
-final attempts = await secureStorage.getOrDefault(pinAttempts, 0);
-
-// Удаление
-await secureStorage.remove(masterPassword);
-
-// Проверка
-if (await secureStorage.containsKey(masterPassword)) {
-  // ключ существует
-}
-```
-
-### 6. Работа с JSON
-
-```dart
-// SharedPreferences
-await prefsService.setJson(userSettings, {
+// Обычные настройки
+await storage.setJson(userSettings, {
   'theme': 'dark',
   'language': 'ru',
 });
 
-final settings = prefsService.getJson(userSettings);
+final settings = await storage.getJson(userSettings);
 
-// FlutterSecureStorage
-await secureStorage.setJson(sessionData, {
+// Защищённые JSON данные
+await storage.setJson(sessionData, {
   'userId': '12345',
   'token': 'abc-def',
 });
 
-final session = await secureStorage.getJson(sessionData);
+final session = await storage.getJson(sessionData);
 ```
 
-### 7. Фильтрация ключей для UI
+### 6. Фильтрация ключей для UI
 
 ```dart
 // Получить все видимые настройки
-final visible = prefsService.getVisibleKeys(allKeys);
+final visible = storage.getVisibleKeys(AppKeys.getAllKeys());
 
 // Получить редактируемые настройки
-final editable = prefsService.getEditableKeys(allKeys);
+final editable = storage.getEditableKeys(AppKeys.getAllKeys());
 
 // Получить настройки по категории
-final securitySettings = prefsService.getKeysByCategory(
+final securitySettings = storage.getKeysByCategory(
   PrefCategory.security,
-  allKeys,
+  AppKeys.getAllKeys(),
 );
+
+// Получить только защищённые ключи
+final protectedKeys = storage.getProtectedKeys(AppKeys.getAllKeys());
 ```
 
 ## Категории настроек
@@ -152,34 +140,53 @@ enum PrefCategory {
 }
 ```
 
-## Свойства ключей
+## Свойства AppKey
 
-- **key** - строковый идентификатор для хранения
-- **isHiddenUI** - скрыть ли настройку в UI (для системных настроек)
-- **editable** - можно ли редактировать в UI (для критичных настроек)
-- **category** - категория для группировки в UI
+| Свойство | Тип | По умолчанию | Описание |
+|----------|-----|--------------|----------|
+| `key` | `String` | — | Строковый идентификатор для хранения |
+| `isProtected` | `bool` | `false` | Использовать SecureStorage вместо SharedPreferences |
+| `isHiddenUI` | `bool` | `false` | Скрыть настройку в UI |
+| `editable` | `bool` | `true` | Разрешить редактирование в UI |
+| `category` | `PrefCategory` | `general` | Категория для группировки |
 
 ## Поддерживаемые типы
 
-### SharedPreferences
-- `String`
-- `int`
-- `double`
-- `bool`
-- `List<String>`
-- `Map<String, dynamic>` (через JSON)
-
-### FlutterSecureStorage
+### Оба хранилища
 - `String`
 - `int`
 - `double`
 - `bool`
 - `Map<String, dynamic>` (через JSON)
-- `List<T>` (через JSON)
 
-## Примеры
+### Только SharedPreferences
+- `List<String>` (нативно)
 
-См. файл `usage_examples.dart` для полных примеров использования.
+### Только SecureStorage
+- `List<T>` (через JSON сериализацию)
+
+## Миграция со старого API
+
+```dart
+// Было (старый API)
+const themeMode = PrefKey<String>('theme_mode');
+const password = SecureKey<String>('password');
+
+final prefsService = await PreferencesService.init();
+final secureService = SecureStorageService.init(storage);
+
+await prefsService.setString(themeMode, 'dark');
+await secureService.setString(password, 'secret');
+
+// Стало (новый API)
+const themeMode = AppKey<String>('theme_mode');
+const password = AppKey<String>('password', isProtected: true);
+
+final storage = await AppStorageService.init(secureStorage: storage);
+
+await storage.setString(themeMode, 'dark');
+await storage.setString(password, 'secret');  // Автоматически в SecureStorage
+```
 
 ## Лицензия
 

@@ -8,18 +8,20 @@ import 'package:local_auth/local_auth.dart';
 final getIt = GetIt.instance;
 
 Future<void> setupDI() async {
-  final PreferencesService preferencesService = await PreferencesService.init();
-  getIt.registerSingleton<PreferencesService>(preferencesService);
+  // Инициализация FlutterSecureStorage
   getIt.registerSingleton<FlutterSecureStorage>(setupSecureStorage());
-  getIt.registerSingleton<SecureStorageService>(
-    SecureStorageService.init(getIt<FlutterSecureStorage>()),
-  );
 
-  // Инициализация LocalAuthentication и LocalAuthService
+  // Инициализация LocalAuthentication и LocalAuthService (до AppStorageService)
   getIt.registerLazySingleton<LocalAuthentication>(() => LocalAuthentication());
-  getIt.registerLazySingleton<LocalAuthService>(
-    () => LocalAuthService(getIt<LocalAuthentication>()),
+  final localAuthService = LocalAuthService(LocalAuthentication());
+  getIt.registerSingleton<LocalAuthService>(localAuthService);
+
+  // Инициализация унифицированного сервиса хранения с поддержкой биометрии
+  final appStorageService = await AppStorageService.init(
+    secureStorage: getIt<FlutterSecureStorage>(),
+    localAuthService: localAuthService,
   );
+  getIt.registerSingleton<AppStorageService>(appStorageService);
 
   // Инициализация HiveBoxManager
   final hiveBoxManager = HiveBoxManager(getIt<FlutterSecureStorage>());

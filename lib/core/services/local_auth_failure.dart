@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'local_auth_failure.freezed.dart';
 
 @freezed
-class LocalAuthFailure with _$LocalAuthFailure implements Exception {
+sealed class LocalAuthFailure with _$LocalAuthFailure implements Exception {
   const LocalAuthFailure._();
 
   const factory LocalAuthFailure.canceled() = _Canceled;

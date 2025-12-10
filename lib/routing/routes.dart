@@ -21,6 +21,7 @@ import 'package:hoplixi/features/component_showcase/component_showcase_screen.da
 import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/lock_store/lock_store_screen.dart';
 import 'package:hoplixi/features/password_manager/migration/passwords/screens/password_migration_screen.dart';
+import 'package:hoplixi/features/settings/screens/settings_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
 final List<RouteBase> appRoutes = [
@@ -31,6 +32,10 @@ final List<RouteBase> appRoutes = [
   GoRoute(
     path: AppRoutesPaths.home,
     builder: (context, state) => const HomeScreen(),
+  ),
+  GoRoute(
+    path: AppRoutesPaths.settings,
+    builder: (context, state) => const SettingsScreen(),
   ),
   GoRoute(
     path: AppRoutesPaths.logs,
@@ -51,6 +56,11 @@ final List<RouteBase> appRoutes = [
   GoRoute(
     path: AppRoutesPaths.lockStore,
     builder: (context, state) => const LockStoreScreen(),
+  ),
+
+  GoRoute(
+    path: AppRoutesPaths.settings,
+    builder: (context, state) => const SettingsScreen(),
   ),
 
   // Dashboard с вложенными роутами через ShellRoute

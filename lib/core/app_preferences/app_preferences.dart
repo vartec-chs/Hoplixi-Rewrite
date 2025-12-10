@@ -1,22 +1,35 @@
 /// Обертки для работы с SharedPreferences и FlutterSecureStorage
 ///
-/// Этот пакет предоставляет типизированные ключи и удобные сервисы
-/// для работы с настройками приложения и защищенным хранилищем.
+/// Этот пакет предоставляет типизированные ключи и унифицированный сервис
+/// для работы с настройками приложения и защищённым хранилищем.
+///
+/// Используйте [AppKey] с флагом `isProtected` для определения типа хранилища:
+/// - `isProtected: false` → SharedPreferences (по умолчанию)
+/// - `isProtected: true` → FlutterSecureStorage
 library;
 
 // Категории настроек
 export 'pref_category.dart';
 
-// Типизированные ключи
-export 'pref_key.dart';
-export 'secure_key.dart';
+// Унифицированный типизированный ключ
+export 'app_key.dart';
 
-// Сервисы
-export 'preferences_service.dart';
-export 'secure_storage_service.dart';
+// Унифицированный сервис хранения
+export 'app_storage_service.dart';
 
-// Примеры ключей приложения
+// Ключи настроек приложения
 export 'app_preference_keys.dart';
 
-// Примеры использования (только для разработки)
-// export 'usage_examples.dart';
+// UI-ориентированные ключи с метаданными
+export 'settings_key.dart';
+
+// Устаревшие экспорты (для обратной совместимости)
+// TODO: Удалить в следующей версии
+@Deprecated('Используйте AppKey вместо PrefKey')
+export 'pref_key.dart';
+@Deprecated('Используйте AppKey вместо SecureKey')
+export 'secure_key.dart';
+@Deprecated('Используйте AppStorageService вместо PreferencesService')
+export 'preferences_service.dart';
+@Deprecated('Используйте AppStorageService вместо SecureStorageService')
+export 'secure_storage_service.dart';

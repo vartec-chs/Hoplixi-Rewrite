@@ -14,8 +14,8 @@ class ThemeProvider extends AsyncNotifier<ThemeMode> {
   FutureOr<ThemeMode> build() async {
     state = const AsyncValue.loading();
     try {
-      final prefs = getIt.get<PreferencesService>();
-      String? themeMode = prefs.get(AppPreferenceKeys.themeMode);
+      final storage = getIt.get<AppStorageService>();
+      String? themeMode = await storage.get(AppKeys.themeMode);
       if (themeMode == 'light') {
         state = const AsyncData(ThemeMode.light);
         return ThemeMode.light;
@@ -35,13 +35,13 @@ class ThemeProvider extends AsyncNotifier<ThemeMode> {
   /// Сохраняет текущую тему в SharedPreferences
   Future<void> _saveTheme(ThemeMode themeMode) async {
     try {
-      final prefs = getIt.get<PreferencesService>();
+      final storage = getIt.get<AppStorageService>();
       if (themeMode == ThemeMode.light) {
-        await prefs.set(AppPreferenceKeys.themeMode, 'light');
+        await storage.set(AppKeys.themeMode, 'light');
       } else if (themeMode == ThemeMode.dark) {
-        await prefs.set(AppPreferenceKeys.themeMode, 'dark');
+        await storage.set(AppKeys.themeMode, 'dark');
       } else {
-        await prefs.set(AppPreferenceKeys.themeMode, 'system');
+        await storage.set(AppKeys.themeMode, 'system');
       }
     } catch (e) {
       // logError(

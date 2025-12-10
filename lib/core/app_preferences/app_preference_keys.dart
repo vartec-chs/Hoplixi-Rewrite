@@ -1,26 +1,32 @@
-import 'pref_key.dart';
-import 'secure_key.dart';
+import 'app_key.dart';
 import 'pref_category.dart';
 
-/// Примеры типизированных ключей для SharedPreferences
-class AppPreferenceKeys {
+/// Типизированные ключи настроек приложения
+///
+/// Все ключи используют унифицированный класс [AppKey].
+/// Флаг `isProtected: true` означает хранение в FlutterSecureStorage.
+class AppKeys {
+  AppKeys._();
+
+  static const String biometricEnabledConst = 'biometric_enabled';
+
   // ==================== Общие настройки ====================
 
-  static const themeMode = PrefKey<String>(
+  static const themeMode = AppKey<String>(
     'theme_mode',
     category: PrefCategory.appearance,
     editable: true,
     isHiddenUI: false,
   );
 
-  static const language = PrefKey<String>(
+  static const language = AppKey<String>(
     'language',
     category: PrefCategory.general,
     editable: true,
     isHiddenUI: false,
   );
 
-  static const isFirstLaunch = PrefKey<bool>(
+  static const isFirstLaunch = AppKey<bool>(
     'is_first_launch',
     category: PrefCategory.system,
     editable: false,
@@ -29,53 +35,26 @@ class AppPreferenceKeys {
 
   // ==================== Настройки безопасности ====================
 
-  static const autoLockTimeout = PrefKey<int>(
+  static const autoLockTimeout = AppKey<int>(
     'auto_lock_timeout',
     category: PrefCategory.security,
     editable: true,
     isHiddenUI: false,
   );
 
-  static const biometricEnabled = PrefKey<bool>(
-    'biometric_enabled',
-    category: PrefCategory.security,
-    editable: true,
-    isHiddenUI: false,
-  );
-
-  static const passwordGeneratorLength = PrefKey<int>(
-    'password_generator_length',
-    category: PrefCategory.security,
-    editable: true,
-    isHiddenUI: false,
-  );
-
-  // ==================== Настройки внешнего вида ====================
-
-  static const fontSize = PrefKey<double>(
-    'font_size',
-    category: PrefCategory.appearance,
-    editable: true,
-    isHiddenUI: false,
-  );
-
-  static const compactMode = PrefKey<bool>(
-    'compact_mode',
-    category: PrefCategory.appearance,
-    editable: true,
-    isHiddenUI: false,
-  );
+ 
+  
 
   // ==================== Настройки синхронизации ====================
 
-  static const autoSyncEnabled = PrefKey<bool>(
+  static const autoSyncEnabled = AppKey<bool>(
     'auto_sync_enabled',
     category: PrefCategory.sync,
     editable: true,
     isHiddenUI: false,
   );
 
-  static const lastSyncTime = PrefKey<int>(
+  static const lastSyncTime = AppKey<int>(
     'last_sync_time',
     category: PrefCategory.sync,
     editable: false,
@@ -84,153 +63,97 @@ class AppPreferenceKeys {
 
   // ==================== Настройки резервного копирования ====================
 
-  static const autoBackupEnabled = PrefKey<bool>(
+  static const autoBackupEnabled = AppKey<bool>(
     'auto_backup_enabled',
     category: PrefCategory.backup,
     editable: true,
     isHiddenUI: false,
   );
 
-  static const backupPath = PrefKey<String>(
+  static const backupPath = AppKey<String>(
     'backup_path',
     category: PrefCategory.backup,
     editable: true,
     isHiddenUI: false,
   );
 
-  // ==================== Системные настройки ====================
+  
 
-  static const appVersion = PrefKey<String>(
-    'app_version',
-    category: PrefCategory.system,
-    editable: false,
-    isHiddenUI: true,
-  );
+  
+  // ==================== Защищённые ключи (SecureStorage) ====================
 
-  static const deviceId = PrefKey<String>(
-    'device_id',
-    category: PrefCategory.system,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  // ==================== JSON примеры ====================
-
-  static const userSettings = PrefKey<Map<String, dynamic>>(
-    'user_settings',
-    category: PrefCategory.general,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const recentSearches = PrefKey<List<String>>(
-    'recent_searches',
-    category: PrefCategory.general,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  /// Получить все ключи (для UI настроек)
-  static List<PrefKey> getAllKeys() {
-    return [
-      themeMode,
-      language,
-      isFirstLaunch,
-      autoLockTimeout,
-      biometricEnabled,
-      passwordGeneratorLength,
-      fontSize,
-      compactMode,
-      autoSyncEnabled,
-      lastSyncTime,
-      autoBackupEnabled,
-      backupPath,
-      appVersion,
-      deviceId,
-      userSettings,
-      recentSearches,
-    ];
-  }
-}
-
-/// Примеры типизированных ключей для FlutterSecureStorage
-class AppSecureKeys {
-  // ==================== Аутентификация ====================
-
-  // ==================== Токены ====================
-
-  static const accessToken = SecureKey<String>(
-    'access_token',
-    category: PrefCategory.sync,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const refreshToken = SecureKey<String>(
-    'refresh_token',
-    category: PrefCategory.sync,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const apiKey = SecureKey<String>(
-    'api_key',
-    category: PrefCategory.sync,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  // ==================== Резервные копии ====================
-
-  static const backupEncryptionKey = SecureKey<String>(
-    'backup_encryption_key',
-    category: PrefCategory.backup,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const cloudCredentials = SecureKey<String>(
-    'cloud_credentials',
-    category: PrefCategory.backup,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  // JSON пример (сериализуется как строка в secure storage)
-  static const userSessionData = SecureKey<Map<String, dynamic>>(
-    'user_session_data',
+  /// Включена ли биометрия (требует подтверждения биометрией при изменении)
+  static const biometricEnabled = AppKey<bool>(
+    biometricEnabledConst,
     category: PrefCategory.security,
-    editable: false,
-    isHiddenUI: true,
+    editable: true,
+    isHiddenUI: false,
+    isProtected: true,
+    biometricProtect: true,
   );
 
-  // ==================== PIN код ====================
+  
 
-  static const pinCode = SecureKey<String>(
+
+
+
+  
+
+  /// PIN код (защищённое хранилище, требует подтверждения биометрией)
+  static const pinCode = AppKey<String>(
     'pin_code',
+    isProtected: true,
+    biometricProtect: true,
     category: PrefCategory.security,
     editable: true,
     isHiddenUI: false,
   );
 
-  static const pinAttempts = SecureKey<int>(
+  /// Количество попыток ввода PIN (защищённое хранилище)
+  static const pinAttempts = AppKey<int>(
     'pin_attempts',
+    isProtected: true,
     category: PrefCategory.security,
     editable: false,
     isHiddenUI: true,
   );
 
-  /// Получить все ключи (для UI настроек)
-  static List<SecureKey> getAllKeys() {
+  /// Получить все ключи
+  static List<AppKey> getAllKeys() {
     return [
-      accessToken,
-      refreshToken,
-      apiKey,
-      backupEncryptionKey,
-      cloudCredentials,
-      userSessionData,
+      // Обычные настройки
+      themeMode,
+      language,
+      isFirstLaunch,
+      autoLockTimeout,
+      biometricEnabled,
+     
+      autoSyncEnabled,
+      lastSyncTime,
+      autoBackupEnabled,
+      backupPath,
       pinCode,
       pinAttempts,
     ];
   }
+
+  /// Получить только обычные ключи (SharedPreferences)
+  static List<AppKey> getUnprotectedKeys() {
+    return getAllKeys().where((key) => !key.isProtected).toList();
+  }
+
+  /// Получить только защищённые ключи (SecureStorage)
+  static List<AppKey> getProtectedKeys() {
+    return getAllKeys().where((key) => key.isProtected).toList();
+  }
 }
+
+// ==================== Устаревшие классы для обратной совместимости ====================
+
+/// @Deprecated Используйте [AppKeys] вместо этого класса
+@Deprecated('Используйте AppKeys вместо AppPreferenceKeys')
+typedef AppPreferenceKeys = AppKeys;
+
+/// @Deprecated Используйте [AppKeys] вместо этого класса
+@Deprecated('Используйте AppKeys вместо AppSecureKeys')
+typedef AppSecureKeys = AppKeys;
