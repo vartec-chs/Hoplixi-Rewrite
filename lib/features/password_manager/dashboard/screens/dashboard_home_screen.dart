@@ -29,15 +29,15 @@ import 'package:sliver_tools/sliver_tools.dart';
 
 const _kStatusSwitchDuration = Duration(milliseconds: 180);
 
-class DashboardHomeScreenV2 extends ConsumerStatefulWidget {
-  const DashboardHomeScreenV2({super.key});
+class DashboardHomeScreen extends ConsumerStatefulWidget {
+  const DashboardHomeScreen({super.key});
 
   @override
-  ConsumerState<DashboardHomeScreenV2> createState() =>
+  ConsumerState<DashboardHomeScreen> createState() =>
       _DashboardHomeScreenV2State();
 }
 
-class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
+class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
   final GlobalKey<SliverAnimatedListState> _listKey = GlobalKey();
   final GlobalKey<SliverAnimatedGridState> _gridKey = GlobalKey();
   late final ScrollController _scrollController;
@@ -696,9 +696,9 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreenV2> {
           final shouldDelete = await showDialog<bool>(
             context: context,
             builder: (dialogContext) => AlertDialog(
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerLow,
+              // backgroundColor: Theme.of(
+              //   context,
+              // ).colorScheme.surfaceContainerLow,
               title: const Text("Удалить?"),
               content: Text("Вы уверены, что хотите удалить '$itemName'?"),
               actions: [

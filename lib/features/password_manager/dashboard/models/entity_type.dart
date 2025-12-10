@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hoplixi/core/app_paths.dart';
+
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/routing/paths.dart';
 
@@ -153,5 +153,6 @@ extension EntityTypeRouting on EntityType {
     // Добавьте здесь пути, которые должны открывать sidebar
     // Например: '/dashboard/detail/', '/dashboard/preview/'
     AppRoutesPaths.dashboardMigrateOtp,
+    AppRoutesPaths.dashboardMigratePasswords,
   ];
 }

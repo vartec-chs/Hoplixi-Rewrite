@@ -90,13 +90,16 @@ class NotificationCard extends StatelessWidget {
           ),
           if (onDismiss != null) ...[
             const SizedBox(width: 12),
-            GestureDetector(
-              onTap: onDismiss,
-              child: Icon(
+            IconButton(
+              onPressed: onDismiss,
+              icon: Icon(
                 Icons.close,
                 color: textColor.withOpacity(0.6),
                 size: 20,
               ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
             ),
           ],
         ],

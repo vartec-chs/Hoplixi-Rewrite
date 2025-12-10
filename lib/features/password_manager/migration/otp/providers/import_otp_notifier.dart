@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/core/utils/smart_converter_base.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/otp_extractor.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/providers/import_otp_state.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/otp_extractor.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/providers/import_otp_state.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';
@@ -219,7 +219,7 @@ class ImportOtpNotifier extends Notifier<ImportOtpState> {
       // Триггерим обновление списка OTP (не заметок!)
       ref
           .read(dataRefreshTriggerProvider.notifier)
-          .triggerEntityUpdate(EntityType.otp);
+          .triggerEntityAdd(EntityType.otp);
 
       return true;
     } catch (e, s) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
@@ -12,13 +12,14 @@ import 'package:hoplixi/features/password_manager/dashboard/forms/note_form/scre
 import 'package:hoplixi/features/password_manager/dashboard/forms/bank_card_form/screens/bank_card_form_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/forms/file_form/screens/file_form_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/forms/otp_form/screens/otp_form_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/screens/import_otp_screen.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/screens/import_otp_screen.dart';
 import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
+import 'package:hoplixi/features/password_manager/migration/passwords/screens/password_migration_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
 final List<RouteBase> appRoutes = [
@@ -55,7 +56,7 @@ final List<RouteBase> appRoutes = [
       GoRoute(
         path: AppRoutesPaths.dashboardHome,
         builder: (context, state) {
-          return const DashboardHomeScreenV2();
+          return const DashboardHomeScreen();
         },
       ),
       GoRoute(
@@ -96,6 +97,12 @@ final List<RouteBase> appRoutes = [
         path: AppRoutesPaths.dashboardTagManager,
         builder: (context, state) {
           return const TagsManagerScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutesPaths.dashboardMigration,
+        builder: (context, state) {
+          return const PasswordMigrationScreen();
         },
       ),
 
@@ -185,6 +192,13 @@ final List<RouteBase> appRoutes = [
         builder: (context, state) {
           final otpId = state.pathParameters['id'];
           return OtpFormScreen(otpId: otpId);
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutesPaths.dashboardMigratePasswords,
+        builder: (context, state) {
+          return const PasswordMigrationScreen();
         },
       ),
     ],

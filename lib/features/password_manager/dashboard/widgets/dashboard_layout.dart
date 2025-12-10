@@ -6,7 +6,7 @@ import 'package:hoplixi/features/password_manager/dashboard/models/dashboard_des
 import 'package:hoplixi/features/password_manager/dashboard/models/dashboard_fab_action.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen_v2.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -273,7 +273,7 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
           _buildNavigationRail(context, selectedIndex),
 
           // Home контент (всегда присутствует)
-          const Expanded(flex: 1, child: DashboardHomeScreenV2()),
+          const Expanded(flex: 1, child: DashboardHomeScreen()),
 
           // Анимированный Sidebar справа
           AnimatedBuilder(

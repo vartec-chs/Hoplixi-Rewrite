@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/otp_extractor.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/providers/import_otp_notifier.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/migrate_otp/widgets/otp_import_list_item.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/otp_extractor.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/providers/import_otp_notifier.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/widgets/otp_import_list_item.dart';
 import 'package:hoplixi/features/qr_scanner/widgets/qr_scanner_widget.dart';
 import 'package:hoplixi/shared/ui/slider_button.dart';
 

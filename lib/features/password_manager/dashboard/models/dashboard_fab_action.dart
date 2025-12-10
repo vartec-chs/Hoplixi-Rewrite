@@ -106,7 +106,7 @@ enum DashboardFabAction {
       case DashboardFabAction.importOtp:
         return AppRoutesPaths.dashboardMigrateOtp;
       case DashboardFabAction.migratePasswords:
-        return null; // TODO: Implement password migration path
+        return AppRoutesPaths.dashboardMigratePasswords;
       case DashboardFabAction.createEntity:
         return entityType?.createPath;
     }
