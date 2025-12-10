@@ -28,6 +28,7 @@ class PasswordDao extends DatabaseAccessor<MainStore>
   // toggle favorite
   @override
   Future<bool> toggleFavorite(String id, bool isFavorite) async {
+ 
     final result = await (update(passwords)..where((p) => p.id.equals(id)))
         .write(PasswordsCompanion(isFavorite: Value(isFavorite)));
 

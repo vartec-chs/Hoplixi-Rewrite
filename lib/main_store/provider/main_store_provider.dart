@@ -49,6 +49,24 @@ final mainStoreManagerProvider = FutureProvider<MainStoreManager?>((ref) async {
       : null;
 });
 
+/// Провайдер для потока обновлений данных
+///
+/// Предоставляет Stream<void> для отслеживания изменений в базе данных.
+/// Доступен только когда хранилище открыто.
+final dataUpdateStreamProvider = Provider<Stream<void>>((ref) {
+  final managerAsync = ref.watch(mainStoreManagerProvider);
+
+  return managerAsync.maybeWhen(
+    data: (manager) {
+      if (manager != null && manager.currentStore != null) {
+        return manager.currentStore!.watchDataChanged();
+      }
+      return const Stream.empty();
+    },
+    orElse: () => const Stream.empty(),
+  );
+});
+
 /// AsyncNotifier для управления состоянием хранилища MainStore
 ///
 /// Предоставляет методы для:

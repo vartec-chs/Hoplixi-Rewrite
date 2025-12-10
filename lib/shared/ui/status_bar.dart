@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
+import 'package:hoplixi/shared/ui/update_marker.dart';
 
 /// Простой статус-бар для отображения информации внизу экрана
 class StatusBar extends ConsumerWidget {
@@ -76,6 +77,7 @@ class StatusBar extends ConsumerWidget {
                     padding: const EdgeInsets.only(right: 8.0),
                     child: statusState.rightContent!,
                   ),
+                const _UpdateMarkerWidget(),
                 const _DatabaseStatusWidget(),
               ],
             ),
@@ -198,6 +200,21 @@ class _DatabaseStatusWidget extends ConsumerWidget {
     }
 
     return chip;
+  }
+}
+
+/// Виджет для отображения маркера обновлений
+class _UpdateMarkerWidget extends ConsumerWidget {
+  const _UpdateMarkerWidget();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stream = ref.watch(dataUpdateStreamProvider);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: UpdateMarker(updateStream: stream),
+    );
   }
 }
 

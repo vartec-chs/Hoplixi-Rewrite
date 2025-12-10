@@ -89,4 +89,35 @@ class MainStore extends _$MainStore {
 
   @override
   int get schemaVersion => MainConstants.databaseSchemaVersion;
+
+  /// Поток для отслеживания изменений в данных
+  ///
+  /// Эмитирует событие каждый раз при изменении данных в любой таблице
+  Stream<void> watchDataChanged() {
+    return customSelect(
+      'SELECT 1', // данные нам не нужны
+      readsFrom: {
+        passwords,
+        passwordsHistory,
+        otps,
+        otpsHistory,
+        notes,
+        notesHistory,
+        bankCards,
+        bankCardsHistory,
+        files,
+        filesHistory,
+        categories,
+        tags,
+        icons,
+        passwordsTags,
+        otpsTags,
+        notesTags,
+        bankCardsTags,
+        filesTags,
+      }, // отслеживаем все основные таблицы
+    ).watch().map((_) {
+      return;
+    }); // превращаем в Stream<void>
+  }
 }
