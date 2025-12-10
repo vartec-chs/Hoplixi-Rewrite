@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/lifecycle/auto_lock_provider.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
 import 'package:hoplixi/shared/ui/update_marker.dart';
 
@@ -77,11 +78,84 @@ class StatusBar extends ConsumerWidget {
                     padding: const EdgeInsets.only(right: 8.0),
                     child: statusState.rightContent!,
                   ),
+                const _AutoLockTimerWidget(),
                 const _UpdateMarkerWidget(),
                 const _DatabaseStatusWidget(),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AutoLockTimerWidget extends ConsumerStatefulWidget {
+  const _AutoLockTimerWidget();
+
+  @override
+  ConsumerState<_AutoLockTimerWidget> createState() =>
+      _AutoLockTimerWidgetState();
+}
+
+class _AutoLockTimerWidgetState extends ConsumerState<_AutoLockTimerWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+    _opacityAnimation = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final autoLockState = ref.watch(autoLockProvider);
+
+    if (!autoLockState.isWarning) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: FadeTransition(
+        opacity: _opacityAnimation,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.red.withOpacity(0.5), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.timer, size: 12, color: Colors.red),
+              const SizedBox(width: 4),
+              Text(
+                'Автоблокировка: ${autoLockState.remainingSeconds}с',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
+import 'package:hoplixi/core/lifecycle/app_lifecycle_observer.dart';
 import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/core/theme/index.dart';
 import 'package:hoplixi/core/utils/window_manager.dart';
@@ -21,28 +22,14 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> with TrayListener {
-  late final AppLifecycleListener _listener;
-
   @override
   void initState() {
     trayManager.addListener(this);
     super.initState();
-    // final appLifecycleNotifier = ref.read(appLifecycleProvider.notifier);
-    // _listener = AppLifecycleListener(
-    //   onDetach: () => appLifecycleNotifier.onDetach(),
-    //   onHide: () => appLifecycleNotifier.onHide(),
-    //   onInactive: () => appLifecycleNotifier.onInactive(),
-    //   onPause: () => appLifecycleNotifier.onPause(),
-    //   onRestart: () => appLifecycleNotifier.onRestart(),
-    //   onResume: () => appLifecycleNotifier.onResume(),
-    //   onShow: () => appLifecycleNotifier.onShow(),
-    //   onExitRequested: () => appLifecycleNotifier.onExitRequested(),
-    // );
   }
 
   @override
   void dispose() {
-    _listener.dispose();
     trayManager.removeListener(this);
     super.dispose();
   }
@@ -51,9 +38,6 @@ class _AppState extends ConsumerState<App> with TrayListener {
   void onTrayIconMouseDown() async {
     await WindowManager.show();
   }
-
-  @override
-  void onTrayIconLeftMouseUp() {}
 
   @override
   void onTrayIconRightMouseDown() {
@@ -98,32 +82,34 @@ class _AppState extends ConsumerState<App> with TrayListener {
 
     final themeMode = theme.value ?? ThemeMode.system;
 
-    return animated_theme.ThemeProvider(
-      initTheme: themeMode == ThemeMode.light
-          ? AppTheme.light(context)
-          : themeMode == ThemeMode.dark
-          ? AppTheme.dark(context)
-          : MediaQuery.of(context).platformBrightness == Brightness.dark
-          ? AppTheme.dark(context)
-          : AppTheme.light(context),
-      child: MaterialApp.router(
-        title: MainConstants.appName,
-        theme: AppTheme.light(context),
-        darkTheme: AppTheme.dark(context),
-        routerConfig: router,
-        // themeMode: themeMode,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          FlutterQuillLocalizations.delegate,
-        ],
-        debugShowCheckedModeBanner: false,
-        builder: (context, child) {
-          return animated_theme.ThemeSwitchingArea(
-            child: RootBarsOverlay(child: child!),
-          );
-        },
+    return AppLifecycleObserver(
+      child: animated_theme.ThemeProvider(
+        initTheme: themeMode == ThemeMode.light
+            ? AppTheme.light(context)
+            : themeMode == ThemeMode.dark
+            ? AppTheme.dark(context)
+            : MediaQuery.of(context).platformBrightness == Brightness.dark
+            ? AppTheme.dark(context)
+            : AppTheme.light(context),
+        child: MaterialApp.router(
+          title: MainConstants.appName,
+          theme: AppTheme.light(context),
+          darkTheme: AppTheme.dark(context),
+          routerConfig: router,
+          // themeMode: themeMode,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            FlutterQuillLocalizations.delegate,
+          ],
+          debugShowCheckedModeBanner: false,
+          builder: (context, child) {
+            return animated_theme.ThemeSwitchingArea(
+              child: RootBarsOverlay(child: child!),
+            );
+          },
+        ),
       ),
     );
   }
