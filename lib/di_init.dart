@@ -2,7 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hoplixi/core/app_preferences/app_preferences.dart';
 import 'package:hoplixi/core/services/hive_box_manager.dart';
-import 'package:hoplixi/core/services/settings_service.dart';
+
 import 'package:hoplixi/main_store/services/db_history_services.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -17,12 +17,6 @@ Future<void> setupDI() async {
   );
 
   getIt.registerLazySingleton<LocalAuthentication>(() => LocalAuthentication());
-
-  getIt.registerLazySingleton<SettingsService>(() => SettingsService(
-        getIt<PreferencesService>(),
-        getIt<SecureStorageService>(),
-        getIt<LocalAuthentication>(),
-      ));
 
   // Инициализация HiveBoxManager
   final hiveBoxManager = HiveBoxManager(getIt<FlutterSecureStorage>());
