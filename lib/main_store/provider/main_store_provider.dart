@@ -321,9 +321,9 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
 
   /// Блокировать текущее хранилище
   ///
-  /// Блокирует хранилище без закрытия соединения.
+  /// Блокирует хранилище и закрывает соединение.
   /// Пользователь должен будет ввести пароль для разблокировки.
-  void lockStore() {
+  Future<void> lockStore() async {
     if (!_currentState.isOpen) {
       logWarning('Store is not open, cannot lock', tag: _logTag);
       return;
@@ -331,11 +331,28 @@ class MainStoreAsyncNotifier extends AsyncNotifier<DatabaseState> {
 
     logInfo('Locking store', tag: _logTag);
 
+    final currentPath = _currentState.path;
+    final currentName = _currentState.name;
+
+    // Закрываем соединение
+    await _manager.closeStore();
+
     _setState(
-      _currentState.copyWith(status: DatabaseStatus.locked, error: null),
+      _currentState.copyWith(
+        status: DatabaseStatus.locked,
+        error: null,
+        path: currentPath,
+        name: currentName,
+      ),
     );
 
     logInfo('Store locked successfully', tag: _logTag);
+  }
+
+  /// Сбросить состояние (выход на главный экран)
+  void resetState() {
+    logInfo('Resetting state to idle', tag: _logTag);
+    _setState(const DatabaseState(status: DatabaseStatus.idle));
   }
 
   /// Разблокировать хранилище

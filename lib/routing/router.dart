@@ -40,15 +40,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         final dbState = dbStateAsync.value!;
         final currentPath = state.matchedLocation;
 
+        // Если БД заблокирована, редиректим на экран блокировки
+        if (dbState.isLocked) {
+          if (currentPath != AppRoutesPaths.lockStore) {
+            WindowManager.instance.setSize(MainConstants.defaultWindowSize);
+            WindowManager.instance.center();
+            return AppRoutesPaths.lockStore;
+          }
+          return null;
+        }
+
         if (dbState.isOpen &&
             (currentPath == AppRoutesPaths.createStore ||
                 currentPath == AppRoutesPaths.openStore ||
-                currentPath == AppRoutesPaths.home)) {
+                currentPath == AppRoutesPaths.home ||
+                currentPath == AppRoutesPaths.lockStore)) {
           WindowManager.instance.setSize(MainConstants.defaultDashboardSize);
           WindowManager.instance.center();
           return AppRoutesPaths.dashboardHome;
-        } else if (dbState.isClosed &&
-            (currentPath.startsWith(AppRoutesPaths.dashboard))) {
+        } else if ((dbState.isClosed || dbState.isIdle) &&
+            (currentPath.startsWith(AppRoutesPaths.dashboard) ||
+                currentPath == AppRoutesPaths.lockStore)) {
           WindowManager.instance.setSize(MainConstants.defaultWindowSize);
           WindowManager.instance.center();
           return AppRoutesPaths.home;

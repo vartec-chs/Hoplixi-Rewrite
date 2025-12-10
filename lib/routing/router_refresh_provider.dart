@@ -10,7 +10,10 @@ class RouterRefreshNotifier extends Notifier<int> with ChangeNotifier {
   @override
   int build() {
     ref.listen<AsyncValue<DatabaseState>>(mainStoreProvider, (previous, next) {
-      if (next.hasValue && (next.value!.isOpen || next.value!.isClosed)) {
+      if (next.hasValue &&
+          (next.value!.isOpen ||
+              next.value!.isClosed ||
+              next.value!.isLocked)) {
         notifyListeners();
       }
     });

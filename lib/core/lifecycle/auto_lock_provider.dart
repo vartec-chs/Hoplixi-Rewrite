@@ -105,7 +105,7 @@ class AutoLockNotifier extends Notifier<AutoLockState> {
 
   Future<void> _triggerLock() async {
     logInfo('Auto-lock triggered', tag: _tag);
-    await ref.read(mainStoreProvider.notifier).closeStore();
+    await ref.read(mainStoreProvider.notifier).lockStore();
   }
 }
 

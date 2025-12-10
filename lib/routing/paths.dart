@@ -9,6 +9,7 @@ class AppRoutesPaths {
   // Add other route paths as needed
   static const String createStore = '/create-store';
   static const String openStore = '/open-store';
+  static const String lockStore = '/lock-store';
 
   // Dashboard related paths
   static const String dashboard = '/dashboard';
