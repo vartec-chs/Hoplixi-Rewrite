@@ -4,3 +4,5 @@
 library;
 
 export 'hive_box_manager.dart';
+export 'local_auth_failure.dart';
+export 'local_auth_service.dart';

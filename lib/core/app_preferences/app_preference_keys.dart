@@ -157,34 +157,6 @@ class AppPreferenceKeys {
 class AppSecureKeys {
   // ==================== Аутентификация ====================
 
-  static const masterPassword = SecureKey<String>(
-    'master_password',
-    category: PrefCategory.security,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const passwordHash = SecureKey<String>(
-    'password_hash',
-    category: PrefCategory.security,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const encryptionKey = SecureKey<String>(
-    'encryption_key',
-    category: PrefCategory.security,
-    editable: false,
-    isHiddenUI: true,
-  );
-
-  static const biometricKey = SecureKey<String>(
-    'biometric_key',
-    category: PrefCategory.security,
-    editable: false,
-    isHiddenUI: true,
-  );
-
   // ==================== Токены ====================
 
   static const accessToken = SecureKey<String>(
@@ -251,10 +223,6 @@ class AppSecureKeys {
   /// Получить все ключи (для UI настроек)
   static List<SecureKey> getAllKeys() {
     return [
-      masterPassword,
-      passwordHash,
-      encryptionKey,
-      biometricKey,
       accessToken,
       refreshToken,
       apiKey,

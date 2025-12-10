@@ -77,15 +77,6 @@ void exampleUsage() async {
 
   // ==================== Работа с FlutterSecureStorage ====================
 
-  // Сохранение конфиденциальных данных
-  await secureStorage.setString(
-    AppSecureKeys.masterPassword,
-    'super_secret_password',
-  );
-  await secureStorage.setString(
-    AppSecureKeys.encryptionKey,
-    'encryption_key_base64',
-  );
   await secureStorage.setInt(AppSecureKeys.pinAttempts, 0);
 
   // Сохранение JSON (как строка)
@@ -101,13 +92,6 @@ void exampleUsage() async {
     'expiresAt': DateTime.now().millisecondsSinceEpoch,
   });
 
-  // Чтение конфиденциальных данных
-  final masterPassword = await secureStorage.getString(
-    AppSecureKeys.masterPassword,
-  );
-  final encryptionKey = await secureStorage.getString(
-    AppSecureKeys.encryptionKey,
-  );
   final pinAttempts = await secureStorage.getInt(AppSecureKeys.pinAttempts);
 
   // Чтение с значением по умолчанию
@@ -125,15 +109,6 @@ void exampleUsage() async {
   final sessionData = await secureStorage.getJson(
     AppSecureKeys.userSessionData,
   );
-
-  // Проверка наличия ключа
-  final hasPassword = await secureStorage.containsKey(
-    AppSecureKeys.masterPassword,
-  );
-
-  if (!hasPassword) {
-    debugPrint('Мастер-пароль не установлен');
-  }
 
   // Удаление значения
   await secureStorage.remove(AppSecureKeys.accessToken);
