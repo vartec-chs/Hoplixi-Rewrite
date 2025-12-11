@@ -46,6 +46,22 @@ sealed class DatabaseError with _$DatabaseError implements Exception {
     @JsonKey(includeToJson: true) DateTime? timestamp,
   }) = QueryFailedError;
 
+  const factory DatabaseError.archiveFailed({
+    @Default('DB_ARCHIVE_FAILED') String code,
+    @Default('Не удалось создать архив') String message,
+    Map<String, dynamic>? data,
+    @JsonKey(includeToJson: true) StackTrace? stackTrace,
+    @JsonKey(includeToJson: true) DateTime? timestamp,
+  }) = ArchiveFailedError;
+
+  const factory DatabaseError.unarchiveFailed({
+    @Default('DB_UNARCHIVE_FAILED') String code,
+    @Default('Не удалось распаковать архив') String message,
+    Map<String, dynamic>? data,
+    @JsonKey(includeToJson: true) StackTrace? stackTrace,
+    @JsonKey(includeToJson: true) DateTime? timestamp,
+  }) = UnarchiveFailedError;
+
   const factory DatabaseError.recordNotFound({
     @Default('DB_RECORD_NOT_FOUND') String code,
     @Default('Запись не найдена в базе данных') String message,

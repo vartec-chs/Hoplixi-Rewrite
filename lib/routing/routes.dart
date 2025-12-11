@@ -20,6 +20,7 @@ import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/lock_store/lock_store_screen.dart';
+import 'package:hoplixi/features/archive_storage/ui/archive_screen.dart';
 import 'package:hoplixi/features/password_manager/migration/passwords/screens/password_migration_screen.dart';
 import 'package:hoplixi/features/settings/screens/settings_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
@@ -56,6 +57,10 @@ final List<RouteBase> appRoutes = [
   GoRoute(
     path: AppRoutesPaths.lockStore,
     builder: (context, state) => const LockStoreScreen(),
+  ),
+  GoRoute(
+    path: AppRoutesPaths.archiveStore,
+    builder: (context, state) => const ArchiveScreen(),
   ),
 
   GoRoute(

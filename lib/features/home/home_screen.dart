@@ -269,10 +269,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       icon: CupertinoIcons.arrow_up_right_square,
                       label: 'Импорт/Экспорт',
                       description: 'Импортировать или экспортировать проект',
-                      disabled: true,
-                      onTap: () {
-                        // TODO: Импорт/Экспорт
-                      },
+                      onTap: () => context.push(AppRoutesPaths.archiveStore),
                     ),
                   ),
                   const SizedBox(width: 16),
