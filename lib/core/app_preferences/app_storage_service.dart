@@ -519,6 +519,11 @@ class AppStorageService {
   // ==================== Приватные методы ====================
 
   Future<T?> _getPrefs<T>(AppKey<T> key) async {
+    // Для dynamic типа возвращаем null
+    if (T == dynamic) {
+      return null;
+    }
+
     if (T == String) {
       return _prefs.getString(key.key) as T?;
     } else if (T == int) {
@@ -534,6 +539,11 @@ class AppStorageService {
   }
 
   Future<T?> _getSecure<T>(AppKey<T> key) async {
+    // Для dynamic типа возвращаем null
+    if (T == dynamic) {
+      return null;
+    }
+
     final value = await _secureStorage.read(key: key.key);
     if (value == null) return null;
 
@@ -550,6 +560,24 @@ class AppStorageService {
   }
 
   Future<bool> _setPrefs<T>(AppKey<T> key, T value) async {
+    // Для dynamic типа пытаемся определить тип значения
+    if (T == dynamic) {
+      if (value is String) {
+        return _prefs.setString(key.key, value);
+      } else if (value is int) {
+        return _prefs.setInt(key.key, value);
+      } else if (value is double) {
+        return _prefs.setDouble(key.key, value);
+      } else if (value is bool) {
+        return _prefs.setBool(key.key, value);
+      } else if (value is List<String>) {
+        return _prefs.setStringList(key.key, value);
+      }
+      throw UnsupportedError(
+        'Value type ${value.runtimeType} is not supported',
+      );
+    }
+
     if (T == String) {
       return _prefs.setString(key.key, value as String);
     } else if (T == int) {
@@ -571,7 +599,9 @@ class AppStorageService {
     } else if (value is int || value is double || value is bool) {
       stringValue = value.toString();
     } else {
-      throw UnsupportedError('Type $T is not supported for secure storage');
+      throw UnsupportedError(
+        'Value type ${value.runtimeType} is not supported for secure storage',
+      );
     }
     await _secureStorage.write(key: key.key, value: stringValue);
   }

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/core/app_preferences/app_key.dart';
 import 'package:hoplixi/core/app_preferences/app_preference_keys.dart';
 import 'package:hoplixi/core/app_preferences/app_storage_service.dart';
 import 'package:hoplixi/core/app_preferences/storage_errors.dart';
@@ -24,7 +25,26 @@ class SettingsNotifier extends Notifier<Map<String, dynamic>> {
     // Загружаем все ключи
     for (final key in AppKeys.getAllKeys()) {
       try {
-        final value = await _storage.get(key);
+        dynamic value;
+
+        // Используем специализированные методы на основе проверки runtimeType
+        final typeString = key.runtimeType.toString();
+        if (typeString.contains('AppKey<String>')) {
+          value = await _storage.getString(key as AppKey<String>);
+        } else if (typeString.contains('AppKey<int>')) {
+          value = await _storage.getInt(key as AppKey<int>);
+        } else if (typeString.contains('AppKey<bool>')) {
+          value = await _storage.getBool(key as AppKey<bool>);
+        } else if (typeString.contains('AppKey<double>')) {
+          value = await _storage.getDouble(key as AppKey<double>);
+        } else if (typeString.contains('List<String>')) {
+          value = await _storage.getStringList(key as AppKey<List<String>>);
+        } else {
+          // Для неизвестных типов пропускаем
+          logError('Unknown key type: $typeString for key ${key.key}');
+          continue;
+        }
+
         if (value != null) {
           settings[key.key] = value;
         }
@@ -44,7 +64,7 @@ class SettingsNotifier extends Notifier<Map<String, dynamic>> {
   /// Установить строковое значение
   Future<void> setString(String key, String value) async {
     final appKey = AppKeys.getAllKeys().firstWhere((k) => k.key == key);
-    final result = await _storage.setString(appKey as dynamic, value);
+    final result = await _storage.setString(appKey as AppKey<String>, value);
     if (result) {
       state = {...state, key: value};
     }
@@ -53,7 +73,7 @@ class SettingsNotifier extends Notifier<Map<String, dynamic>> {
   /// Установить булево значение (без биометрии)
   Future<void> setBool(String key, bool value) async {
     final appKey = AppKeys.getAllKeys().firstWhere((k) => k.key == key);
-    final result = await _storage.setBool(appKey as dynamic, value);
+    final result = await _storage.setBool(appKey as AppKey<bool>, value);
     if (result) {
       state = {...state, key: value};
     }
@@ -62,7 +82,7 @@ class SettingsNotifier extends Notifier<Map<String, dynamic>> {
   /// Установить целочисленное значение
   Future<void> setInt(String key, int value) async {
     final appKey = AppKeys.getAllKeys().firstWhere((k) => k.key == key);
-    final result = await _storage.setInt(appKey as dynamic, value);
+    final result = await _storage.setInt(appKey as AppKey<int>, value);
     if (result) {
       state = {...state, key: value};
     }
@@ -76,7 +96,7 @@ class SettingsNotifier extends Notifier<Map<String, dynamic>> {
   }) async {
     final appKey = AppKeys.getAllKeys().firstWhere((k) => k.key == key);
     final result = await _storage.setBoolWithBiometric(
-      appKey as dynamic,
+      appKey as AppKey<bool>,
       value,
       biometricReason: reason ?? 'Подтвердите изменение настройки',
     );
@@ -126,7 +146,7 @@ class SettingsNotifier extends Notifier<Map<String, dynamic>> {
   }) async {
     final appKey = AppKeys.getAllKeys().firstWhere((k) => k.key == key);
     final result = await _storage.setStringWithBiometric(
-      appKey as dynamic,
+      appKey as AppKey<String>,
       value,
       biometricReason: reason ?? 'Подтвердите изменение настройки',
     );
