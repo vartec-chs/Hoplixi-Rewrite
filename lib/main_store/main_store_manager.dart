@@ -300,7 +300,9 @@ class MainStoreManager {
           .replace(storeMeta.copyWith(lastOpenedAt: DateTime.now()));
 
       // Обновление или создание записи в истории
-      final existingHistory = await _dbHistoryService.getByPath(actualStoragePath);
+      final existingHistory = await _dbHistoryService.getByPath(
+        actualStoragePath,
+      );
       if (existingHistory == null) {
         // Создаем новую запись в истории, если ее нет
         await _dbHistoryService.create(
