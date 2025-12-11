@@ -32,6 +32,7 @@ class DashboardCardCallbacks {
     required this.onToggleArchive,
     required this.onDelete,
     required this.onRestore,
+    required this.onLocalRemove,
   });
 
   final void Function(String id) onToggleFavorite;
@@ -39,9 +40,13 @@ class DashboardCardCallbacks {
   final void Function(String id) onToggleArchive;
   final void Function(String id, bool? isDeleted) onDelete;
   final void Function(String id) onRestore;
+  final void Function(String id) onLocalRemove;
 
-  /// Создать коллбэки из WidgetRef
-  factory DashboardCardCallbacks.fromRef(WidgetRef ref) {
+  /// Создать коллбэки из WidgetRef с локальным удалением
+  factory DashboardCardCallbacks.fromRefWithLocalRemove(
+    WidgetRef ref,
+    void Function(String id) onLocalRemove,
+  ) {
     return DashboardCardCallbacks(
       onToggleFavorite: (id) =>
           ref.read(paginatedListProvider.notifier).toggleFavorite(id),
@@ -58,6 +63,7 @@ class DashboardCardCallbacks {
       },
       onRestore: (id) =>
           ref.read(paginatedListProvider.notifier).restoreFromDeleted(id),
+      onLocalRemove: onLocalRemove,
     );
   }
 }
@@ -577,6 +583,9 @@ class DashboardHomeBuilders {
         }
       },
       onDismissed: (_) {
+        // Сначала удаляем локально без анимации, чтобы Dismissible не жаловался
+        callbacks.onLocalRemove(item.id);
+        // Затем удаляем через провайдер
         callbacks.onDelete(item.id, item.isDeleted);
       },
       child: child,

@@ -243,15 +243,20 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
       AsyncValue<DashboardListState<BaseCardDto>>
     >(paginatedListProvider, (prev, next) {
       next.whenData((state) {
-        // Обновляем список при изменении данных
-        // Если это первая загрузка (список был пуст), даем время на построение SliverAnimatedList
-        if (_displayedItems.isEmpty && state.items.isNotEmpty) {
-          Future.delayed(const Duration(milliseconds: 50), () {
-            if (mounted) _updateList(state.items);
-          });
-        } else {
-          _updateList(state.items);
-        }
+        // Обновляем список после построения кадра, чтобы избежать мутации во время layout
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+
+          // Обновляем список при изменении данных
+          // Если это первая загрузка (список был пуст), даем время на построение SliverAnimatedList
+          if (_displayedItems.isEmpty && state.items.isNotEmpty) {
+            Future.delayed(const Duration(milliseconds: 50), () {
+              if (mounted) _updateList(state.items);
+            });
+          } else {
+            _updateList(state.items);
+          }
+        });
       });
     });
 
@@ -292,7 +297,10 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
               isClearing: _isClearing,
               listKey: _listKey,
               gridKey: _gridKey,
-              callbacks: DashboardCardCallbacks.fromRef(ref),
+              callbacks: DashboardCardCallbacks.fromRefWithLocalRemove(
+                ref,
+                _removeItemLocally,
+              ),
               onInvalidate: () => ref.invalidate(paginatedListProvider),
             ),
           ],
@@ -313,7 +321,17 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
       item: item,
       animation: animation,
       viewMode: viewMode,
-      callbacks: DashboardCardCallbacks.fromRef(ref),
+      callbacks: DashboardCardCallbacks.fromRefWithLocalRemove(
+        ref,
+        _removeItemLocally,
+      ),
     );
+  }
+
+  /// Локальное удаление элемента без анимации (для Dismissible)
+  void _removeItemLocally(String id) {
+    setState(() {
+      _displayedItems.removeWhere((item) => item.id == id);
+    });
   }
 }
