@@ -73,6 +73,8 @@ class FilterModal {
   ) {
     return WoltModalSheetPage(
       hasTopBarLayer: true,
+      forceMaxHeight: true,
+
       isTopBarLayerAlwaysVisible: true,
       topBarTitle: Consumer(
         builder: (context, ref, _) {
@@ -207,13 +209,13 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
 
     return Container(
       constraints: BoxConstraints(
-        minHeight: UniversalPlatform.isDesktop ? windowHeight * 0.8 : 0,
+        minHeight: UniversalPlatform.isDesktop ? windowHeight * 0.88 : 0,
         maxHeight: UniversalPlatform.isDesktop
-            ? windowHeight * 0.9
+            ? windowHeight * 0.88
             : double.infinity,
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
