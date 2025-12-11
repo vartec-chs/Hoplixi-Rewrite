@@ -100,6 +100,7 @@ class _DashboardSliverAppBarState extends ConsumerState<DashboardSliverAppBar> {
     FilterModal.show(
       context: context,
       onFilterApplied: () {
+       
         logInfo('DashboardSliverAppBar: Фильтры применены');
         widget.onFilterApplied?.call();
       },

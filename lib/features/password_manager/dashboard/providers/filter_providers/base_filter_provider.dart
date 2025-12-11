@@ -25,6 +25,11 @@ class BaseFilterNotifier extends Notifier<BaseFilter> {
     return const BaseFilter();
   }
 
+  // set state
+  void setState(BaseFilter newState) {
+    state = newState;
+  }
+
   // ============================================================================
   // Методы поиска и фильтрации
   // ============================================================================

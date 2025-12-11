@@ -240,12 +240,12 @@ class PaginatedListNotifier
       case EntityType.password:
         final passwordFilter = ref.read(passwordsFilterProvider);
         final base = passwordFilter.base.copyWith(
-          isFavorite: tabFilter.isFavorite ?? passwordFilter.base.isFavorite,
-          isArchived: tabFilter.isArchived ?? passwordFilter.base.isArchived,
-          isDeleted: tabFilter.isDeleted ?? passwordFilter.base.isDeleted,
+          isFavorite: passwordFilter.base.isFavorite ?? tabFilter.isFavorite,
+          isArchived: passwordFilter.base.isArchived ?? tabFilter.isArchived,
+          isDeleted: passwordFilter.base.isDeleted ?? tabFilter.isDeleted,
           isFrequentlyUsed:
-              tabFilter.isFrequentlyUsed ??
-              passwordFilter.base.isFrequentlyUsed,
+              passwordFilter.base.isFrequentlyUsed ??
+              tabFilter.isFrequentlyUsed,
           limit: limit,
           offset: offset,
         );
@@ -253,11 +253,11 @@ class PaginatedListNotifier
       case EntityType.note:
         final notesFilter = ref.read(notesFilterProvider);
         final base = notesFilter.base.copyWith(
-          isFavorite: tabFilter.isFavorite ?? notesFilter.base.isFavorite,
-          isArchived: tabFilter.isArchived ?? notesFilter.base.isArchived,
-          isDeleted: tabFilter.isDeleted ?? notesFilter.base.isDeleted,
+          isFavorite: notesFilter.base.isFavorite ?? tabFilter.isFavorite,
+          isArchived: notesFilter.base.isArchived ?? tabFilter.isArchived,
+          isDeleted: notesFilter.base.isDeleted ?? tabFilter.isDeleted,
           isFrequentlyUsed:
-              tabFilter.isFrequentlyUsed ?? notesFilter.base.isFrequentlyUsed,
+              notesFilter.base.isFrequentlyUsed ?? tabFilter.isFrequentlyUsed,
           limit: limit,
           offset: offset,
         );
@@ -265,12 +265,12 @@ class PaginatedListNotifier
       case EntityType.bankCard:
         final bankCardsFilter = ref.read(bankCardsFilterProvider);
         final base = bankCardsFilter.base.copyWith(
-          isFavorite: tabFilter.isFavorite ?? bankCardsFilter.base.isFavorite,
-          isArchived: tabFilter.isArchived ?? bankCardsFilter.base.isArchived,
-          isDeleted: tabFilter.isDeleted ?? bankCardsFilter.base.isDeleted,
+          isFavorite: bankCardsFilter.base.isFavorite ?? tabFilter.isFavorite,
+          isArchived: bankCardsFilter.base.isArchived ?? tabFilter.isArchived,
+          isDeleted: bankCardsFilter.base.isDeleted ?? tabFilter.isDeleted,
           isFrequentlyUsed:
-              tabFilter.isFrequentlyUsed ??
-              bankCardsFilter.base.isFrequentlyUsed,
+              bankCardsFilter.base.isFrequentlyUsed ??
+              tabFilter.isFrequentlyUsed,
           limit: limit,
           offset: offset,
         );
@@ -278,11 +278,11 @@ class PaginatedListNotifier
       case EntityType.file:
         final filesFilter = ref.read(filesFilterProvider);
         final base = filesFilter.base.copyWith(
-          isFavorite: tabFilter.isFavorite ?? filesFilter.base.isFavorite,
-          isArchived: tabFilter.isArchived ?? filesFilter.base.isArchived,
-          isDeleted: tabFilter.isDeleted ?? filesFilter.base.isDeleted,
+          isFavorite: filesFilter.base.isFavorite ?? tabFilter.isFavorite,
+          isArchived: filesFilter.base.isArchived ?? tabFilter.isArchived,
+          isDeleted: filesFilter.base.isDeleted ?? tabFilter.isDeleted,
           isFrequentlyUsed:
-              tabFilter.isFrequentlyUsed ?? filesFilter.base.isFrequentlyUsed,
+              filesFilter.base.isFrequentlyUsed ?? tabFilter.isFrequentlyUsed,
           limit: limit,
           offset: offset,
         );
@@ -290,11 +290,11 @@ class PaginatedListNotifier
       case EntityType.otp:
         final otpsFilter = ref.read(otpsFilterProvider);
         final base = otpsFilter.base.copyWith(
-          isFavorite: tabFilter.isFavorite ?? otpsFilter.base.isFavorite,
-          isArchived: tabFilter.isArchived ?? otpsFilter.base.isArchived,
-          isDeleted: tabFilter.isDeleted ?? otpsFilter.base.isDeleted,
+          isFavorite: otpsFilter.base.isFavorite ?? tabFilter.isFavorite,
+          isArchived: otpsFilter.base.isArchived ?? tabFilter.isArchived,
+          isDeleted: otpsFilter.base.isDeleted ?? tabFilter.isDeleted,
           isFrequentlyUsed:
-              tabFilter.isFrequentlyUsed ?? otpsFilter.base.isFrequentlyUsed,
+              otpsFilter.base.isFrequentlyUsed ?? tabFilter.isFrequentlyUsed,
           limit: limit,
           offset: offset,
         );

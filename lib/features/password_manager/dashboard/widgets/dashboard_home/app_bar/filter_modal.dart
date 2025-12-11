@@ -112,21 +112,57 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   List<String> _selectedTagIds = [];
   List<String> _selectedTagNames = [];
 
+  // Локальные копии фильтров (изменяются локально, применяются при нажатии кнопки)
+  late BaseFilter _localBaseFilter;
+  PasswordsFilter? _localPasswordsFilter;
+  NotesFilter? _localNotesFilter;
+  OtpsFilter? _localOtpsFilter;
+  BankCardsFilter? _localBankCardsFilter;
+  FilesFilter? _localFilesFilter;
+
   // Типобезопасное хранение начальных значений для отката
   _InitialFilterValues? _initialValues;
 
   @override
   void initState() {
     super.initState();
+    // Инициализируем фильтры синхронно, чтобы избежать LateInitializationError
+    _initializeLocalFilters();
     _loadInitialValues();
     logDebug('FilterModal: Инициализация содержимого фильтра');
+  }
+
+  void _initializeLocalFilters() {
+    final entityType = ref.read(entityTypeProvider).currentType;
+    _localBaseFilter = ref.read(baseFilterProvider);
+
+    // Инициализируем категории и теги из базового фильтра
+    _selectedCategoryIds = List<String>.from(_localBaseFilter.categoryIds);
+    _selectedTagIds = List<String>.from(_localBaseFilter.tagIds);
+
+    switch (entityType) {
+      case EntityType.password:
+        _localPasswordsFilter = ref.read(passwordsFilterProvider);
+        break;
+      case EntityType.note:
+        _localNotesFilter = ref.read(notesFilterProvider);
+        break;
+      case EntityType.otp:
+        _localOtpsFilter = ref.read(otpsFilterProvider);
+        break;
+      case EntityType.bankCard:
+        _localBankCardsFilter = ref.read(bankCardsFilterProvider);
+        break;
+      case EntityType.file:
+        _localFilesFilter = ref.read(filesFilterProvider);
+        break;
+    }
   }
 
   void _loadInitialValues() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _saveInitialValues();
-      _loadSelectedCategoriesAndTags();
     });
   }
 
@@ -186,22 +222,6 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
     );
   }
 
-  void _loadSelectedCategoriesAndTags() {
-    final baseFilter = ref.read(baseFilterProvider);
-    setState(() {
-      _selectedCategoryIds = List<String>.from(baseFilter.categoryIds);
-      _selectedTagIds = List<String>.from(baseFilter.tagIds);
-    });
-
-    logDebug(
-      'FilterModal: Загружены выбранные категории и теги',
-      data: {
-        'categories': _selectedCategoryIds.length,
-        'tags': _selectedTagIds.length,
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final entityType = ref.watch(entityTypeProvider).currentType;
@@ -214,32 +234,53 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
             ? windowHeight * 0.88
             : double.infinity,
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Секция категорий
-            _buildCategoriesSection(entityType),
-            const SizedBox(height: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Прокручиваемый контент
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Секция категорий
+                  _buildCategoriesSection(entityType),
+                  const SizedBox(height: 24),
 
-            // Секция тегов
-            _buildTagsSection(entityType),
-            const SizedBox(height: 24),
+                  // Секция тегов
+                  _buildTagsSection(entityType),
+                  const SizedBox(height: 24),
 
-            // Базовые фильтры
-            _buildBaseFiltersSection(entityType),
-            const SizedBox(height: 24),
+                  // Базовые фильтры
+                  _buildBaseFiltersSection(entityType),
+                  const SizedBox(height: 24),
 
-            // Специфичные фильтры для типа сущности
-            _buildSpecificFiltersSection(entityType),
-            const SizedBox(height: 32),
+                  // Специфичные фильтры для типа сущности
+                  _buildSpecificFiltersSection(entityType),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
 
-            // Кнопки действий
-            _buildActionButtons(context),
-          ],
-        ),
+          // Закрепленные кнопки внизу
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: _buildActionButtons(context),
+          ),
+        ],
       ),
     );
   }
@@ -257,25 +298,17 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
         const SizedBox(height: 12),
         CategoryPickerField(
           isFilter: true,
-          selectedCategoryIds:
-              _selectedCategoryIds.isEmpty &&
-                  ref.read(baseFilterProvider).categoryIds.isNotEmpty
-              ? ref.read(baseFilterProvider).categoryIds
-              : _selectedCategoryIds,
-          selectedCategoryNames:
-              _selectedCategoryNames.isEmpty &&
-                  ref.read(baseFilterProvider).categoryIds.isNotEmpty
-              ? ref.read(baseFilterProvider).categoryIds
-              : _selectedCategoryNames,
+          selectedCategoryIds: _selectedCategoryIds,
+          selectedCategoryNames: _selectedCategoryNames,
           filterByType: _getCategoryType(entityType),
           onCategoriesSelected: (ids, names) {
             setState(() {
               _selectedCategoryIds = ids;
               _selectedCategoryNames = names;
+              _localBaseFilter = _localBaseFilter.copyWith(categoryIds: ids);
             });
-            ref.read(baseFilterProvider.notifier).setCategoryIds(ids);
             logDebug(
-              'FilterModal: Обновлены категории',
+              'FilterModal: Выбраны категории локально',
               data: {'count': ids.length},
             );
           },
@@ -297,25 +330,17 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
         const SizedBox(height: 12),
         TagPickerField(
           isFilter: true,
-          selectedTagIds:
-              _selectedTagIds.isEmpty &&
-                  ref.read(baseFilterProvider).tagIds.isNotEmpty
-              ? ref.read(baseFilterProvider).tagIds
-              : _selectedTagIds,
-          selectedTagNames:
-              _selectedTagNames.isEmpty &&
-                  ref.read(baseFilterProvider).tagIds.isNotEmpty
-              ? ref.read(baseFilterProvider).tagIds
-              : _selectedTagNames,
+          selectedTagIds: _selectedTagIds,
+          selectedTagNames: _selectedTagNames,
           filterByType: _getTagType(entityType),
           onTagsSelected: (ids, names) {
             setState(() {
               _selectedTagIds = ids;
               _selectedTagNames = names;
+              _localBaseFilter = _localBaseFilter.copyWith(tagIds: ids);
             });
-            ref.read(baseFilterProvider.notifier).setTagIds(ids);
             logDebug(
-              'FilterModal: Обновлены теги',
+              'FilterModal: Выбраны теги локально',
               data: {'count': ids.length},
             );
           },
@@ -325,8 +350,6 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   }
 
   Widget _buildBaseFiltersSection(EntityType entityType) {
-    final baseFilter = ref.watch(baseFilterProvider);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -338,28 +361,52 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
         ),
         const SizedBox(height: 12),
         BaseFilterSection(
-          filter: baseFilter,
+          filter: _localBaseFilter,
           entityTypeName: entityType.label,
           onFilterChanged: (updatedFilter) {
-            // Обновление через notifier методы
-            final notifier = ref.read(baseFilterProvider.notifier);
-            notifier.setQuery(updatedFilter.query);
-            notifier.setCategoryIds(updatedFilter.categoryIds);
-            notifier.setTagIds(updatedFilter.tagIds);
-            notifier.setFavorite(updatedFilter.isFavorite);
-            notifier.setArchived(updatedFilter.isArchived);
-            notifier.setDeleted(updatedFilter.isDeleted);
-            notifier.setPinned(updatedFilter.isPinned);
-            notifier.setHasNotes(updatedFilter.hasNotes);
-            notifier.setCreatedAfter(updatedFilter.createdAfter);
-            notifier.setCreatedBefore(updatedFilter.createdBefore);
-            notifier.setModifiedAfter(updatedFilter.modifiedAfter);
-            notifier.setModifiedBefore(updatedFilter.modifiedBefore);
-            notifier.setLastAccessedAfter(updatedFilter.lastAccessedAfter);
-            notifier.setLastAccessedBefore(updatedFilter.lastAccessedBefore);
-            notifier.setMinUsedCount(updatedFilter.minUsedCount);
-            notifier.setMaxUsedCount(updatedFilter.maxUsedCount);
-            notifier.setSortDirection(updatedFilter.sortDirection);
+            setState(() {
+              _localBaseFilter = updatedFilter;
+
+              // Обновляем base в специфичном фильтре текущего типа
+              switch (entityType) {
+                case EntityType.password:
+                  if (_localPasswordsFilter != null) {
+                    _localPasswordsFilter = _localPasswordsFilter!.copyWith(
+                      base: updatedFilter,
+                    );
+                  }
+                  break;
+                case EntityType.note:
+                  if (_localNotesFilter != null) {
+                    _localNotesFilter = _localNotesFilter!.copyWith(
+                      base: updatedFilter,
+                    );
+                  }
+                  break;
+                case EntityType.otp:
+                  if (_localOtpsFilter != null) {
+                    _localOtpsFilter = _localOtpsFilter!.copyWith(
+                      base: updatedFilter,
+                    );
+                  }
+                  break;
+                case EntityType.bankCard:
+                  if (_localBankCardsFilter != null) {
+                    _localBankCardsFilter = _localBankCardsFilter!.copyWith(
+                      base: updatedFilter,
+                    );
+                  }
+                  break;
+                case EntityType.file:
+                  if (_localFilesFilter != null) {
+                    _localFilesFilter = _localFilesFilter!.copyWith(
+                      base: updatedFilter,
+                    );
+                  }
+                  break;
+              }
+            });
+            logDebug('FilterModal: Обновлены базовые фильтры локально');
           },
         ),
       ],
@@ -385,65 +432,66 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   Widget _buildEntitySpecificSection(EntityType entityType) {
     switch (entityType) {
       case EntityType.password:
-        final passwordFilter = ref.watch(passwordsFilterProvider);
         return PasswordFilterSection(
-          filter: passwordFilter,
+          filter:
+              _localPasswordsFilter ?? PasswordsFilter(base: _localBaseFilter),
           onFilterChanged: (updatedFilter) {
-            ref
-                .read(passwordsFilterProvider.notifier)
-                .updateFilterDebounced(updatedFilter);
+            setState(() {
+              _localPasswordsFilter = updatedFilter;
+            });
+            logDebug('FilterModal: Обновлены фильтры паролей локально');
           },
         );
 
       case EntityType.note:
-        final notesFilter = ref.watch(notesFilterProvider);
         return NotesFilterSection(
-          filter: notesFilter,
+          filter: _localNotesFilter ?? NotesFilter(base: _localBaseFilter),
           onFilterChanged: (updatedFilter) {
-            ref
-                .read(notesFilterProvider.notifier)
-                .updateFilterDebounced(updatedFilter);
+            setState(() {
+              _localNotesFilter = updatedFilter;
+            });
+            logDebug('FilterModal: Обновлены фильтры заметок локально');
           },
         );
 
       case EntityType.otp:
-        final otpFilter = ref.watch(otpsFilterProvider);
         return OtpsFilterSection(
-          filter: otpFilter,
+          filter: _localOtpsFilter ?? OtpsFilter(base: _localBaseFilter),
           onFilterChanged: (updatedFilter) {
-            ref
-                .read(otpsFilterProvider.notifier)
-                .updateFilterDebounced(updatedFilter);
+            setState(() {
+              _localOtpsFilter = updatedFilter;
+            });
+            logDebug('FilterModal: Обновлены фильтры OTP локально');
           },
         );
 
       case EntityType.bankCard:
-        final bankCardsFilter = ref.watch(bankCardsFilterProvider);
         return BankCardsFilterSection(
-          filter: bankCardsFilter,
+          filter:
+              _localBankCardsFilter ?? BankCardsFilter(base: _localBaseFilter),
           onFilterChanged: (updatedFilter) {
-            ref
-                .read(bankCardsFilterProvider.notifier)
-                .updateFilterDebounced(updatedFilter);
+            setState(() {
+              _localBankCardsFilter = updatedFilter;
+            });
+            logDebug('FilterModal: Обновлены фильтры банковских карт локально');
           },
         );
 
       case EntityType.file:
-        final filesFilter = ref.watch(filesFilterProvider);
         return FilesFilterSection(
-          filter: filesFilter,
+          filter: _localFilesFilter ?? FilesFilter(base: _localBaseFilter),
           onFilterChanged: (updatedFilter) {
-            ref
-                .read(filesFilterProvider.notifier)
-                .updateFilterDebounced(updatedFilter);
+            setState(() {
+              _localFilesFilter = updatedFilter;
+            });
+            logDebug('FilterModal: Обновлены фильтры файлов локально');
           },
         );
     }
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    final baseFilter = ref.watch(baseFilterProvider);
-    final hasActiveFilters = baseFilter.hasActiveConstraints;
+    final hasActiveFilters = _localBaseFilter.hasActiveConstraints;
 
     return Row(
       children: [
@@ -453,7 +501,7 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
             child: OutlinedButton.icon(
               onPressed: _resetFilters,
               icon: const Icon(Icons.clear_all),
-              label: const Text('Сбросить все'),
+              label: const Text('Сбросить'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
@@ -507,42 +555,41 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   }
 
   void _resetFilters() {
-    logDebug('FilterModal: Сброс всех фильтров');
+    logDebug('FilterModal: Сброс всех локальных фильтров');
 
     try {
       final entityType = ref.read(entityTypeProvider).currentType;
+      final emptyBaseFilter = const BaseFilter();
 
-      // Сброс базового фильтра
-      ref.read(baseFilterProvider.notifier).reset();
-
-      // Сброс специфичного для типа фильтра
-      switch (entityType) {
-        case EntityType.password:
-          ref.read(passwordsFilterProvider.notifier).reset();
-          break;
-        case EntityType.note:
-          ref.read(notesFilterProvider.notifier).reset();
-          break;
-        case EntityType.otp:
-          ref.read(otpsFilterProvider.notifier).reset();
-          break;
-        case EntityType.bankCard:
-          ref.read(bankCardsFilterProvider.notifier).reset();
-          break;
-        case EntityType.file:
-          ref.read(filesFilterProvider.notifier).reset();
-          break;
-      }
-
-      // Очистка локального состояния
+      // Сброс локальных фильтров
       setState(() {
+        _localBaseFilter = emptyBaseFilter;
         _selectedCategoryIds = [];
         _selectedCategoryNames = [];
         _selectedTagIds = [];
         _selectedTagNames = [];
+
+        // Сброс специфичных фильтров
+        switch (entityType) {
+          case EntityType.password:
+            _localPasswordsFilter = PasswordsFilter(base: emptyBaseFilter);
+            break;
+          case EntityType.note:
+            _localNotesFilter = NotesFilter(base: emptyBaseFilter);
+            break;
+          case EntityType.otp:
+            _localOtpsFilter = OtpsFilter(base: emptyBaseFilter);
+            break;
+          case EntityType.bankCard:
+            _localBankCardsFilter = BankCardsFilter(base: emptyBaseFilter);
+            break;
+          case EntityType.file:
+            _localFilesFilter = FilesFilter(base: emptyBaseFilter);
+            break;
+        }
       });
 
-      logInfo('FilterModal: Фильтры успешно сброшены');
+      logInfo('FilterModal: Локальные фильтры сброшены');
     } catch (e) {
       logError('FilterModal: Ошибка при сбросе фильтров', error: e);
     }
@@ -568,23 +615,7 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
       final baseNotifier = ref.read(baseFilterProvider.notifier);
       final base = _initialValues!.baseFilter;
 
-      baseNotifier.setQuery(base.query);
-      baseNotifier.setCategoryIds(base.categoryIds);
-      baseNotifier.setTagIds(base.tagIds);
-      baseNotifier.setFavorite(base.isFavorite);
-      baseNotifier.setArchived(base.isArchived);
-      baseNotifier.setDeleted(base.isDeleted);
-      baseNotifier.setPinned(base.isPinned);
-      baseNotifier.setHasNotes(base.hasNotes);
-      baseNotifier.setCreatedAfter(base.createdAfter);
-      baseNotifier.setCreatedBefore(base.createdBefore);
-      baseNotifier.setModifiedAfter(base.modifiedAfter);
-      baseNotifier.setModifiedBefore(base.modifiedBefore);
-      baseNotifier.setLastAccessedAfter(base.lastAccessedAfter);
-      baseNotifier.setLastAccessedBefore(base.lastAccessedBefore);
-      baseNotifier.setMinUsedCount(base.minUsedCount);
-      baseNotifier.setMaxUsedCount(base.maxUsedCount);
-      baseNotifier.setSortDirection(base.sortDirection);
+      baseNotifier.updateFilter(base);
 
       // Восстановление специфичного для типа фильтра
       switch (entityType) {
@@ -641,12 +672,57 @@ class _FilterModalContentState extends ConsumerState<_FilterModalContent> {
   }
 
   void _applyFilters(BuildContext context) {
-    logDebug('FilterModal: Применение фильтров');
+    logDebug('FilterModal: Применение локальных фильтров к провайдерам');
 
     try {
+      final entityType = ref.read(entityTypeProvider).currentType;
+
+      // Применяем базовый фильтр через отдельные setter'ы для каждого поля
+      final baseNotifier = ref.read(baseFilterProvider.notifier);
+      baseNotifier.updateFilter(_localBaseFilter);
+
+      // Применяем специфичный для типа фильтр
+      switch (entityType) {
+        case EntityType.password:
+          if (_localPasswordsFilter != null) {
+            ref
+                .read(passwordsFilterProvider.notifier)
+                .updateFilter(_localPasswordsFilter!);
+          }
+          break;
+        case EntityType.note:
+          if (_localNotesFilter != null) {
+            ref
+                .read(notesFilterProvider.notifier)
+                .updateFilter(_localNotesFilter!);
+          }
+          break;
+        case EntityType.otp:
+          if (_localOtpsFilter != null) {
+            ref
+                .read(otpsFilterProvider.notifier)
+                .updateFilter(_localOtpsFilter!);
+          }
+          break;
+        case EntityType.bankCard:
+          if (_localBankCardsFilter != null) {
+            ref
+                .read(bankCardsFilterProvider.notifier)
+                .updateFilter(_localBankCardsFilter!);
+          }
+          break;
+        case EntityType.file:
+          if (_localFilesFilter != null) {
+            ref
+                .read(filesFilterProvider.notifier)
+                .updateFilter(_localFilesFilter!);
+          }
+          break;
+      }
+
       widget.onFilterApplied?.call();
       Navigator.of(context).pop();
-      logInfo('FilterModal: Фильтры применены');
+      logInfo('FilterModal: Фильтры успешно применены');
     } catch (e) {
       logError('FilterModal: Ошибка при применении фильтров', error: e);
     }
