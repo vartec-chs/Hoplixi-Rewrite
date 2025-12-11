@@ -22,14 +22,3 @@ export 'app_preference_keys.dart';
 
 // UI-ориентированные ключи с метаданными
 export 'settings_key.dart';
-
-// Устаревшие экспорты (для обратной совместимости)
-// TODO: Удалить в следующей версии
-@Deprecated('Используйте AppKey вместо PrefKey')
-export 'pref_key.dart';
-@Deprecated('Используйте AppKey вместо SecureKey')
-export 'secure_key.dart';
-@Deprecated('Используйте AppStorageService вместо PreferencesService')
-export 'preferences_service.dart';
-@Deprecated('Используйте AppStorageService вместо SecureStorageService')
-export 'secure_storage_service.dart';
