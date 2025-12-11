@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hoplixi/shared/ui/status_bar.dart';
+import 'package:hoplixi/shared/widgets/status_bar.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
 import 'package:hoplixi/main_store/models/dto/main_store_dto.dart';
 

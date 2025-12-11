@@ -25,6 +25,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // final isDatabaseOpen = ref.watch(isDatabaseOpenProvider);
     // final closeDbTimer = ref.watch(appInactivityTimeoutProvider);
     final titlebarState = ref.watch(titlebarStateProvider);
@@ -36,12 +37,12 @@ class _TitleBarState extends ConsumerState<TitleBar> {
         decoration: BoxDecoration(
           color: titlebarState.backgroundTransparent
               ? Colors.transparent
-              : Theme.of(context).appBarTheme.backgroundColor,
+              : theme.colorScheme.surface,
           border: Border(
             bottom: BorderSide(
               color: titlebarState.backgroundTransparent
                   ? Colors.transparent
-                  : Theme.of(context).dividerColor,
+                  : theme.dividerColor,
               width: 1,
             ),
           ),
@@ -72,9 +73,7 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                           style: TextStyle(
                             color: titlebarState.backgroundTransparent
                                 ? Colors.white
-                                : Theme.of(
-                                    context,
-                                  ).appBarTheme.titleTextStyle?.color,
+                                : theme.colorScheme.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             fontStyle: FontStyle.normal,
@@ -98,30 +97,8 @@ class _TitleBarState extends ConsumerState<TitleBar> {
                 spacing: 4,
 
                 children: [
-                  // if (isDatabaseOpen && closeDbTimer > 0 && closeDbTimer <= 60)
-                  //   Container(
-                  //     padding: const EdgeInsets.symmetric(
-                  //       horizontal: 8,
-                  //       vertical: 4,
-                  //     ),
-                  //     decoration: BoxDecoration(
-                  //       color: Colors.red.withValues(alpha: 0.1),
-                  //       borderRadius: BorderRadius.circular(12),
-                  //     ),
-                  //     child: Text(
-                  //       'Авто-закрытие через $closeDbTimer с',
-                  //       style: TextStyle(
-                  //         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  //         fontSize: 12,
-                  //         fontWeight: FontWeight.normal,
-                  //         fontStyle: FontStyle.normal,
-                  //         letterSpacing: 0.0,
-                  //         decoration: TextDecoration.none,
-                  //       ),
-                  //     ),
-                  //   ),
                   const CloseDatabaseButton(type: CloseDatabaseButtonType.icon),
-                  ThemeSwitcher(size: 26),
+                  ThemeSwitcher(size: 26, style: ThemeSwitcherStyle.animated),
                   IconButton(
                     padding: const EdgeInsets.all(6),
                     icon: Icon(Icons.minimize, size: 20),

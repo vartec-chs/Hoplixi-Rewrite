@@ -7,7 +7,7 @@ import 'package:hoplixi/core/theme/index.dart';
 import 'package:hoplixi/core/utils/window_manager.dart';
 import 'package:hoplixi/routing/router.dart';
 import 'package:hoplixi/setup_tray.dart';
-import 'package:hoplixi/shared/ui/desktop_shell.dart';
+import 'package:hoplixi/shared/widgets/desktop_shell.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart'
     as animated_theme;

@@ -7,7 +7,7 @@ import 'package:hoplixi/features/password_manager/open_store/models/open_store_s
 import 'package:hoplixi/features/password_manager/open_store/providers/open_store_form_provider.dart';
 import 'package:hoplixi/features/password_manager/open_store/widgets/index.dart';
 import 'package:hoplixi/routing/paths.dart';
-import 'package:hoplixi/shared/ui/titlebar.dart';
+import 'package:hoplixi/shared/widgets/titlebar.dart';
 
 class OpenStoreScreen extends ConsumerStatefulWidget {
   const OpenStoreScreen({super.key});

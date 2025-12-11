@@ -7,7 +7,7 @@ import 'package:hoplixi/routing/paths.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'widgets/action_button.dart';
 import 'widgets/recent_database_card.dart';
-import 'package:hoplixi/shared/ui/titlebar.dart';
+import 'package:hoplixi/shared/widgets/titlebar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -273,6 +273,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
+                  Expanded(
+                    child: ActionButton(
+                      icon: CupertinoIcons.settings,
+                      label: 'Настройки',
+                      description: 'Открыть настройки',
+                      onTap: () {
+                        context.push(AppRoutesPaths.settings);
+                      },
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -298,15 +308,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
 
               const SizedBox(height: 12),
-
-              ActionButton(
-                icon: CupertinoIcons.settings,
-                label: 'Настройки',
-                description: 'Открыть настройки',
-                onTap: () {
-                  context.push(AppRoutesPaths.settings);
-                },
-              ),
             ],
           ),
         );

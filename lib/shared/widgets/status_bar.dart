@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/lifecycle/auto_lock_provider.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
-import 'package:hoplixi/shared/ui/update_marker.dart';
+import 'package:hoplixi/shared/widgets/update_marker.dart';
 
 /// Простой статус-бар для отображения информации внизу экрана
 class StatusBar extends ConsumerWidget {

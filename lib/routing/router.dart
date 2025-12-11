@@ -8,8 +8,8 @@ import 'package:hoplixi/main_store/provider/main_store_provider.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/routing/router_refresh_provider.dart';
 import 'package:hoplixi/routing/routes.dart';
-import 'package:hoplixi/shared/ui/desktop_shell.dart';
-import 'package:hoplixi/shared/ui/titlebar.dart';
+import 'package:hoplixi/shared/widgets/desktop_shell.dart';
+import 'package:hoplixi/shared/widgets/titlebar.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'package:window_manager/window_manager.dart';
 

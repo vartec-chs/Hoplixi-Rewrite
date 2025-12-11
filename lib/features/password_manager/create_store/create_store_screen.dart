@@ -14,7 +14,7 @@ import 'package:hoplixi/features/password_manager/create_store/widgets/step4_con
 import 'package:hoplixi/main_store/models/dto/main_store_dto.dart';
 import 'package:hoplixi/main_store/provider/main_store_provider.dart';
 import 'package:hoplixi/shared/ui/button.dart';
-import 'package:hoplixi/shared/ui/titlebar.dart';
+import 'package:hoplixi/shared/widgets/titlebar.dart';
 
 /// Экран создания хранилища по шагам
 class CreateStoreScreen extends ConsumerStatefulWidget {
