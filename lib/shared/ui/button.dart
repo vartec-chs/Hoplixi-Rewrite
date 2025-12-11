@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:hoplixi/core/theme/colors.dart';
 
-enum SmoothButtonType { text, filled, tonal, outlined }
+enum SmoothButtonType { text, filled, tonal, outlined, dashed }
 
 enum SmoothButtonSize { small, medium, large }
 
@@ -133,6 +134,7 @@ class SmoothButton extends StatelessWidget {
   Widget _buildButton(BuildContext context) {
     final buttonChild = _buildChild();
     final variantColor = _getVariantColor(context);
+    final theme = Theme.of(context);
 
     final effectiveStyle = (style ?? ButtonStyle()).copyWith(
       padding: WidgetStateProperty.all(_padding),
@@ -166,7 +168,7 @@ class SmoothButton extends StatelessWidget {
             foregroundColor: WidgetStateProperty.all(variantColor),
           );
           break;
-        case SmoothButtonType.text:
+        case SmoothButtonType.text || SmoothButtonType.dashed:
           styledWithVariant = effectiveStyle.copyWith(
             foregroundColor: WidgetStateProperty.all(variantColor),
             overlayColor: WidgetStateProperty.all(
@@ -248,6 +250,43 @@ class SmoothButton extends StatelessWidget {
             ),
           ),
           child: buttonChild,
+        );
+
+      case SmoothButtonType.dashed:
+        // DottedBorder paints a dashed border around the child. Wrap the
+        // interactive TextButton inside so we keep focus/hover behavior.
+        final dashColor = variant == SmoothButtonVariant.normal
+            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.12)
+            : variantColor;
+
+        return Material(
+          color: Colors.transparent,
+          child: DottedBorder(
+            options: RoundedRectDottedBorderOptions(
+              color: dashColor,
+              strokeWidth: 1.5,
+              dashPattern: const <double>[6, 4],
+              radius: const Radius.circular(16),
+              padding: EdgeInsets.zero,
+            ),
+            child: TextButton(
+              onPressed: loading ? null : onPressed,
+              onLongPress: onLongPress,
+              focusNode: focusNode,
+              autofocus: autofocus,
+              clipBehavior: clipBehavior,
+              style: styledWithVariant.copyWith(
+                padding: WidgetStateProperty.all(_padding),
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                // keep side unset here, DottedBorder handles border
+              ),
+              child: buttonChild,
+              onHover: (isHovered) {
+                onHover?.call(isHovered);
+              },
+              onFocusChange: (value) => {onFocusChange?.call(value)},
+            ),
+          ),
         );
     }
   }

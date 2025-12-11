@@ -89,6 +89,7 @@ class RecentDatabaseCard extends ConsumerWidget {
               width: double.infinity,
               child: SmoothButton(
                 label: 'Открыть',
+                type: SmoothButtonType.outlined,
                 icon: const Icon(CupertinoIcons.arrow_right_circle),
                 onPressed: () => _openDatabase(context, ref, entry),
               ),
@@ -170,7 +171,6 @@ class _PasswordDialogState extends State<_PasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      
       title: Text('Введите пароль для "${widget.dbName}"'),
       content: SizedBox(
         width: 300,

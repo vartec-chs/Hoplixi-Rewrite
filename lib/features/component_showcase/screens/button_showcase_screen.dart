@@ -33,6 +33,12 @@ class ButtonShowcaseScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             SmoothButton(
+              label: 'Dashed Button',
+              type: SmoothButtonType.dashed,
+              onPressed: () {},
+            ),
+            const SizedBox(height: 12),
+            SmoothButton(
               label: 'Text Button',
               type: SmoothButtonType.text,
               onPressed: () {},
@@ -177,6 +183,20 @@ class ButtonShowcaseScreen extends StatelessWidget {
               label: 'Success Outlined',
               variant: SmoothButtonVariant.success,
               type: SmoothButtonType.outlined,
+              onPressed: () {},
+            ),
+            const SizedBox(height: 12),
+            SmoothButton(
+              label: 'Error Dashed',
+              variant: SmoothButtonVariant.error,
+              type: SmoothButtonType.dashed,
+              onPressed: () {},
+            ),
+            const SizedBox(height: 12),
+            SmoothButton(
+              label: 'Success Dashed',
+              variant: SmoothButtonVariant.success,
+              type: SmoothButtonType.dashed,
               onPressed: () {},
             ),
             const SizedBox(height: 24),
