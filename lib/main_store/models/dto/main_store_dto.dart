@@ -21,8 +21,11 @@ sealed class CreateStoreDto with _$CreateStoreDto {
 /// DTO для открытия существующего хранилища
 @freezed
 sealed class OpenStoreDto with _$OpenStoreDto {
-  const factory OpenStoreDto({required String password, required String path}) =
-      _OpenStoreDto;
+  const factory OpenStoreDto({
+    required String password,
+    required String path,
+    @Default(false) bool saveMasterPassword,
+  }) = _OpenStoreDto;
 
   factory OpenStoreDto.fromJson(Map<String, dynamic> json) =>
       _$OpenStoreDtoFromJson(json);

@@ -299,8 +299,24 @@ class MainStoreManager {
           .update(database.storeMetaTable)
           .replace(storeMeta.copyWith(lastOpenedAt: DateTime.now()));
 
-      // Обновление в истории
-      await _dbHistoryService.updateLastAccessed(dto.path);
+      // Обновление или создание записи в истории
+      final existingHistory = await _dbHistoryService.getByPath(actualStoragePath);
+      if (existingHistory == null) {
+        // Создаем новую запись в истории, если ее нет
+        await _dbHistoryService.create(
+          path: actualStoragePath,
+          dbId: storeMeta.id,
+          name: storeMeta.name,
+          description: storeMeta.description,
+          password: dto.saveMasterPassword ? dto.password : null,
+          savePassword: dto.saveMasterPassword,
+        );
+        logInfo('Created new history entry for opened store', tag: _logTag);
+      } else {
+        // Обновляем время последнего доступа для существующей записи
+        await _dbHistoryService.updateLastAccessed(actualStoragePath);
+        logInfo('Updated existing history entry', tag: _logTag);
+      }
 
       logInfo('Store opened successfully', tag: _logTag);
 

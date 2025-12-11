@@ -155,10 +155,10 @@ class DatabaseHistoryService {
     try {
       final entries = await getAll();
       entries.sort((a, b) {
-        if (a.lastAccessed == null && b.lastAccessed == null) return 0;
-        if (a.lastAccessed == null) return 1;
-        if (b.lastAccessed == null) return -1;
-        return b.lastAccessed!.compareTo(a.lastAccessed!);
+        // Используем lastAccessed, если есть, иначе createdAt
+        final aDate = a.lastAccessed ?? a.createdAt ?? DateTime(1970);
+        final bDate = b.lastAccessed ?? b.createdAt ?? DateTime(1970);
+        return bDate.compareTo(aDate);
       });
 
       return entries.take(limit).toList();

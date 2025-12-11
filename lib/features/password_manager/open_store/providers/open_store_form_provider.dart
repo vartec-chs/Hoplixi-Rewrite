@@ -127,12 +127,19 @@ class OpenStoreFormNotifier extends AsyncNotifier<OpenStoreState> {
         // Проверяем, существует ли директория
         if (!await dir.exists()) continue;
 
-        // Ищем файл БД в директории
-        final dirName = p.basename(entry.path);
-        final dbFileName = dirName + MainConstants.dbExtension;
-        final dbFile = File(p.join(entry.path, dbFileName));
+        // Ищем файл с нужным расширением в директории
+        final files = await dir
+            .list()
+            .where(
+              (entity) =>
+                  entity is File &&
+                  entity.path.endsWith(MainConstants.dbExtension),
+            )
+            .toList();
 
-        if (!await dbFile.exists()) continue;
+        if (files.isEmpty) continue;
+
+        final dbFile = File(files.first.path);
 
         final stat = await dbFile.stat();
 
@@ -181,13 +188,23 @@ class OpenStoreFormNotifier extends AsyncNotifier<OpenStoreState> {
       // Ищем поддиректории (каждое хранилище в своей папке)
       await for (final entity in storageDir.list()) {
         if (entity is Directory) {
-          // Ищем файлы с расширением из констант
-          final dirName = p.basename(entity.path);
-          final dbFileName = dirName + MainConstants.dbExtension;
-          final dbFile = File(p.join(entity.path, dbFileName));
+          // Проверяем, существует ли директория
+          if (!await entity.exists()) continue;
 
-          if (await dbFile.exists()) {
+          // Ищем файлы с нужным расширением
+          final files = await entity
+              .list()
+              .where(
+                (item) =>
+                    item is File &&
+                    item.path.endsWith(MainConstants.dbExtension),
+              )
+              .toList();
+
+          if (files.isNotEmpty) {
+            final dbFile = File(files.first.path);
             final stat = await dbFile.stat();
+            final dirName = p.basename(entity.path);
 
             storages.add(
               StorageInfo(

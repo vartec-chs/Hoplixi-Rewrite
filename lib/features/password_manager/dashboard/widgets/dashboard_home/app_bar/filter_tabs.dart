@@ -198,7 +198,7 @@ class _FilterTabsState extends ConsumerState<FilterTabs>
         labelStyle: theme.textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w600,
         ),
-        indicatorPadding: const EdgeInsets.all(3),
+        indicatorPadding: const EdgeInsets.all(2),
         unselectedLabelStyle: theme.textTheme.bodyMedium,
         tabAlignment: tabAlignment,
         labelPadding: widget.labelPadding,
