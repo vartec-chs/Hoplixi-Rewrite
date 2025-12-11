@@ -108,11 +108,12 @@ class _FileListCardState extends ConsumerState<FileListCard>
     return Stack(
       children: [
         Card(
+          margin: EdgeInsets.zero,
           clipBehavior: Clip.hardEdge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+
           child: Column(
             children: [_buildHeader(theme), _buildExpandedContent(theme)],
           ),

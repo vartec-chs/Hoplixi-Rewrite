@@ -127,7 +127,7 @@ class _DashboardListToolBarState extends ConsumerState<DashboardListToolBar> {
               widget.listState.whenOrNull(data: (state) => state.totalCount));
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

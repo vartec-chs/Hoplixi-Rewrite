@@ -133,10 +133,11 @@ class _NoteListCardState extends ConsumerState<NoteListCard>
       children: [
         Card(
           clipBehavior: Clip.hardEdge,
+          margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+       
           child: Column(
             children: [
               // Основная часть карточки

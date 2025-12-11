@@ -163,6 +163,7 @@ class _BankCardGridCardState extends ConsumerState<BankCardGridCard>
     return Stack(
       children: [
         Card(
+          margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: isExpired

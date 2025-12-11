@@ -153,12 +153,13 @@ class _DashboardSliverAppBarState extends ConsumerState<DashboardSliverAppBar> {
       surfaceTintColor: theme.colorScheme.surface,
 
       // Кнопка открытия drawer слева
-      leading: IconButton(
-        icon: const Icon(Icons.menu),
-        onPressed: widget.onMenuPressed,
-        tooltip: 'Открыть меню',
-      ),
-
+      leading: widget.onMenuPressed != null
+          ? IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: widget.onMenuPressed,
+              tooltip: 'Открыть меню',
+            )
+          : null,
       // Actions справа: выбор типа сущности и кнопка фильтров
       actions: [
         if (widget.showEntityTypeSelector) ...[

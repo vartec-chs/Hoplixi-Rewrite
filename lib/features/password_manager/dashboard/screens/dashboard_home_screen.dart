@@ -2,32 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/list_state.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/current_view_mode_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/list_provider.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card/bank_card_grid.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/bank_card/bank_card_list_card.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/file/file_grid_card.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/file/file_list_card.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/modals/file_decrypt_modal.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note/note_grid.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/note/note_list_card.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp/otp_grid.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/otp/otp_list_card.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password/password_grid.dart';
-
-import 'package:hoplixi/features/password_manager/dashboard/widgets/cards/password/password_list_card.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_builders.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/app_bar/app_bar_widgets.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_home/dashboard_list_toolbar.dart';
 import 'package:hoplixi/main_store/models/dto/index.dart';
-import 'package:hoplixi/routing/paths.dart';
-import 'package:hoplixi/shared/ui/button.dart';
-import 'package:sliver_tools/sliver_tools.dart';
-
-const _kStatusSwitchDuration = Duration(milliseconds: 180);
 
 class DashboardHomeScreen extends ConsumerStatefulWidget {
   const DashboardHomeScreen({super.key});
@@ -160,14 +142,14 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
             i,
             (context, animation) =>
                 _buildRemovedItem(removedItem, context, animation, viewMode),
-            duration: _kStatusSwitchDuration,
+            duration: kStatusSwitchDuration,
           );
         } else {
           gridState?.removeItem(
             i,
             (context, animation) =>
                 _buildRemovedItem(removedItem, context, animation, viewMode),
-            duration: _kStatusSwitchDuration,
+            duration: kStatusSwitchDuration,
           );
         }
       }
@@ -175,7 +157,7 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
 
     if (itemsRemoved && newItems.isEmpty) {
       _isClearing = true;
-      Timer(_kStatusSwitchDuration, () {
+      Timer(kStatusSwitchDuration, () {
         if (mounted) {
           setState(() {
             _isClearing = false;
@@ -217,14 +199,14 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
               currentIndex,
               (context, animation) =>
                   _buildRemovedItem(item, context, animation, viewMode),
-              duration: _kStatusSwitchDuration,
+              duration: kStatusSwitchDuration,
             );
           } else {
             gridState?.removeItem(
               currentIndex,
               (context, animation) =>
                   _buildRemovedItem(item, context, animation, viewMode),
-              duration: _kStatusSwitchDuration,
+              duration: kStatusSwitchDuration,
             );
           }
 
@@ -234,18 +216,18 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
 
           // Симулируем перемещение: вставляем на новую позицию с анимацией
           if (viewMode == ViewMode.list) {
-            listState?.insertItem(i, duration: _kStatusSwitchDuration);
+            listState?.insertItem(i, duration: kStatusSwitchDuration);
           } else {
-            gridState?.insertItem(i, duration: _kStatusSwitchDuration);
+            gridState?.insertItem(i, duration: kStatusSwitchDuration);
           }
         }
       } else {
         // Элемента нет в списке - вставляем
         _displayedItems.insert(i, newItem);
         if (viewMode == ViewMode.list) {
-          listState?.insertItem(i, duration: _kStatusSwitchDuration);
+          listState?.insertItem(i, duration: kStatusSwitchDuration);
         } else {
-          gridState?.insertItem(i, duration: _kStatusSwitchDuration);
+          gridState?.insertItem(i, duration: kStatusSwitchDuration);
         }
       }
     }
@@ -300,157 +282,21 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
                 listState: asyncValue,
               ),
             ),
-            _buildContentSliver(entityType, viewMode, asyncValue),
+            DashboardHomeBuilders.buildContentSliver(
+              context: context,
+              ref: ref,
+              entityType: entityType,
+              viewMode: viewMode,
+              asyncValue: asyncValue,
+              displayedItems: _displayedItems,
+              isClearing: _isClearing,
+              listKey: _listKey,
+              gridKey: _gridKey,
+              callbacks: DashboardCardCallbacks.fromRef(ref),
+              onInvalidate: () => ref.invalidate(paginatedListProvider),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildContentSliver(
-    EntityType entityType,
-    ViewMode viewMode,
-    AsyncValue<DashboardListState<BaseCardDto>> asyncValue,
-  ) {
-    // Определяем состояние для отображения статуса (Empty/Error/Loading)
-    final hasItems = _displayedItems.isNotEmpty;
-
-    // Если есть элементы, сразу возвращаем список, чтобы избежать лишних перерисовок статуса
-    if (hasItems) {
-      return _buildAnimatedListOrGrid(entityType, viewMode, asyncValue.value);
-    }
-
-    final providerHasItems = asyncValue.value?.items.isNotEmpty ?? false;
-
-    final isInitialLoading = asyncValue.isLoading && !hasItems;
-    final isError = asyncValue.hasError && !hasItems;
-
-    // Показываем статус, если нет локальных элементов и не идет очистка
-    final showStatus = !hasItems && !_isClearing;
-
-    Widget? statusSliver;
-    if (showStatus) {
-      if (isInitialLoading) {
-        statusSliver = const SliverFillRemaining(
-          key: ValueKey('loading'),
-          child: Center(child: CircularProgressIndicator()),
-        );
-      } else if (isError) {
-        statusSliver = _buildErrorSliver(
-          asyncValue.error!,
-          key: const ValueKey('error'),
-        );
-      } else if (!providerHasItems) {
-        // Данных нет ни локально, ни в провайдере -> Пусто
-        statusSliver = _buildEmptyState(
-          entityType,
-          key: const ValueKey('empty'),
-        );
-      } else {
-        // Данные есть в провайдере, но еще не отображены (идет задержка) -> Загрузка
-        statusSliver = const SliverFillRemaining(
-          key: ValueKey('loading'),
-          child: Center(child: CircularProgressIndicator()),
-        );
-      }
-    } else {
-      statusSliver = const SliverToBoxAdapter(
-        key: ValueKey('none'),
-        child: SizedBox.shrink(),
-      );
-    }
-
-    return SliverMainAxisGroup(
-      slivers: [
-        // Список всегда в дереве, чтобы избежать Duplicate GlobalKey при анимациях
-        _buildAnimatedListOrGrid(entityType, viewMode, asyncValue.value),
-        // Статус (загрузка, ошибка, пусто) анимируется отдельно
-        SliverAnimatedSwitcher(
-          duration: _kStatusSwitchDuration,
-          child: statusSliver,
-        ),
-        // statusSliver,
-      ],
-    );
-  }
-
-  Widget _buildAnimatedListOrGrid(
-    EntityType entityType,
-    ViewMode viewMode,
-    DashboardListState<BaseCardDto>? state, {
-    Key? key,
-  }) {
-    final hasMore = state?.hasMore ?? false;
-    final isLoadingMore = state?.isLoadingMore ?? false;
-
-    Widget listSliver;
-    if (viewMode == ViewMode.list) {
-      listSliver = SliverAnimatedList(
-        key: _listKey,
-        initialItemCount: _displayedItems.length,
-        itemBuilder: (context, index, animation) {
-          if (index >= _displayedItems.length) return const SizedBox.shrink();
-          return _buildItemTransition(
-            context,
-            _displayedItems[index],
-            animation,
-            viewMode,
-            entityType,
-          );
-        },
-      );
-    } else {
-      // В Grid режиме используем SliverPadding, но если элементов нет - скрываем паддинг,
-      // чтобы не занимать место (хотя SliverAnimatedGrid с 0 элементов и так пуст, но паддинг останется)
-      // Однако, при анимации удаления паддинг нужен.
-      listSliver = SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        sliver: SliverAnimatedGrid(
-          key: _gridKey,
-          initialItemCount: _displayedItems.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.6,
-          ),
-          itemBuilder: (context, index, animation) {
-            if (index >= _displayedItems.length) return const SizedBox.shrink();
-            return _buildItemTransition(
-              context,
-              _displayedItems[index],
-              animation,
-              viewMode,
-              entityType,
-            );
-          },
-        ),
-      );
-    }
-
-    return SliverMainAxisGroup(
-      key: key,
-      slivers: [listSliver, _buildFooter(hasMore, isLoadingMore)],
-    );
-  }
-
-  Widget _buildItemTransition(
-    BuildContext context,
-    BaseCardDto item,
-    Animation<double> animation,
-    ViewMode viewMode,
-    EntityType entityType,
-  ) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
-            .animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
-        child: viewMode == ViewMode.list
-            ? _buildListCardFor(entityType, item)
-            : _buildGridCardFor(entityType, item),
       ),
     );
   }
@@ -461,354 +307,13 @@ class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
     Animation<double> animation,
     ViewMode viewMode,
   ) {
-    // Для удаленного элемента нам нужно знать его тип, но он может быть уже недоступен в провайдере
-    // Используем текущий тип из провайдера (предполагаем, что тип сущности не меняется мгновенно при удалении)
-    final entityType = ref.read(entityTypeProvider).currentType;
-
-    return FadeTransition(
-      opacity: animation,
-      child: SizeTransition(
-        sizeFactor: animation,
-        child: viewMode == ViewMode.list
-            ? _buildListCardFor(entityType, item, isDismissible: false)
-            : _buildGridCardFor(entityType, item),
-      ),
+    return DashboardHomeBuilders.buildRemovedItem(
+      context: context,
+      ref: ref,
+      item: item,
+      animation: animation,
+      viewMode: viewMode,
+      callbacks: DashboardCardCallbacks.fromRef(ref),
     );
-  }
-
-  Widget _buildFooter(bool hasMore, bool isLoadingMore) {
-    if (isLoadingMore) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        ),
-      );
-    }
-    if (!hasMore && _displayedItems.isNotEmpty) {
-      return const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: Text(
-              'Больше нет данных',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-        ),
-      );
-    }
-    return const SliverToBoxAdapter(child: SizedBox(height: 8));
-  }
-
-  Widget _buildEmptyState(EntityType entityType, {Key? key}) {
-    return SliverFillRemaining(
-      key: key,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(entityType.icon, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text('Нет данных', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              'Добавьте первый элемент',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorSliver(Object err, {Key? key}) {
-    return SliverFillRemaining(
-      key: key,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text('Ошибка: $err'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                ref.invalidate(paginatedListProvider);
-              },
-              child: const Text('Повторить'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- Builders for Cards ---
-
-  Widget _buildListCardFor(
-    EntityType type,
-    BaseCardDto item, {
-    bool isDismissible = true,
-  }) {
-    Widget card;
-    switch (type) {
-      case EntityType.password:
-        if (item is! PasswordCardDto) return const SizedBox.shrink();
-        card = PasswordListCard(
-          password: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-        break;
-      case EntityType.note:
-        if (item is! NoteCardDto) return const SizedBox.shrink();
-        card = NoteListCard(
-          note: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-        break;
-      case EntityType.bankCard:
-        if (item is! BankCardCardDto) return const SizedBox.shrink();
-        card = BankCardListCard(
-          bankCard: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-        break;
-      case EntityType.file:
-        if (item is! FileCardDto) return const SizedBox.shrink();
-        card = FileListCard(
-          file: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-          onDecrypt: () => showFileDecryptModal(context, item),
-        );
-        break;
-      case EntityType.otp:
-        if (item is! OtpCardDto) return const SizedBox.shrink();
-        card = TotpListCard(
-          otp: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-        break;
-    }
-
-    if (!isDismissible) return card;
-
-    return _buildDismissible(child: card, item: item);
-  }
-
-  Widget _buildDismissible({required Widget child, required BaseCardDto item}) {
-    return Dismissible(
-      key: ValueKey(item.id),
-      direction: DismissDirection.horizontal,
-      background: Container(
-        decoration: BoxDecoration(
-          color: Colors.blueAccent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        alignment: Alignment.centerLeft,
-        child: const Icon(Icons.edit, color: Colors.white),
-      ),
-      secondaryBackground: Container(
-        decoration: BoxDecoration(
-          color: Colors.redAccent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        alignment: Alignment.centerRight,
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          // Вправо → редактирование
-          if (item is PasswordCardDto) {
-            final path = AppRoutesPaths.dashboardPasswordEditWithId(item.id);
-            if (GoRouter.of(context).state.matchedLocation != path) {
-              context.push(path);
-            }
-          } else if (item is BankCardCardDto) {
-            final path = AppRoutesPaths.dashboardBankCardEditWithId(item.id);
-            if (GoRouter.of(context).state.matchedLocation != path) {
-              context.push(path);
-            }
-          } else if (item is NoteCardDto) {
-            final path = AppRoutesPaths.dashboardNoteEditWithId(item.id);
-            if (GoRouter.of(context).state.matchedLocation != path) {
-              context.push(path);
-            }
-          } else if (item is OtpCardDto) {
-            final path = AppRoutesPaths.dashboardOtpEditWithId(item.id);
-            if (GoRouter.of(context).state.matchedLocation != path) {
-              context.push(path);
-            }
-          } else if (item is FileCardDto) {
-            final path = AppRoutesPaths.dashboardFileEditWithId(item.id);
-            if (GoRouter.of(context).state.matchedLocation != path) {
-              context.push(path);
-            }
-          }
-
-          return false;
-        } else {
-          // Влево → удаление
-          String itemName = 'элемент';
-          if (item is PasswordCardDto) {
-            itemName = item.name;
-          } else if (item is BankCardCardDto) {
-            itemName = item.name;
-          } else if (item is NoteCardDto) {
-            itemName = item.title;
-          } else if (item is OtpCardDto) {
-            itemName = item.accountName ?? 'OTP';
-          } else if (item is FileCardDto) {
-            itemName = item.name;
-          }
-
-          final shouldDelete = await showDialog<bool>(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              // backgroundColor: Theme.of(
-              //   context,
-              // ).colorScheme.surfaceContainerLow,
-              title: const Text("Удалить?"),
-              content: Text("Вы уверены, что хотите удалить '$itemName'?"),
-              actions: [
-                SmoothButton(
-                  type: SmoothButtonType.text,
-
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  label: "Отмена",
-                ),
-                SmoothButton(
-                  type: SmoothButtonType.filled,
-                  variant: SmoothButtonVariant.error,
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  label: "Удалить",
-                ),
-              ],
-            ),
-          );
-          if (!mounted) return false;
-          return shouldDelete ?? false;
-        }
-      },
-      onDismissed: (_) {
-        _onDelete(item.id, item.isDeleted);
-      },
-      child: child,
-    );
-  }
-
-  Widget _buildGridCardFor(EntityType type, BaseCardDto item) {
-    switch (type) {
-      case EntityType.password:
-        if (item is! PasswordCardDto) return const SizedBox.shrink();
-        return PasswordGridCard(
-          password: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-      case EntityType.note:
-        if (item is! NoteCardDto) return const SizedBox.shrink();
-
-        return NoteGridCard(
-          note: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-      case EntityType.bankCard:
-        if (item is! BankCardCardDto) return const SizedBox.shrink();
-
-        return BankCardGridCard(
-          bankCard: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-      case EntityType.file:
-        if (item is! FileCardDto) return const SizedBox.shrink();
-        return FileGridCard(
-          file: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-          onDecrypt: () => showFileDecryptModal(context, item),
-        );
-      case EntityType.otp:
-        if (item is! OtpCardDto) return const SizedBox.shrink();
-        return TotpGridCard(
-          otp: item,
-          onToggleFavorite: () => _onToggleFavorite(item.id),
-          onTogglePin: () => _onTogglePin(item.id),
-          onToggleArchive: () => _onToggleArchive(item.id),
-          onDelete: () => _onDelete(item.id, item.isDeleted),
-          onRestore: () => _onRestore(item.id),
-        );
-    }
-  }
-
-  // --- Universal Entity Actions ---
-
-  void _onToggleFavorite(String id) {
-    ref.read(paginatedListProvider.notifier).toggleFavorite(id);
-  }
-
-  void _onTogglePin(String id) {
-    ref.read(paginatedListProvider.notifier).togglePin(id);
-  }
-
-  void _onToggleArchive(String id) {
-    ref.read(paginatedListProvider.notifier).toggleArchive(id);
-  }
-
-  void _onDelete(String id, bool? isDeleted) {
-    if (isDeleted == true) {
-      ref.read(paginatedListProvider.notifier).permanentDelete(id);
-    } else {
-      ref.read(paginatedListProvider.notifier).delete(id);
-    }
-  }
-
-  void _onRestore(String id) {
-    ref.read(paginatedListProvider.notifier).restoreFromDeleted(id);
   }
 }

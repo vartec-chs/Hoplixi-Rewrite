@@ -26,8 +26,8 @@ class CardStatusIndicators extends StatelessWidget {
     required this.isPinned,
     required this.isFavorite,
     required this.isArchived,
-    this.top = 2,
-    this.left = 8,
+    this.top = 0,
+    this.left = 0,
     this.spacing = 26,
   });
 

@@ -83,6 +83,7 @@ class _NoteGridCardState extends ConsumerState<NoteGridCard>
     return Stack(
       children: [
         Card(
+          margin: EdgeInsets.zero,
           child: MouseRegion(
             onEnter: (_) => _onHoverChanged(true),
             onExit: (_) => _onHoverChanged(false),

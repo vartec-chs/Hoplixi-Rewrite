@@ -237,6 +237,7 @@ class _BankCardListCardState extends ConsumerState<BankCardListCard>
     return Stack(
       children: [
         Card(
+          margin: EdgeInsets.zero,
           clipBehavior: Clip.hardEdge,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -246,7 +247,7 @@ class _BankCardListCardState extends ConsumerState<BankCardListCard>
                 ? const BorderSide(color: Colors.orange, width: 1.5)
                 : BorderSide.none,
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          
           child: Column(
             children: [
               // Основная часть карточки
