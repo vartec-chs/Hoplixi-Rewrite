@@ -20,7 +20,10 @@ class RecentDatabaseCard extends ConsumerWidget {
     return recentDbAsync.when(
       data: (entry) {
         if (entry == null) return const SizedBox.shrink();
-        return _buildCard(context, ref, entry);
+        return Column(
+          spacing: 4,
+          children: [_buildCard(context, ref, entry), const Divider()],
+        );
       },
       loading: () => const SizedBox.shrink(),
       error: (err, stack) => const SizedBox.shrink(),
@@ -31,7 +34,8 @@ class RecentDatabaseCard extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
-      elevation: 2,
+      margin: EdgeInsets.zero,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -166,6 +170,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      
       title: Text('Введите пароль для "${widget.dbName}"'),
       content: SizedBox(
         width: 300,
@@ -208,13 +213,16 @@ class _PasswordDialogState extends State<_PasswordDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        SmoothButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+          label: 'Отмена',
+
+          variant: SmoothButtonVariant.error,
+          type: SmoothButtonType.text,
         ),
         SmoothButton(
           label: 'Открыть',
-          size: SmoothButtonSize.small,
+
           onPressed: () =>
               Navigator.of(context).pop((_controller.text, _savePassword)),
         ),

@@ -73,6 +73,8 @@ abstract final class ComponentThemes {
     navigationRailUseIndicator: true,
     navigationRailIndicatorSchemeColor: SchemeColor.primary,
     navigationRailLabelType: NavigationRailLabelType.selected,
+    
+    
   );
 
   /// Базовые подтемы для тёмной темы
@@ -135,6 +137,7 @@ abstract final class ComponentThemes {
     navigationRailUseIndicator: true,
     navigationRailIndicatorSchemeColor: SchemeColor.primary,
     navigationRailLabelType: NavigationRailLabelType.selected,
+    
   );
 }
 

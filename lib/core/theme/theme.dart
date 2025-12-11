@@ -67,6 +67,7 @@ abstract final class AppTheme {
               mainContentScrollPhysics: ClampingScrollPhysics(),
             ),
           ],
+         
         );
 
     return _withNunito(

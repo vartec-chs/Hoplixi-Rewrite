@@ -169,7 +169,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               children: [
                 const RecentDatabaseCard(),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
+
                 ActionButton(
                   icon: CupertinoIcons.folder_open,
                   label: 'Открыть',
@@ -238,7 +239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             children: [
               const RecentDatabaseCard(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               Row(
                 children: [
                   Expanded(
@@ -250,7 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onTap: () => context.push(AppRoutesPaths.openStore),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ActionButton(
                       icon: CupertinoIcons.add_circled,
@@ -272,7 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onTap: () => context.push(AppRoutesPaths.archiveStore),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ActionButton(
                       icon: CupertinoIcons.settings,
