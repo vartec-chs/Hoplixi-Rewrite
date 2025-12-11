@@ -30,14 +30,13 @@ class _ExportTabState extends ConsumerState<ExportTab> {
 
     ref.listen(archiveNotifierProvider, (prev, next) {
       // Показываем успех только если состояние изменилось с false на true
-      if (next.isSuccess && 
-          next.successMessage != null && 
+      if (next.isSuccess &&
+          next.successMessage != null &&
           (prev == null || !prev.isSuccess)) {
         Toaster.success(title: 'Успех', description: next.successMessage!);
       }
       // Показываем ошибку только если она новая
-      if (next.error != null && 
-          (prev == null || prev.error != next.error)) {
+      if (next.error != null && (prev == null || prev.error != next.error)) {
         Toaster.error(
           title: 'Ошибка экспорта',
           description: next.error!.message,
