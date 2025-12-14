@@ -3,19 +3,27 @@ class OAuthConfig {
   static const String redirectUriMobile = 'hoplixiauth://callback';
 
   static const List<String> googleScopes = [
-    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
+    'openid',
   ];
 
   static const List<String> onedriveScopes = [
-    'Files.ReadWrite.All',
+    'openid',
+    'profile',
+    'email',
     'User.Read',
   ];
 
   static const List<String> dropboxScopes = [
-    'files.metadata.read',
-    'files.content.read',
-    'files.content.write',
+    "account_info.read",
+    "files.content.read",
+    "files.content.write",
+    "files.metadata.write",
+    "files.metadata.read",
+    'openid',
+    'email',
+    "profile",
   ];
 
   static const List<String> yandexScopes = [

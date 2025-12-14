@@ -329,7 +329,7 @@ class _OAuthAppFormState extends ConsumerState<_OAuthAppForm> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Данные для регистрации',
+                'Данные для OAuth конфигурации',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.primary,
@@ -363,7 +363,7 @@ class _OAuthAppFormState extends ConsumerState<_OAuthAppForm> {
             _buildCopyableField(
               context,
               label: 'Scopes (разрешения)',
-              value: scopes.join('\\n'),
+              value: scopes.join('  '),
               icon: Icons.verified_user_outlined,
               maxLines: scopes.length,
             ),
