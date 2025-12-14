@@ -87,4 +87,21 @@ abstract class ProviderServiceError
     @JsonKey(includeToJson: true) StackTrace? stackTrace,
     @JsonKey(includeToJson: true) DateTime? timestamp,
   }) = NoTokenFoundError;
+
+  const factory ProviderServiceError.providerNotFound({
+    @Default('PROVIDER_NOT_FOUND') String code,
+    @Default('Провайдер не найден') String message,
+    String? provider,
+    Map<String, dynamic>? data,
+    @JsonKey(includeToJson: true) StackTrace? stackTrace,
+    @JsonKey(includeToJson: true) DateTime? timestamp,
+  }) = ProviderNotFoundError;
+
+  const factory ProviderServiceError.unknown({
+    @Default('PROVIDER_UNKNOWN_ERROR') String code,
+    @Default('Неизвестная ошибка') String message,
+    Map<String, dynamic>? data,
+    @JsonKey(includeToJson: true) StackTrace? stackTrace,
+    @JsonKey(includeToJson: true) DateTime? timestamp,
+  }) = UnknownError;
 }

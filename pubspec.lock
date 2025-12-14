@@ -238,10 +238,10 @@ packages:
     description:
       path: "packages/cloud_storage_all"
       ref: master
-      resolved-ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
+      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
       url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
     source: git
-    version: "1.0.2"
+    version: "1.0.3"
   code_builder:
     dependency: transitive
     description:
@@ -446,8 +446,8 @@ packages:
     dependency: transitive
     description:
       path: "packages/dropbox_api"
-      ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
-      resolved-ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
+      ref: "0d049200a192edcb326e98fc6501f024840079bb"
+      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
       url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
     source: git
     version: "0.0.6"
@@ -834,8 +834,8 @@ packages:
     dependency: transitive
     description:
       path: "packages/google_drive_api"
-      ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
-      resolved-ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
+      ref: "0d049200a192edcb326e98fc6501f024840079bb"
+      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
       url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
     source: git
     version: "0.0.1"
@@ -1243,8 +1243,8 @@ packages:
     dependency: transitive
     description:
       path: "packages/oauth2restclient"
-      ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
-      resolved-ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
+      ref: "0d049200a192edcb326e98fc6501f024840079bb"
+      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
       url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
     source: git
     version: "0.0.15"
@@ -1252,8 +1252,8 @@ packages:
     dependency: transitive
     description:
       path: "packages/onedrive_api"
-      ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
-      resolved-ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
+      ref: "0d049200a192edcb326e98fc6501f024840079bb"
+      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
       url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
     source: git
     version: "0.0.2"
@@ -2250,8 +2250,8 @@ packages:
     dependency: transitive
     description:
       path: "packages/yandex_drive_api"
-      ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
-      resolved-ref: "867459fd2e460137d0afb03e3b26ad5866c3447c"
+      ref: "0d049200a192edcb326e98fc6501f024840079bb"
+      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
       url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
     source: git
     version: "0.0.1"

@@ -204,6 +204,54 @@ class OAuthLoginScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                 ],
 
+                // Список ошибок процесса авторизации
+                if (state.authErrors.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.warning_amber,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ошибки авторизации:',
+                              style: TextStyle(
+                                color: Colors.orange[900],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ...state.authErrors.map(
+                          (error) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4, left: 28),
+                            child: Text(
+                              '• $error',
+                              style: TextStyle(
+                                color: Colors.orange[900],
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 // Сохраненные аккаунты
                 if (state.savedAccounts.isNotEmpty) ...[
                   Text(

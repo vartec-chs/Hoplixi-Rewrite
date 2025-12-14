@@ -26,6 +26,9 @@ sealed class OAuthLoginState with _$OAuthLoginState {
     /// Сообщение об ошибке
     String? errorMessage,
 
+    /// Список ошибок, возникших в процессе авторизации
+    @Default([]) List<String> authErrors,
+
     /// Список сохраненных аккаунтов для выбранного провайдера
     @Default([]) List<SavedAccount> savedAccounts,
   }) = _OAuthLoginState;

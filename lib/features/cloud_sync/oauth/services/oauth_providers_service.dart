@@ -58,6 +58,7 @@ class OauthProvidersService {
   final TokenService _tokenService;
   late final OAuth2Account _account;
   final Map<String, OAuth2RestClient> _clients = {};
+  final Map<String, OAuth2Provider> _providers = {};
 
   bool _initialized = false;
 
@@ -315,15 +316,18 @@ class OauthProvidersService {
   /// Выполнить новый вход для провайдера
   ///
   /// [provider] - уникальный ID OAuth-приложения (app.id), а не тип провайдера
+  /// [onError] - callback для получения ошибок в процессе авторизации
   AsyncResultDart<OAuth2Token, ProviderServiceError> login(
-    String provider,
-  ) async {
+    String provider, {
+    void Function(String error)? onError,
+  }) async {
     try {
       _ensureInitialized();
 
       logInfo('Starting login for provider: $provider', tag: _logTag);
 
-      final token = await _account.newLogin(provider);
+      final token = await _account.newLogin(provider, onError: onError);
+
       if (token == null) {
         return Failure(
           ProviderServiceError.loginFailed(
@@ -825,5 +829,43 @@ class OauthProvidersService {
   /// Получить количество кэшированных клиентов
   int get cachedClientsCount {
     return _clients.length;
+  }
+
+  /// Отменить текущий процесс авторизации для провайдера
+  ///
+  /// [provider] - ID OAuth-приложения (app.id)
+  AsyncResultDart<void, ProviderServiceError> cancelLogin(
+    String provider,
+  ) async {
+    try {
+      _ensureInitialized();
+
+      final oauthProvider = _providers[provider];
+      if (oauthProvider == null) {
+        return Failure(
+          ProviderServiceError.providerNotFound(
+            provider: provider,
+            message: 'Provider not registered',
+          ),
+        );
+      }
+
+      logInfo('Cancelling login for provider: $provider', tag: _logTag);
+      oauthProvider.cancelLogin();
+
+      return const Success(unit);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to cancel login: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        ProviderServiceError.unknown(
+          message: 'Failed to cancel login: $e',
+          data: {'error': e.toString()},
+        ),
+      );
+    }
   }
 }

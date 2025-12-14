@@ -187,6 +187,16 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
     }
   }
 
+  /// Добавить ошибку авторизации в список
+  void _addAuthError(String error) {
+    final currentState = state.value ?? const OAuthLoginState();
+    final updatedErrors = [...currentState.authErrors, error];
+
+    state = AsyncData(currentState.copyWith(authErrors: updatedErrors));
+
+    logWarning('Auth error: $error', tag: _logTag);
+  }
+
   /// Выполнить новый вход
   Future<void> login() async {
     final currentState = state.value ?? const OAuthLoginState();
@@ -203,11 +213,20 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
       currentState.copyWith(
         loginStatus: LoginStatus.loggingIn,
         errorMessage: null,
+        authErrors: [], // Очищаем предыдущие ошибки
       ),
     );
 
     try {
-      final result = await _service.login(currentState.selectedProviderId!);
+      final result = await _service.login(
+        currentState.selectedProviderId!,
+        onError: (error) {
+          // Добавляем ошибку только если операция не отменена
+          if (currentOperationId == _operationId) {
+            _addAuthError(error);
+          }
+        },
+      );
 
       // Проверяем, не была ли отменена/заменена операция
       if (currentOperationId != _operationId) {
@@ -261,7 +280,7 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
   }
 
   /// Отменить текущий процесс авторизации
-  void cancel() {
+  Future<void> cancel() async {
     final currentState = state.value ?? const OAuthLoginState();
 
     // Отменяем только если идет процесс авторизации или авто-входа
@@ -269,10 +288,16 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
         currentState.loginStatus == LoginStatus.autoLogin) {
       _operationId++; // Увеличиваем счетчик - текущая операция станет недействительной
 
+      // Вызываем отмену на уровне сервиса
+      if (currentState.selectedProviderId != null) {
+        await _service.cancelLogin(currentState.selectedProviderId!);
+      }
+
       state = AsyncData(
         currentState.copyWith(
           loginStatus: LoginStatus.idle,
-          errorMessage: null, // Не показываем ошибку при отмене
+          errorMessage: null,
+          authErrors: [], // Очищаем ошибки при отмене
         ),
       );
 
@@ -292,6 +317,7 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
         loginStatus: LoginStatus.idle,
         token: null,
         errorMessage: null,
+        authErrors: [],
       ),
     );
 
