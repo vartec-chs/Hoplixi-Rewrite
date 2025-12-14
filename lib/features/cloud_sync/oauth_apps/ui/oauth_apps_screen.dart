@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/providers/oauth_apps_provider.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/ui/widgets/oauth_app_card.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/ui/widgets/oauth_app_modal.dart';
+import 'package:hoplixi/routing/paths.dart';
 
 /// Экран для управления OAuth приложениями
 class OAuthAppsScreen extends ConsumerWidget {
@@ -23,6 +25,13 @@ class OAuthAppsScreen extends ConsumerWidget {
               ref.read(oauthAppsProvider.notifier).reload();
             },
             tooltip: 'Обновить список',
+          ),
+          IconButton(
+            icon: const Icon(Icons.vpn_key),
+            onPressed: () {
+              context.push(AppRoutesPaths.oauthTokens);
+            },
+            tooltip: 'Токены OAuth',
           ),
         ],
       ),

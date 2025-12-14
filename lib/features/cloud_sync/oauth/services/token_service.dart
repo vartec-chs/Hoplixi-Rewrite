@@ -642,4 +642,13 @@ class TokenService {
       );
     }
   }
+
+  /// Освободить ресурсы (синхронно)
+  void dispose() {
+    if (_box != null && _box!.isOpen) {
+      _box!.close();
+      _box = null;
+      logInfo('TokenService disposed', tag: _logTag);
+    }
+  }
 }
