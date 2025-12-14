@@ -6,12 +6,14 @@ import 'package:hoplixi/core/services/hive_box_manager.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/models/token_oauth.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/models/token_service_errors.dart';
 import 'package:result_dart/result_dart.dart';
+import 'package:cloud_storage_all/cloud_storage_all.dart'
+    show OAuth2TokenStorage, OAuth2TokenF;
 
 /// Сервис для управления OAuth токенами
 ///
 /// Использует HiveBoxManager для безопасного хранения токенов.
 /// Все операции возвращают AsyncResult для обработки ошибок.
-class TokenService {
+class TokenService implements OAuth2TokenStorage {
   static const String _boxName = 'oauth_tokens';
   static const String _logTag = 'TokenService';
 
@@ -649,6 +651,120 @@ class TokenService {
       _box!.close();
       _box = null;
       logInfo('TokenService disposed', tag: _logTag);
+    }
+  }
+
+  // Реализация интерфейса OAuth2TokenStorage
+
+  @override
+  Future<String?> load(String key) async {
+    try {
+      _ensureInitialized();
+
+      final data = _box!.get(key);
+      if (data == null) {
+        return null;
+      }
+
+      final token = TokenOAuth.fromJson(Map<String, dynamic>.from(data));
+      return token.tokenJson;
+    } catch (e) {
+      logError('Failed to load token for OAuth2TokenStorage: $e', tag: _logTag);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> save(String key, String value) async {
+    try {
+      _ensureInitialized();
+
+      // Парсим JSON строку в OAuth2Token, затем конвертируем в TokenOAuth
+      final oAuth2Token = OAuth2TokenF.fromJsonString(value);
+      final tokenOAuth = TokenOAuth.fromOAuth2Token(
+        id: key,
+        token: oAuth2Token,
+      );
+
+      final data = tokenOAuth.toJson();
+      await _box!.put(key, data);
+
+      logInfo(
+        'Token saved via OAuth2TokenStorage',
+        data: {'key': key},
+        tag: _logTag,
+      );
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to save token via OAuth2TokenStorage: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    try {
+      _ensureInitialized();
+
+      await _box!.delete(key);
+      logInfo(
+        'Token deleted via OAuth2TokenStorage',
+        data: {'key': key},
+        tag: _logTag,
+      );
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to delete token via OAuth2TokenStorage: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, String>> loadAll({String? keyPrefix}) async {
+    try {
+      _ensureInitialized();
+
+      final result = <String, String>{};
+      final prefix = keyPrefix ?? '';
+
+      for (final key in _box!.keys) {
+        final keyStr = key.toString();
+        if (keyStr.startsWith(prefix)) {
+          final data = _box!.get(key);
+          if (data != null) {
+            try {
+              final token = TokenOAuth.fromJson(
+                Map<String, dynamic>.from(data),
+              );
+              result[keyStr] = token.tokenJson;
+            } catch (e) {
+              logWarning(
+                'Failed to parse token for loadAll: $keyStr, error: $e',
+                tag: _logTag,
+              );
+            }
+          }
+        }
+      }
+
+      logInfo(
+        'Loaded ${result.length} tokens via OAuth2TokenStorage',
+        tag: _logTag,
+      );
+      return result;
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to load all tokens via OAuth2TokenStorage: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return {};
     }
   }
 }
