@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/ui/oauth_login_screen.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/ui/tokens_screen.dart';
+import 'package:hoplixi/features/cloud_sync/auth/ui/auth_login_screen.dart';
+import 'package:hoplixi/features/cloud_sync/auth/ui/tokens_screen.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/ui/oauth_apps_screen.dart';
 import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:hive_ce/hive.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/core/services/hive_box_manager.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/token_oauth.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/token_service_errors.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/token_oauth.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/token_service_errors.dart';
 import 'package:result_dart/result_dart.dart';
 import 'package:cloud_storage_all/cloud_storage_all.dart'
     show OAuth2TokenStorage, OAuth2TokenF;

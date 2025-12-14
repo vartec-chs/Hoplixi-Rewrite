@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/token_oauth.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/services/token_service.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/providers/token_service_provider.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/token_oauth.dart';
+import 'package:hoplixi/features/cloud_sync/auth/services/token_service.dart';
+import 'package:hoplixi/features/cloud_sync/auth/providers/token_service_provider.dart';
 
 /// AsyncNotifier для управления списком OAuth токенов
 ///

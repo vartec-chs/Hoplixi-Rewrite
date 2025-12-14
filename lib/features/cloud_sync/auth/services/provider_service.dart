@@ -1,18 +1,8 @@
 import 'package:cloud_storage_all/cloud_storage_all.dart'
-    show
-        OAuth2Account,
-        Google,
-        Dropbox,
-        Yandex,
-        Microsoft,
-        OAuth2Token,
-        OAuth2RestClient,
-        OAuth2Provider;
+    show OAuth2Account, Google, Dropbox, Yandex, Microsoft, OAuth2Token;
 import 'package:hoplixi/core/logger/app_logger.dart';
-import 'package:hoplixi/features/cloud_sync/models/oauth_config.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/services/oauth_provider_wrapper.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/provider_service_errors.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/services/token_service.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/provider_service_errors.dart';
+import 'package:hoplixi/features/cloud_sync/auth/services/token_service.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/services/oauth_apps_service.dart';
 import 'package:result_dart/result_dart.dart';
@@ -21,48 +11,17 @@ import 'package:result_dart/result_dart.dart';
 ///
 /// Использует OAuth2Account для управления токенами и провайдерами.
 /// Регистрирует провайдеры на основе данных из OAuthAppsService.
-///
-/// ## Важная информация о провайдерах
-///
-/// Каждое OAuth-приложение получает уникальное имя провайдера на основе `app.id`,
-/// что позволяет иметь несколько приложений одного типа (например, несколько
-/// Google-аккаунтов) без конфликтов имен.
-///
-/// ## Использование
-///
-/// ```dart
-/// // 1. Инициализация сервиса
-/// final result = await providerService.initialize();
-///
-/// // 2. Получить список зарегистрированных провайдеров
-/// final providersResult = await providerService.getRegisteredProviders();
-/// final appIds = providersResult.getOrThrow(); // ['app_id_1', 'app_id_2', ...]
-///
-/// // 3. Выполнить вход используя app.id
-/// final loginResult = await providerService.login('app_id_1');
-/// final token = loginResult.getOrThrow();
-///
-/// // 4. Получить информацию о приложении
-/// final appResult = await providerService.getAppById('app_id_1');
-/// final app = appResult.getOrThrow();
-/// print('Provider: ${app.name} (${app.type.name})');
-/// ```
-///
-/// **Внимание:** Все методы, принимающие параметр `provider`, ожидают `app.id`,
-/// а не тип провайдера (например, не "google", а конкретный ID приложения).
-class OauthProvidersService {
+class ProviderService {
   static const String _logTag = 'ProviderService';
   static const String _appPrefix = 'hoplixi';
 
   final OAuthAppsService _appsService;
   final TokenService _tokenService;
   late final OAuth2Account _account;
-  final Map<String, OAuth2RestClient> _clients = {};
-  final Map<String, OAuth2Provider> _providers = {};
 
   bool _initialized = false;
 
-  OauthProvidersService({
+  ProviderService({
     required OAuthAppsService appsService,
     required TokenService tokenService,
   }) : _appsService = appsService,
@@ -75,8 +34,6 @@ class OauthProvidersService {
         logInfo('ProviderService already initialized', tag: _logTag);
         return const Success(unit);
       }
-
-      await _tokenService.initialize();
 
       // Создаем OAuth2Account с TokenService как хранилищем
       _account = OAuth2Account(
@@ -139,8 +96,8 @@ class OauthProvidersService {
     OauthApps app,
   ) async {
     try {
-      final baseProvider = _createProvider(app);
-      if (baseProvider == null) {
+      final provider = _createProvider(app);
+      if (provider == null) {
         return Failure(
           ProviderServiceError.unsupportedProvider(
             message: 'Provider type ${app.type.name} is not supported',
@@ -148,17 +105,10 @@ class OauthProvidersService {
         );
       }
 
-      // Оборачиваем провайдер для использования уникального имени
-      // Используем app.id как уникальный идентификатор
-      final uniqueProvider = OAuthProviderWrapper(
-        name: app.id,
-        provider: baseProvider,
-      );
-
-      _account.addProvider(uniqueProvider);
+      _account.addProvider(provider);
 
       logInfo(
-        'Registered provider: ${app.name} (${app.type.identifier}) with ID: ${app.id}',
+        'Registered provider: ${app.name} (${app.type.identifier})',
         tag: _logTag,
       );
 
@@ -179,38 +129,44 @@ class OauthProvidersService {
   }
 
   /// Создать провайдер на основе типа приложения
-  OAuth2Provider? _createProvider(OauthApps app) {
+  dynamic _createProvider(OauthApps app) {
     switch (app.type) {
       case OauthAppsType.google:
         return Google(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: OAuthConfig.redirectUri,
-          scopes: OAuthConfig.googleScopes,
+          redirectUri: 'http://localhost:8080/callback',
+          scopes: [
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/userinfo.profile',
+          ],
         );
 
       case OauthAppsType.onedrive:
         return Microsoft(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: OAuthConfig.redirectUri,
-          scopes: OAuthConfig.onedriveScopes,
+          redirectUri: 'http://localhost:8080/callback',
+          scopes: [
+            'Files.ReadWrite.All',
+            'User.Read',
+          ],
         );
 
       case OauthAppsType.dropbox:
         return Dropbox(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: OAuthConfig.redirectUri,
-          scopes: OAuthConfig.dropboxScopes,
+          redirectUri: 'http://localhost:8080/callback',
+          scopes: ['files.metadata.read', 'files.content.read', 'files.content.write'],
         );
 
       case OauthAppsType.yandex:
         return Yandex(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: OAuthConfig.redirectUri,
-          scopes: OAuthConfig.yandexScopes,
+          redirectUri: 'http://localhost:8080/callback',
+          scopes: ['login:info', 'disk:info', 'disk:read', 'disk:write'],
         );
 
       case OauthAppsType.other:
@@ -225,109 +181,16 @@ class OauthProvidersService {
     }
   }
 
-  /// Получить список всех зарегистрированных провайдеров (app.id)
-  ///
-  /// Возвращает список уникальных ID OAuth-приложений,
-  /// которые были успешно зарегистрированы в сервисе.
-  AsyncResultDart<List<String>, ProviderServiceError>
-  getRegisteredProviders() async {
-    try {
-      _ensureInitialized();
-
-      // Получаем все приложения из OAuthAppsService
-      final appsResult = await _appsService.getAllApps();
-      if (appsResult.isError()) {
-        return Failure(
-          ProviderServiceError.operationFailed(
-            message: 'Failed to get apps: ${appsResult.exceptionOrNull()}',
-          ),
-        );
-      }
-
-      final apps = appsResult.getOrThrow();
-      final providerIds = apps
-          .where((app) => app.type.isActive)
-          .map((app) => app.id)
-          .toList();
-
-      logInfo('Found ${providerIds.length} registered providers', tag: _logTag);
-
-      return Success(providerIds);
-    } catch (e, stackTrace) {
-      logError(
-        'Failed to get registered providers: $e',
-        stackTrace: stackTrace,
-        tag: _logTag,
-      );
-      return Failure(
-        ProviderServiceError.operationFailed(
-          message: 'Failed to get registered providers: ${e.toString()}',
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-  }
-
-  /// Получить OAuth-приложение по его ID
-  ///
-  /// Полезно для получения информации о провайдере (имя, тип) по его ID.
-  AsyncResultDart<OauthApps, ProviderServiceError> getAppById(
-    String appId,
-  ) async {
-    try {
-      _ensureInitialized();
-
-      final appsResult = await _appsService.getAllApps();
-      if (appsResult.isError()) {
-        return Failure(
-          ProviderServiceError.operationFailed(
-            message: 'Failed to get apps: ${appsResult.exceptionOrNull()}',
-          ),
-        );
-      }
-
-      final apps = appsResult.getOrThrow();
-      final app = apps.where((a) => a.id == appId).firstOrNull;
-
-      if (app == null) {
-        return Failure(
-          ProviderServiceError.unsupportedProvider(
-            message: 'OAuth app with ID $appId not found',
-          ),
-        );
-      }
-
-      return Success(app);
-    } catch (e, stackTrace) {
-      logError(
-        'Failed to get app by ID: $e',
-        stackTrace: stackTrace,
-        tag: _logTag,
-      );
-      return Failure(
-        ProviderServiceError.operationFailed(
-          message: 'Failed to get app by ID: ${e.toString()}',
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-  }
-
   /// Выполнить новый вход для провайдера
-  ///
-  /// [provider] - уникальный ID OAuth-приложения (app.id), а не тип провайдера
-  /// [onError] - callback для получения ошибок в процессе авторизации
   AsyncResultDart<OAuth2Token, ProviderServiceError> login(
-    String provider, {
-    void Function(String error)? onError,
-  }) async {
+    String provider,
+  ) async {
     try {
       _ensureInitialized();
 
       logInfo('Starting login for provider: $provider', tag: _logTag);
 
-      final token = await _account.newLogin(provider, onError: onError);
-
+      final token = await _account.newLogin(provider);
       if (token == null) {
         return Failure(
           ProviderServiceError.loginFailed(
@@ -358,9 +221,6 @@ class OauthProvidersService {
   }
 
   /// Попытка автоматического входа
-  ///
-  /// [provider] - уникальный ID OAuth-приложения (app.id), а не тип провайдера
-  /// [userName] - имя пользователя для входа
   AsyncResultDart<OAuth2Token, ProviderServiceError> tryAutoLogin(
     String provider,
     String userName,
@@ -502,9 +362,6 @@ class OauthProvidersService {
   }
 
   /// Получить все аккаунты
-  ///
-  /// [service] - фильтр по ID OAuth-приложения (app.id).
-  /// Если пусто, возвращаются все аккаунты.
   AsyncResultDart<List<(String, String)>, ProviderServiceError> getAllAccounts({
     String service = '',
   }) async {
@@ -535,9 +392,6 @@ class OauthProvidersService {
   }
 
   /// Загрузить аккаунт
-  ///
-  /// [service] - ID OAuth-приложения (app.id)
-  /// [userName] - имя пользователя
   AsyncResultDart<OAuth2Token, ProviderServiceError> loadAccount(
     String service,
     String userName,
@@ -580,9 +434,6 @@ class OauthProvidersService {
   }
 
   /// Удалить аккаунт
-  ///
-  /// [service] - ID OAuth-приложения (app.id)
-  /// [userName] - имя пользователя
   AsyncResultDart<void, ProviderServiceError> deleteAccount(
     String service,
     String userName,
@@ -614,9 +465,6 @@ class OauthProvidersService {
   }
 
   /// Получить любой доступный токен для сервиса
-  ///
-  /// [service] - фильтр по ID OAuth-приложения (app.id).
-  /// Если пусто, возвращается любой доступный токен.
   AsyncResultDart<OAuth2Token, ProviderServiceError> getAnyToken({
     String service = '',
   }) async {
@@ -711,161 +559,5 @@ class OauthProvidersService {
   OAuth2Account get account {
     _ensureInitialized();
     return _account;
-  }
-
-  /// Создать или получить существующий клиент для токена
-  AsyncResultDart<OAuth2RestClient, ProviderServiceError> getOrCreateClient(
-    OAuth2Token token, {
-    String? authScheme,
-    bool forceNew = false,
-  }) async {
-    try {
-      _ensureInitialized();
-
-      final clientKey = '${token.provider}:${token.userName}';
-
-      // Если клиент уже существует и не нужно создавать новый
-      if (!forceNew && _clients.containsKey(clientKey)) {
-        logInfo(
-          'Using cached client for provider: ${token.provider}, user: ${token.userName}',
-          tag: _logTag,
-        );
-        return Success(_clients[clientKey]!);
-      }
-
-      // Создаем новый клиент
-      logInfo(
-        'Creating new client for provider: ${token.provider}, user: ${token.userName}',
-        tag: _logTag,
-      );
-
-      final client = await _account.createClient(token, authScheme: authScheme);
-
-      // Сохраняем в кэше
-      _clients[clientKey] = client;
-
-      logInfo(
-        'Client created and cached for provider: ${token.provider}, user: ${token.userName}',
-        tag: _logTag,
-      );
-
-      return Success(client);
-    } catch (e, stackTrace) {
-      logError(
-        'Failed to create client: $e',
-        stackTrace: stackTrace,
-        tag: _logTag,
-      );
-      return Failure(
-        ProviderServiceError.operationFailed(
-          message: 'Failed to create client: ${e.toString()}',
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-  }
-
-  /// Удалить клиент из кэша
-  ///
-  /// [provider] - ID OAuth-приложения (app.id)
-  /// [userName] - имя пользователя
-  AsyncResultDart<void, ProviderServiceError> removeClient(
-    String provider,
-    String userName,
-  ) async {
-    try {
-      _ensureInitialized();
-
-      final clientKey = '$provider:$userName';
-      _clients.remove(clientKey);
-
-      logInfo(
-        'Removed client from cache for provider: $provider, user: $userName',
-        tag: _logTag,
-      );
-
-      return const Success(unit);
-    } catch (e, stackTrace) {
-      logError(
-        'Failed to remove client: $e',
-        stackTrace: stackTrace,
-        tag: _logTag,
-      );
-      return Failure(
-        ProviderServiceError.operationFailed(
-          message: 'Failed to remove client: ${e.toString()}',
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-  }
-
-  /// Очистить все клиенты из кэша
-  AsyncResultDart<void, ProviderServiceError> clearAllClients() async {
-    try {
-      _ensureInitialized();
-
-      final count = _clients.length;
-      _clients.clear();
-
-      logInfo('Cleared $count clients from cache', tag: _logTag);
-
-      return const Success(unit);
-    } catch (e, stackTrace) {
-      logError(
-        'Failed to clear clients: $e',
-        stackTrace: stackTrace,
-        tag: _logTag,
-      );
-      return Failure(
-        ProviderServiceError.operationFailed(
-          message: 'Failed to clear clients: ${e.toString()}',
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-  }
-
-  /// Получить количество кэшированных клиентов
-  int get cachedClientsCount {
-    return _clients.length;
-  }
-
-  /// Отменить текущий процесс авторизации для провайдера
-  ///
-  /// [provider] - ID OAuth-приложения (app.id)
-  AsyncResultDart<void, ProviderServiceError> cancelLogin(
-    String provider,
-  ) async {
-    try {
-      _ensureInitialized();
-
-      final oauthProvider = _providers[provider];
-      if (oauthProvider == null) {
-        return Failure(
-          ProviderServiceError.providerNotFound(
-            provider: provider,
-            message: 'Provider not registered',
-          ),
-        );
-      }
-
-      logInfo('Cancelling login for provider: $provider', tag: _logTag);
-      oauthProvider.cancelLogin();
-
-      return const Success(unit);
-    } catch (e, stackTrace) {
-      logError(
-        'Failed to cancel login: $e',
-        stackTrace: stackTrace,
-        tag: _logTag,
-      );
-      return Failure(
-        ProviderServiceError.unknown(
-          message: 'Failed to cancel login: $e',
-          data: {'error': e.toString()},
-        ),
-      );
-    }
   }
 }

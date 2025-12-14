@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/providers/token_provider.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/ui/widgets/token_card.dart';
+import 'package:hoplixi/features/cloud_sync/auth/providers/token_provider.dart';
+import 'package:hoplixi/features/cloud_sync/auth/ui/widgets/token_card.dart';
 import 'package:hoplixi/shared/ui/notification_card.dart';
 
 /// Экран для просмотра всех активных OAuth токенов

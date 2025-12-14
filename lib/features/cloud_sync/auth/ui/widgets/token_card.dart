@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/token_oauth.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/token_oauth.dart';
 import 'package:hoplixi/shared/ui/slider_button.dart';
 
 /// Карточка для отображения OAuth токена

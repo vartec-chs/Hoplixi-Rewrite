@@ -65,7 +65,7 @@
 **Быстрый старт:**
 
 ```dart
-import 'package:hoplixi/features/cloud_sync/oauth/ui/oauth_login_screen.dart';
+import 'package:hoplixi/features/cloud_sync/auth/ui/oauth_login_screen.dart';
 
 // Открыть экран авторизации
 final token = await Navigator.of(context).push<OAuth2Token>(

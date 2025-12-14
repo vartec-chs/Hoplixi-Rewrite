@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/oauth_login_state.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/providers/oauth_login_provider.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/oauth_login_state.dart';
+import 'package:hoplixi/features/cloud_sync/auth/providers/auth_login_provider.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 

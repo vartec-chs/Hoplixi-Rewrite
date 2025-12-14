@@ -1,22 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/oauth_login_state.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/providers/oauth_provider.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/services/oauth_providers_service.dart';
+import 'package:hoplixi/features/cloud_sync/auth/models/oauth_login_state.dart';
+import 'package:hoplixi/features/cloud_sync/auth/providers/auth_provider.dart';
+import 'package:hoplixi/features/cloud_sync/auth/services/auth_providers_service.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 
 /// AsyncNotifier для управления процессом OAuth авторизации
-class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
-  static const String _logTag = 'OAuthLoginNotifier';
+class AuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
+  static const String _logTag = 'AuthLoginNotifier';
 
-  late final OauthProvidersService _service;
+  late final AuthProvidersService _service;
   int _operationId = 0; // Счетчик операций
 
   @override
   Future<OAuthLoginState> build() async {
     // Получаем инициализированный сервис
     final serviceAsync = await ref.watch(
-      oauthProvidersServiceAsyncProvider.future,
+      authProvidersServiceAsyncProvider.future,
     );
     _service = serviceAsync;
 
@@ -332,7 +332,7 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
 }
 
 /// Provider для управления OAuth авторизацией
-final oauthLoginProvider =
-    AsyncNotifierProvider<OAuthLoginNotifier, OAuthLoginState>(
-      OAuthLoginNotifier.new,
+final authLoginProvider =
+    AsyncNotifierProvider<AuthLoginNotifier, OAuthLoginState>(
+      AuthLoginNotifier.new,
     );
