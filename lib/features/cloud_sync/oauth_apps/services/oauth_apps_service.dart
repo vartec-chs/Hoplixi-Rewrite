@@ -1,11 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/core/services/hive_box_manager.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps_errors.dart';
 import 'package:result_dart/result_dart.dart';
+import 'package:uuid/uuid.dart';
+
+const _uuid = Uuid();
 
 /// Сервис для управления OAuth приложениями
 ///
@@ -26,6 +30,10 @@ class OAuthAppsService {
       logInfo('Initializing OAuthAppsService', tag: _logTag);
       _box = await _hiveManager.openBox<Map<dynamic, dynamic>>(_boxName);
       logInfo('OAuthAppsService initialized successfully', tag: _logTag);
+
+      // Загружаем встроенные приложения
+      await _loadBuiltinApps();
+
       return const Success(unit);
     } catch (e, stackTrace) {
       logError(
@@ -50,6 +58,155 @@ class OAuthAppsService {
       throw StateError(
         'OAuthAppsService not initialized. Call initialize() first.',
       );
+    }
+  }
+
+  /// Загрузить встроенные OAuth приложения из .env
+  Future<void> _loadBuiltinApps() async {
+    try {
+      // Проверяем, включены ли встроенные приложения
+      final useBuiltin =
+          dotenv.env['USED_BUILTIN_AUTH_APPS']?.toLowerCase() == 'true';
+      if (!useBuiltin) {
+        logInfo('Builtin OAuth apps are disabled', tag: _logTag);
+        return;
+      }
+
+      logInfo('Loading builtin OAuth apps', tag: _logTag);
+      final builtinApps = <OauthApps>[];
+
+      // Загрузка Google
+      if (_isBuiltinEnabled('GOOGLE')) {
+        final app = _createBuiltinApp(
+          type: OauthAppsType.google,
+          prefix: 'GOOGLE',
+        );
+        if (app != null) {
+          builtinApps.add(app);
+        }
+      }
+
+      // Загрузка Dropbox
+      if (_isBuiltinEnabled('DROPBOX')) {
+        final app = _createBuiltinApp(
+          type: OauthAppsType.dropbox,
+          prefix: 'DROPBOX',
+        );
+        if (app != null) {
+          builtinApps.add(app);
+        }
+      }
+
+      // Загрузка Yandex
+      if (_isBuiltinEnabled('YANDEX')) {
+        final app = _createBuiltinApp(
+          type: OauthAppsType.yandex,
+          prefix: 'YANDEX',
+        );
+        if (app != null) {
+          builtinApps.add(app);
+        }
+      }
+
+      // Загрузка OneDrive
+      if (_isBuiltinEnabled('ONEDRIVE')) {
+        final app = _createBuiltinApp(
+          type: OauthAppsType.onedrive,
+          prefix: 'ONEDRIVE',
+        );
+        if (app != null) {
+          builtinApps.add(app);
+        }
+      }
+
+      // Сохраняем встроенные приложения
+      for (final app in builtinApps) {
+        // Проверяем, существует ли уже это приложение
+        if (!_box!.containsKey(app.id)) {
+          final data = app.toJson();
+          await _box!.put(app.id, data);
+          logInfo(
+            'Loaded builtin OAuth app: ${app.name} (${app.type.name})',
+            tag: _logTag,
+          );
+        } else {
+          // Обновляем существующее встроенное приложение
+          final existingData = _box!.get(app.id);
+          if (existingData != null) {
+            final existing = OauthApps.fromJson(
+              Map<String, dynamic>.from(existingData),
+            );
+            if (existing.isBuiltin) {
+              // Обновляем учетные данные для встроенного приложения
+              final data = app.toJson();
+              await _box!.put(app.id, data);
+              logInfo(
+                'Updated builtin OAuth app: ${app.name} (${app.type.name})',
+                tag: _logTag,
+              );
+            }
+          }
+        }
+      }
+
+      logInfo('Loaded ${builtinApps.length} builtin OAuth apps', tag: _logTag);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to load builtin OAuth apps: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      // Не прерываем инициализацию, просто логируем ошибку
+    }
+  }
+
+  /// Проверить, включено ли встроенное приложение
+  bool _isBuiltinEnabled(String prefix) {
+    final enabled =
+        dotenv.env['${prefix}_BUILTIN_ENABLED']?.toLowerCase() == 'true';
+    return enabled;
+  }
+
+  /// Создать встроенное OAuth приложение из переменных окружения
+  OauthApps? _createBuiltinApp({
+    required OauthAppsType type,
+    required String prefix,
+  }) {
+    try {
+      final name = dotenv.env['${prefix}_APP_NAME'];
+      final clientId = dotenv.env['${prefix}_CLIENT_ID'];
+      final clientSecret = dotenv.env['${prefix}_CLIENT_SECRET'];
+
+      if (name == null || name.isEmpty) {
+        logWarning('Missing ${prefix}_APP_NAME in .env', tag: _logTag);
+        return null;
+      }
+
+      if (clientId == null || clientId.isEmpty) {
+        logWarning('Missing ${prefix}_CLIENT_ID in .env', tag: _logTag);
+        return null;
+      }
+
+      // Создаем детерминированный ID для встроенного приложения
+      final id = 'builtin-${type.identifier}';
+
+      return OauthApps(
+        id: id,
+        name: name,
+        type: type,
+        clientId: clientId,
+        clientSecret: (clientSecret != null && clientSecret.isNotEmpty)
+            ? clientSecret
+            : null,
+        isBuiltin: true,
+      );
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to create builtin OAuth app for $prefix: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return null;
     }
   }
 
@@ -287,6 +444,25 @@ class OAuthAppsService {
         );
       }
 
+      // Проверяем, не пытается ли пользователь изменить встроенное приложение
+      final existingData = _box!.get(app.id);
+      if (existingData != null) {
+        final existing = OauthApps.fromJson(
+          Map<String, dynamic>.from(existingData),
+        );
+        if (existing.isBuiltin) {
+          logWarning(
+            'Attempted to update builtin OAuth app: ${app.id}',
+            tag: _logTag,
+          );
+          return const Failure(
+            OAuthAppsError.invalidData(
+              message: 'Встроенные OAuth приложения нельзя редактировать',
+            ),
+          );
+        }
+      }
+
       return await saveApp(app);
     } catch (e, stackTrace) {
       logError(
@@ -315,6 +491,25 @@ class OAuthAppsService {
         return Failure(
           OAuthAppsError.notFound(data: {'id': id}, timestamp: DateTime.now()),
         );
+      }
+
+      // Проверяем, не пытается ли пользователь удалить встроенное приложение
+      final existingData = _box!.get(id);
+      if (existingData != null) {
+        final existing = OauthApps.fromJson(
+          Map<String, dynamic>.from(existingData),
+        );
+        if (existing.isBuiltin) {
+          logWarning(
+            'Attempted to delete builtin OAuth app: $id',
+            tag: _logTag,
+          );
+          return const Failure(
+            OAuthAppsError.invalidData(
+              message: 'Встроенные OAuth приложения нельзя удалять',
+            ),
+          );
+        }
       }
 
       await _box!.delete(id);
@@ -489,6 +684,31 @@ class OAuthAppsService {
       return Failure(
         OAuthAppsError.storageError(
           message: 'Не удалось компактировать хранилище OAuth приложений',
+          data: {'error': e.toString()},
+          stackTrace: stackTrace,
+          timestamp: DateTime.now(),
+        ),
+      );
+    }
+  }
+
+  /// Перезагрузить встроенные OAuth приложения из .env
+  /// Полезно после изменения переменных окружения
+  AsyncResultDart<void, OAuthAppsError> reloadBuiltinApps() async {
+    try {
+      _ensureInitialized();
+      logInfo('Reloading builtin OAuth apps', tag: _logTag);
+      await _loadBuiltinApps();
+      return const Success(unit);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to reload builtin OAuth apps: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        OAuthAppsError.storageError(
+          message: 'Не удалось перезагрузить встроенные OAuth приложения',
           data: {'error': e.toString()},
           stackTrace: stackTrace,
           timestamp: DateTime.now(),

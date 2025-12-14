@@ -230,6 +230,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     context.push(AppRoutesPaths.settings);
                   },
                 ),
+
+                const SizedBox(height: 12),
+
+                ActionButton(
+                  icon: CupertinoIcons.person_2,
+                  label: 'OAuth Приложения',
+                  description: 'Открыть настройки OAuth приложений',
+                  onTap: () {
+                    context.push(AppRoutesPaths.oauthApps);
+                  },
+                ),
               ],
             ),
           );
@@ -309,6 +320,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
 
               const SizedBox(height: 12),
+
+              ActionButton(
+                icon: CupertinoIcons.person_2,
+                label: 'OAuth Приложения',
+                description: 'Открыть настройки OAuth приложений',
+                onTap: () {
+                  context.push(AppRoutesPaths.oauthApps);
+                },
+              ),
             ],
           ),
         );

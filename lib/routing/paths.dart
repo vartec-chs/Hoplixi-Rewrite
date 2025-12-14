@@ -11,6 +11,7 @@ class AppRoutesPaths {
   static const String openStore = '/open-store';
   static const String lockStore = '/lock-store';
   static const String archiveStore = '/archive-store';
+  static const String oauthApps = '/oauth-apps';
 
   // Dashboard related paths
   static const String dashboard = '/dashboard';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/features/cloud_sync/oauth_apps/ui/oauth_apps_screen.dart';
 import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
@@ -66,6 +67,11 @@ final List<RouteBase> appRoutes = [
   GoRoute(
     path: AppRoutesPaths.settings,
     builder: (context, state) => const SettingsScreen(),
+  ),
+
+  GoRoute(
+    path: AppRoutesPaths.oauthApps,
+    builder: (context, state) => const OAuthAppsScreen(),
   ),
 
   // Dashboard с вложенными роутами через ShellRoute
