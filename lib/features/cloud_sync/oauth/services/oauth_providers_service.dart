@@ -6,8 +6,10 @@ import 'package:cloud_storage_all/cloud_storage_all.dart'
         Yandex,
         Microsoft,
         OAuth2Token,
-        OAuth2RestClient;
+        OAuth2RestClient,
+        OAuth2Provider;
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/cloud_sync/oauth/services/oauth_provider_wrapper.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/models/provider_service_errors.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/services/token_service.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
@@ -18,6 +20,35 @@ import 'package:result_dart/result_dart.dart';
 ///
 /// Использует OAuth2Account для управления токенами и провайдерами.
 /// Регистрирует провайдеры на основе данных из OAuthAppsService.
+///
+/// ## Важная информация о провайдерах
+///
+/// Каждое OAuth-приложение получает уникальное имя провайдера на основе `app.id`,
+/// что позволяет иметь несколько приложений одного типа (например, несколько
+/// Google-аккаунтов) без конфликтов имен.
+///
+/// ## Использование
+///
+/// ```dart
+/// // 1. Инициализация сервиса
+/// final result = await providerService.initialize();
+///
+/// // 2. Получить список зарегистрированных провайдеров
+/// final providersResult = await providerService.getRegisteredProviders();
+/// final appIds = providersResult.getOrThrow(); // ['app_id_1', 'app_id_2', ...]
+///
+/// // 3. Выполнить вход используя app.id
+/// final loginResult = await providerService.login('app_id_1');
+/// final token = loginResult.getOrThrow();
+///
+/// // 4. Получить информацию о приложении
+/// final appResult = await providerService.getAppById('app_id_1');
+/// final app = appResult.getOrThrow();
+/// print('Provider: ${app.name} (${app.type.name})');
+/// ```
+///
+/// **Внимание:** Все методы, принимающие параметр `provider`, ожидают `app.id`,
+/// а не тип провайдера (например, не "google", а конкретный ID приложения).
 class OauthProvidersService {
   static const String _logTag = 'ProviderService';
   static const String _appPrefix = 'hoplixi';
@@ -104,8 +135,8 @@ class OauthProvidersService {
     OauthApps app,
   ) async {
     try {
-      final provider = _createProvider(app);
-      if (provider == null) {
+      final baseProvider = _createProvider(app);
+      if (baseProvider == null) {
         return Failure(
           ProviderServiceError.unsupportedProvider(
             message: 'Provider type ${app.type.name} is not supported',
@@ -113,10 +144,17 @@ class OauthProvidersService {
         );
       }
 
-      _account.addProvider(provider);
+      // Оборачиваем провайдер для использования уникального имени
+      // Используем app.id как уникальный идентификатор
+      final uniqueProvider = OAuthProviderWrapper(
+        name: app.id,
+        provider: baseProvider,
+      );
+
+      _account.addProvider(uniqueProvider);
 
       logInfo(
-        'Registered provider: ${app.name} (${app.type.identifier})',
+        'Registered provider: ${app.name} (${app.type.identifier}) with ID: ${app.id}',
         tag: _logTag,
       );
 
@@ -137,7 +175,7 @@ class OauthProvidersService {
   }
 
   /// Создать провайдер на основе типа приложения
-  dynamic _createProvider(OauthApps app) {
+  OAuth2Provider? _createProvider(OauthApps app) {
     switch (app.type) {
       case OauthAppsType.google:
         return Google(
@@ -190,7 +228,97 @@ class OauthProvidersService {
     }
   }
 
+  /// Получить список всех зарегистрированных провайдеров (app.id)
+  ///
+  /// Возвращает список уникальных ID OAuth-приложений,
+  /// которые были успешно зарегистрированы в сервисе.
+  AsyncResultDart<List<String>, ProviderServiceError>
+  getRegisteredProviders() async {
+    try {
+      _ensureInitialized();
+
+      // Получаем все приложения из OAuthAppsService
+      final appsResult = await _appsService.getAllApps();
+      if (appsResult.isError()) {
+        return Failure(
+          ProviderServiceError.operationFailed(
+            message: 'Failed to get apps: ${appsResult.exceptionOrNull()}',
+          ),
+        );
+      }
+
+      final apps = appsResult.getOrThrow();
+      final providerIds = apps
+          .where((app) => app.type.isActive)
+          .map((app) => app.id)
+          .toList();
+
+      logInfo('Found ${providerIds.length} registered providers', tag: _logTag);
+
+      return Success(providerIds);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to get registered providers: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        ProviderServiceError.operationFailed(
+          message: 'Failed to get registered providers: ${e.toString()}',
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  /// Получить OAuth-приложение по его ID
+  ///
+  /// Полезно для получения информации о провайдере (имя, тип) по его ID.
+  AsyncResultDart<OauthApps, ProviderServiceError> getAppById(
+    String appId,
+  ) async {
+    try {
+      _ensureInitialized();
+
+      final appsResult = await _appsService.getAllApps();
+      if (appsResult.isError()) {
+        return Failure(
+          ProviderServiceError.operationFailed(
+            message: 'Failed to get apps: ${appsResult.exceptionOrNull()}',
+          ),
+        );
+      }
+
+      final apps = appsResult.getOrThrow();
+      final app = apps.where((a) => a.id == appId).firstOrNull;
+
+      if (app == null) {
+        return Failure(
+          ProviderServiceError.unsupportedProvider(
+            message: 'OAuth app with ID $appId not found',
+          ),
+        );
+      }
+
+      return Success(app);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to get app by ID: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        ProviderServiceError.operationFailed(
+          message: 'Failed to get app by ID: ${e.toString()}',
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
   /// Выполнить новый вход для провайдера
+  ///
+  /// [provider] - уникальный ID OAuth-приложения (app.id), а не тип провайдера
   AsyncResultDart<OAuth2Token, ProviderServiceError> login(
     String provider,
   ) async {
@@ -230,6 +358,9 @@ class OauthProvidersService {
   }
 
   /// Попытка автоматического входа
+  ///
+  /// [provider] - уникальный ID OAuth-приложения (app.id), а не тип провайдера
+  /// [userName] - имя пользователя для входа
   AsyncResultDart<OAuth2Token, ProviderServiceError> tryAutoLogin(
     String provider,
     String userName,
@@ -371,6 +502,9 @@ class OauthProvidersService {
   }
 
   /// Получить все аккаунты
+  ///
+  /// [service] - фильтр по ID OAuth-приложения (app.id).
+  /// Если пусто, возвращаются все аккаунты.
   AsyncResultDart<List<(String, String)>, ProviderServiceError> getAllAccounts({
     String service = '',
   }) async {
@@ -401,6 +535,9 @@ class OauthProvidersService {
   }
 
   /// Загрузить аккаунт
+  ///
+  /// [service] - ID OAuth-приложения (app.id)
+  /// [userName] - имя пользователя
   AsyncResultDart<OAuth2Token, ProviderServiceError> loadAccount(
     String service,
     String userName,
@@ -443,6 +580,9 @@ class OauthProvidersService {
   }
 
   /// Удалить аккаунт
+  ///
+  /// [service] - ID OAuth-приложения (app.id)
+  /// [userName] - имя пользователя
   AsyncResultDart<void, ProviderServiceError> deleteAccount(
     String service,
     String userName,
@@ -474,6 +614,9 @@ class OauthProvidersService {
   }
 
   /// Получить любой доступный токен для сервиса
+  ///
+  /// [service] - фильтр по ID OAuth-приложения (app.id).
+  /// Если пусто, возвращается любой доступный токен.
   AsyncResultDart<OAuth2Token, ProviderServiceError> getAnyToken({
     String service = '',
   }) async {
@@ -623,6 +766,9 @@ class OauthProvidersService {
   }
 
   /// Удалить клиент из кэша
+  ///
+  /// [provider] - ID OAuth-приложения (app.id)
+  /// [userName] - имя пользователя
   AsyncResultDart<void, ProviderServiceError> removeClient(
     String provider,
     String userName,

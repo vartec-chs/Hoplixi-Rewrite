@@ -15,3 +15,25 @@ final oauthProviderServiceProvider = Provider<OauthProvidersService>((ref) {
 
   return service;
 });
+
+/// AsyncNotifier для управления инициализацией OauthProvidersService
+class OauthProvidersServiceNotifier
+    extends AsyncNotifier<OauthProvidersService> {
+  @override
+  Future<OauthProvidersService> build() async {
+    final service = ref.watch(oauthProviderServiceProvider);
+    final result = await service.initialize();
+
+    if (result.isError()) {
+      throw result.exceptionOrNull()!;
+    }
+
+    return service;
+  }
+}
+
+/// AsyncNotifierProvider для OauthProvidersService с состоянием инициализации
+final oauthProvidersServiceAsyncProvider =
+    AsyncNotifierProvider<OauthProvidersServiceNotifier, OauthProvidersService>(
+      OauthProvidersServiceNotifier.new,
+    );
