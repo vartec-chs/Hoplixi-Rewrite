@@ -49,6 +49,45 @@
 - Автоматическое обновление токенов в клиентах
 - Управление жизненным циклом клиентов
 
+## UI компоненты
+
+### OAuthLoginScreen
+
+Готовый UI компонент для OAuth авторизации с выбором провайдера.
+
+**Возможности:**
+- Выбор OAuth провайдера из списка доступных
+- Автоматический вход с сохраненными аккаунтами
+- Новый вход через браузер
+- Обработка ошибок и loading состояний
+- Material Design 3 интерфейс
+
+**Быстрый старт:**
+
+```dart
+import 'package:hoplixi/features/cloud_sync/oauth/ui/oauth_login_screen.dart';
+
+// Открыть экран авторизации
+final token = await Navigator.of(context).push<OAuth2Token>(
+  MaterialPageRoute(
+    builder: (context) => const OAuthLoginScreen(),
+  ),
+);
+
+if (token != null) {
+  // Токен получен - можно использовать для API запросов
+  print('Авторизован: ${token.userName}');
+}
+```
+
+**Архитектура:**
+- `OAuthLoginState` - Freezed модель состояния
+- `OAuthLoginNotifier` - AsyncNotifier с бизнес-логикой
+- `oauthLoginProvider` - AsyncNotifierProvider
+- `OAuthLoginScreen` - ConsumerWidget UI
+
+См. [ui/README.md](./ui/README.md) для подробной документации.
+
 ## API
 
 ### Инициализация

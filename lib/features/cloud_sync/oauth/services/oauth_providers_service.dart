@@ -9,6 +9,7 @@ import 'package:cloud_storage_all/cloud_storage_all.dart'
         OAuth2RestClient,
         OAuth2Provider;
 import 'package:hoplixi/core/logger/app_logger.dart';
+import 'package:hoplixi/features/cloud_sync/oauth/models/oauth_config.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/services/oauth_provider_wrapper.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/models/provider_service_errors.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/services/token_service.dart';
@@ -181,39 +182,32 @@ class OauthProvidersService {
         return Google(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: 'http://localhost:8080/callback',
-          scopes: [
-            'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/userinfo.profile',
-          ],
+          redirectUri: OAuthConfig.redirectUri,
+          scopes: OAuthConfig.googleScopes,
         );
 
       case OauthAppsType.onedrive:
         return Microsoft(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: 'http://localhost:8080/callback',
-          scopes: ['Files.ReadWrite.All', 'User.Read'],
+          redirectUri: OAuthConfig.redirectUri,
+          scopes: OAuthConfig.onedriveScopes,
         );
 
       case OauthAppsType.dropbox:
         return Dropbox(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: 'http://localhost:8080/callback',
-          scopes: [
-            'files.metadata.read',
-            'files.content.read',
-            'files.content.write',
-          ],
+          redirectUri: OAuthConfig.redirectUri,
+          scopes: OAuthConfig.dropboxScopes,
         );
 
       case OauthAppsType.yandex:
         return Yandex(
           clientId: app.clientId,
           clientSecret: app.clientSecret,
-          redirectUri: 'http://localhost:8080/callback',
-          scopes: ['login:info', 'disk:info', 'disk:read', 'disk:write'],
+          redirectUri: OAuthConfig.redirectUri,
+          scopes: OAuthConfig.yandexScopes,
         );
 
       case OauthAppsType.other:

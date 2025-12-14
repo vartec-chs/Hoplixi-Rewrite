@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
+import 'package:hoplixi/features/cloud_sync/oauth/models/oauth_config.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/providers/oauth_apps_provider.dart';
 import 'package:hoplixi/shared/ui/modal_sheet_close_button.dart';
@@ -157,6 +159,11 @@ class _OAuthAppFormState extends ConsumerState<_OAuthAppForm> {
 
           const SizedBox(height: 24),
 
+          // Информационные блоки с Redirect URI и Scopes
+          _buildConfigInfo(context, _selectedType),
+
+          const SizedBox(height: 24),
+
           // Название
           TextFormField(
             controller: _nameController,
@@ -280,5 +287,149 @@ class _OAuthAppFormState extends ConsumerState<_OAuthAppForm> {
         });
       }
     }
+  }
+
+  /// Получить scopes для выбранного типа приложения
+  List<String> _getScopesForType(OauthAppsType type) {
+    switch (type) {
+      case OauthAppsType.google:
+        return OAuthConfig.googleScopes;
+      case OauthAppsType.onedrive:
+        return OAuthConfig.onedriveScopes;
+      case OauthAppsType.dropbox:
+        return OAuthConfig.dropboxScopes;
+      case OauthAppsType.yandex:
+        return OAuthConfig.yandexScopes;
+      case OauthAppsType.other:
+        return [];
+    }
+  }
+
+  /// Построить информационный блок с конфигурацией
+  Widget _buildConfigInfo(BuildContext context, OauthAppsType type) {
+    final theme = Theme.of(context);
+    final scopes = _getScopesForType(type);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outline.withAlpha(77)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 20,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Данные для регистрации',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Redirect URI Desktop
+          _buildCopyableField(
+            context,
+            label: 'Redirect URI Desktop',
+            value: OAuthConfig.redirectUri,
+            icon: Icons.link,
+          ),
+
+          const SizedBox(height: 12),
+
+          // Redirect URI Mobile
+          _buildCopyableField(
+            context,
+            label: 'Redirect URI Mobile',
+            value: OAuthConfig.redirectUriMobile,
+            icon: Icons.link,
+          ),
+
+          if (scopes.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            // Scopes
+            _buildCopyableField(
+              context,
+              label: 'Scopes (разрешения)',
+              value: scopes.join('\\n'),
+              icon: Icons.verified_user_outlined,
+              maxLines: scopes.length,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Построить поле с возможностью копирования
+  Widget _buildCopyableField(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required IconData icon,
+    int maxLines = 1,
+  }) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: value));
+            Toaster.success(title: 'Скопировано', description: label);
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: theme.colorScheme.outline.withAlpha(128),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    value,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.copy, size: 16, color: theme.colorScheme.primary),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

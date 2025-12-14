@@ -33,6 +33,14 @@ class OAuthAppsScreen extends ConsumerWidget {
             },
             tooltip: 'Токены OAuth',
           ),
+
+          IconButton(
+            icon: const Icon(Icons.login),
+            onPressed: () {
+              context.push(AppRoutesPaths.oauthLogin);
+            },
+            tooltip: 'Вход OAuth',
+          ),
         ],
       ),
       body: appsAsync.when(
