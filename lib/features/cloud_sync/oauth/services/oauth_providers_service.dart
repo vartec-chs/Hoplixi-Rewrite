@@ -1,5 +1,12 @@
 import 'package:cloud_storage_all/cloud_storage_all.dart'
-    show OAuth2Account, Google, Dropbox, Yandex, Microsoft, OAuth2Token;
+    show
+        OAuth2Account,
+        Google,
+        Dropbox,
+        Yandex,
+        Microsoft,
+        OAuth2Token,
+        OAuth2RestClient;
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/models/provider_service_errors.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/services/token_service.dart';
@@ -11,17 +18,18 @@ import 'package:result_dart/result_dart.dart';
 ///
 /// Использует OAuth2Account для управления токенами и провайдерами.
 /// Регистрирует провайдеры на основе данных из OAuthAppsService.
-class ProviderService {
+class OauthProvidersService {
   static const String _logTag = 'ProviderService';
   static const String _appPrefix = 'hoplixi';
 
   final OAuthAppsService _appsService;
   final TokenService _tokenService;
   late final OAuth2Account _account;
+  final Map<String, OAuth2RestClient> _clients = {};
 
   bool _initialized = false;
 
-  ProviderService({
+  OauthProvidersService({
     required OAuthAppsService appsService,
     required TokenService tokenService,
   }) : _appsService = appsService,
@@ -147,10 +155,7 @@ class ProviderService {
           clientId: app.clientId,
           clientSecret: app.clientSecret,
           redirectUri: 'http://localhost:8080/callback',
-          scopes: [
-            'Files.ReadWrite.All',
-            'User.Read',
-          ],
+          scopes: ['Files.ReadWrite.All', 'User.Read'],
         );
 
       case OauthAppsType.dropbox:
@@ -158,7 +163,11 @@ class ProviderService {
           clientId: app.clientId,
           clientSecret: app.clientSecret,
           redirectUri: 'http://localhost:8080/callback',
-          scopes: ['files.metadata.read', 'files.content.read', 'files.content.write'],
+          scopes: [
+            'files.metadata.read',
+            'files.content.read',
+            'files.content.write',
+          ],
         );
 
       case OauthAppsType.yandex:
@@ -559,5 +568,120 @@ class ProviderService {
   OAuth2Account get account {
     _ensureInitialized();
     return _account;
+  }
+
+  /// Создать или получить существующий клиент для токена
+  AsyncResultDart<OAuth2RestClient, ProviderServiceError> getOrCreateClient(
+    OAuth2Token token, {
+    String? authScheme,
+    bool forceNew = false,
+  }) async {
+    try {
+      _ensureInitialized();
+
+      final clientKey = '${token.provider}:${token.userName}';
+
+      // Если клиент уже существует и не нужно создавать новый
+      if (!forceNew && _clients.containsKey(clientKey)) {
+        logInfo(
+          'Using cached client for provider: ${token.provider}, user: ${token.userName}',
+          tag: _logTag,
+        );
+        return Success(_clients[clientKey]!);
+      }
+
+      // Создаем новый клиент
+      logInfo(
+        'Creating new client for provider: ${token.provider}, user: ${token.userName}',
+        tag: _logTag,
+      );
+
+      final client = await _account.createClient(token, authScheme: authScheme);
+
+      // Сохраняем в кэше
+      _clients[clientKey] = client;
+
+      logInfo(
+        'Client created and cached for provider: ${token.provider}, user: ${token.userName}',
+        tag: _logTag,
+      );
+
+      return Success(client);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to create client: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        ProviderServiceError.operationFailed(
+          message: 'Failed to create client: ${e.toString()}',
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  /// Удалить клиент из кэша
+  AsyncResultDart<void, ProviderServiceError> removeClient(
+    String provider,
+    String userName,
+  ) async {
+    try {
+      _ensureInitialized();
+
+      final clientKey = '$provider:$userName';
+      _clients.remove(clientKey);
+
+      logInfo(
+        'Removed client from cache for provider: $provider, user: $userName',
+        tag: _logTag,
+      );
+
+      return const Success(unit);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to remove client: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        ProviderServiceError.operationFailed(
+          message: 'Failed to remove client: ${e.toString()}',
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  /// Очистить все клиенты из кэша
+  AsyncResultDart<void, ProviderServiceError> clearAllClients() async {
+    try {
+      _ensureInitialized();
+
+      final count = _clients.length;
+      _clients.clear();
+
+      logInfo('Cleared $count clients from cache', tag: _logTag);
+
+      return const Success(unit);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to clear clients: $e',
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      return Failure(
+        ProviderServiceError.operationFailed(
+          message: 'Failed to clear clients: ${e.toString()}',
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  /// Получить количество кэшированных клиентов
+  int get cachedClientsCount {
+    return _clients.length;
   }
 }
