@@ -236,11 +236,9 @@ packages:
   cloud_storage_all:
     dependency: "direct main"
     description:
-      path: "packages/cloud_storage_all"
-      ref: master
-      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
-    source: git
+      path: "packages/cloud_storage_sdk/packages/cloud_storage_all"
+      relative: true
+    source: path
     version: "1.0.3"
   code_builder:
     dependency: transitive
@@ -445,11 +443,9 @@ packages:
   dropbox_api:
     dependency: transitive
     description:
-      path: "packages/dropbox_api"
-      ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
-    source: git
+      path: "packages/cloud_storage_sdk/packages/dropbox_api"
+      relative: true
+    source: path
     version: "0.0.6"
   equatable:
     dependency: transitive
@@ -833,11 +829,9 @@ packages:
   google_drive_api:
     dependency: transitive
     description:
-      path: "packages/google_drive_api"
-      ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
-    source: git
+      path: "packages/cloud_storage_sdk/packages/google_drive_api"
+      relative: true
+    source: path
     version: "0.0.1"
   google_fonts:
     dependency: "direct main"
@@ -1242,20 +1236,16 @@ packages:
   oauth2restclient:
     dependency: transitive
     description:
-      path: "packages/oauth2restclient"
-      ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
-    source: git
+      path: "packages/cloud_storage_sdk/packages/oauth2restclient"
+      relative: true
+    source: path
     version: "0.0.15"
   onedrive_api:
     dependency: transitive
     description:
-      path: "packages/onedrive_api"
-      ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
-    source: git
+      path: "packages/cloud_storage_sdk/packages/onedrive_api"
+      relative: true
+    source: path
     version: "0.0.2"
   open_file:
     dependency: "direct main"
@@ -2249,11 +2239,9 @@ packages:
   yandex_drive_api:
     dependency: transitive
     description:
-      path: "packages/yandex_drive_api"
-      ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      resolved-ref: "0d049200a192edcb326e98fc6501f024840079bb"
-      url: "https://github.com/vartec-chs/cloud_storage_sdk.git"
-    source: git
+      path: "packages/cloud_storage_sdk/packages/yandex_drive_api"
+      relative: true
+    source: path
     version: "0.0.1"
   zxing2:
     dependency: "direct main"
