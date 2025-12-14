@@ -12,12 +12,10 @@ import 'package:hoplixi/setup_tray.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'di_init.dart';
-import 'package:flutter/rendering.dart';
 
 import 'app.dart';
 
 Future<void> main() async {
-  const String logTag = 'Main';
   if (UniversalPlatform.isWeb) {
     throw UnsupportedError(
       'Web platform is not supported in this version. Please use a different platform.',
@@ -54,58 +52,7 @@ Future<void> main() async {
         ),
       );
 
-      // Handle Flutter errors
-      FlutterError.onError = (FlutterErrorDetails details) {
-        // Ignore specific debugNeedsLayout assertion error WoltModalSheet Flutter issue
-        if (details.exceptionAsString().contains(
-          "Failed assertion: line 3047 pos 12: '!debugNeedsLayout': is not true.",
-        )) {
-          return;
-        }
-
-        // Записываем краш-репорт для Flutter ошибок
-        logCrash(
-          message: 'Flutter error',
-          error: details.exception,
-          stackTrace: details.stack ?? StackTrace.current,
-          errorType: 'FlutterError',
-        );
-
-        Toaster.error(
-          title: 'Ошибка Flutter',
-          description: details.exceptionAsString(),
-        );
-      };
-
-      // Handle platform errors
-      PlatformDispatcher.instance.onError = (error, stackTrace) {
-        // Записываем краш-репорт для платформенных ошибок
-        logCrash(
-          message: 'Platform error',
-          error: error,
-          stackTrace: stackTrace,
-          errorType: 'PlatformError',
-        );
-
-        Toaster.error(title: 'Ошибка платформы', description: error.toString());
-        return true;
-      };
-
-      // Optional: Catch errors in the widget tree
-      ErrorWidget.builder = (errorDetails) {
-        logCrash(
-          message: 'Widget error',
-          error: errorDetails.exception,
-          stackTrace: errorDetails.stack ?? StackTrace.current,
-          errorType: 'WidgetError',
-        );
-        Toaster.error(
-          title: 'Ошибка виджета',
-          description: errorDetails.exceptionAsString(),
-        );
-        return ErrorWidget(errorDetails.exception);
-      };
-
+      setupErrorHandling();
       await WindowManager.initialize();
       await setupDI();
       await setupTray();
@@ -156,4 +103,58 @@ Widget setupToastificationWrapper(Widget app) {
     ),
     child: app,
   );
+}
+
+void setupErrorHandling() {
+  // Handle Flutter errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // Ignore specific debugNeedsLayout assertion error WoltModalSheet Flutter issue
+    if (details.exceptionAsString().contains(
+      "Failed assertion: line 3047 pos 12: '!debugNeedsLayout': is not true.",
+    )) {
+      return;
+    }
+
+    // Записываем краш-репорт для Flutter ошибок
+    logCrash(
+      message: 'Flutter error',
+      error: details.exception,
+      stackTrace: details.stack ?? StackTrace.current,
+      errorType: 'FlutterError',
+    );
+
+    Toaster.error(
+      title: 'Ошибка Flutter',
+      description: details.exceptionAsString(),
+    );
+  };
+
+  // Handle platform errors
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    // Записываем краш-репорт для платформенных ошибок
+    logCrash(
+      message: 'Platform error',
+      error: error,
+      stackTrace: stackTrace,
+      errorType: 'PlatformError',
+    );
+
+    Toaster.error(title: 'Ошибка платформы', description: error.toString());
+    return true;
+  };
+
+  // Optional: Catch errors in the widget tree
+  ErrorWidget.builder = (errorDetails) {
+    logCrash(
+      message: 'Widget error',
+      error: errorDetails.exception,
+      stackTrace: errorDetails.stack ?? StackTrace.current,
+      errorType: 'WidgetError',
+    );
+    Toaster.error(
+      title: 'Ошибка виджета',
+      description: errorDetails.exceptionAsString(),
+    );
+    return ErrorWidget(errorDetails.exception);
+  };
 }
