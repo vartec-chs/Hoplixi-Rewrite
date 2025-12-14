@@ -38,9 +38,10 @@ class TokensScreen extends ConsumerWidget {
             onRefresh: () async {
               await ref.read(tokenProvider.notifier).reload();
             },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+            child: ListView.separated(
+              padding: EdgeInsets.all(12),
               itemCount: tokens.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final token = tokens[index];
                 return TokenCard(

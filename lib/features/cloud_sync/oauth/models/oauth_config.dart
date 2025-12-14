@@ -28,8 +28,10 @@ class OAuthConfig {
 
   static const List<String> yandexScopes = [
     'login:info',
-    'disk:info',
-    'disk:read',
-    'disk:write',
+    'login:email',
+    'cloud_api:disk.write',
+    'cloud_api:disk.read',
+    'cloud_api:disk.app_folder',
+    'cloud_api:disk.info',
   ];
 }

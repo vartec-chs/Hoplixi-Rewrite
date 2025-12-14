@@ -26,7 +26,7 @@ class _TokenCardState extends State<TokenCard> {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.zero,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
@@ -254,6 +254,8 @@ class _TokenCardState extends State<TokenCard> {
                     width: double.infinity,
                     child: SliderButton(
                       type: SliderButtonType.delete,
+
+                      variant: SliderButtonVariant.warning,
                       text: 'Удалить токен',
                       onSlideCompleteAsync: () async {
                         widget.onDelete();

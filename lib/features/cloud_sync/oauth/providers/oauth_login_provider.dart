@@ -10,6 +10,7 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
   static const String _logTag = 'OAuthLoginNotifier';
 
   late final OauthProvidersService _service;
+  int _operationId = 0; // Счетчик операций
 
   @override
   Future<OAuthLoginState> build() async {
@@ -115,6 +116,9 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
       return;
     }
 
+    final currentOperationId =
+        ++_operationId; // Уникальный ID для этой операции
+
     state = AsyncData(
       currentState.copyWith(
         loginStatus: LoginStatus.autoLogin,
@@ -127,6 +131,12 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
         currentState.selectedProviderId!,
         userName,
       );
+
+      // Проверяем, не была ли отменена/заменена операция
+      if (currentOperationId != _operationId) {
+        logInfo('Auto login was cancelled or replaced by user', tag: _logTag);
+        return;
+      }
 
       if (result.isSuccess()) {
         final token = result.getOrThrow();
@@ -158,6 +168,14 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
         );
       }
     } catch (e, stackTrace) {
+      // Проверяем, не была ли отменена/заменена операция
+      if (currentOperationId != _operationId) {
+        logInfo(
+          'Auto login was cancelled or replaced during error',
+          tag: _logTag,
+        );
+        return;
+      }
       logError('Auto login error: $e', stackTrace: stackTrace, tag: _logTag);
 
       state = AsyncData(
@@ -178,6 +196,9 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
       return;
     }
 
+    final currentOperationId =
+        ++_operationId; // Уникальный ID для этой операции
+
     state = AsyncData(
       currentState.copyWith(
         loginStatus: LoginStatus.loggingIn,
@@ -187,6 +208,12 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
 
     try {
       final result = await _service.login(currentState.selectedProviderId!);
+
+      // Проверяем, не была ли отменена/заменена операция
+      if (currentOperationId != _operationId) {
+        logInfo('Login was cancelled or replaced by user', tag: _logTag);
+        return;
+      }
 
       if (result.isSuccess()) {
         final token = result.getOrThrow();
@@ -216,6 +243,12 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
         );
       }
     } catch (e, stackTrace) {
+      // Проверяем, не была ли отменена/заменена операция
+      if (currentOperationId != _operationId) {
+        logInfo('Login was cancelled or replaced during error', tag: _logTag);
+        return;
+      }
+
       logError('Login error: $e', stackTrace: stackTrace, tag: _logTag);
 
       state = AsyncData(
@@ -234,10 +267,12 @@ class OAuthLoginNotifier extends AsyncNotifier<OAuthLoginState> {
     // Отменяем только если идет процесс авторизации или авто-входа
     if (currentState.loginStatus == LoginStatus.loggingIn ||
         currentState.loginStatus == LoginStatus.autoLogin) {
+      _operationId++; // Увеличиваем счетчик - текущая операция станет недействительной
+
       state = AsyncData(
         currentState.copyWith(
           loginStatus: LoginStatus.idle,
-          errorMessage: 'Авторизация отменена',
+          errorMessage: null, // Не показываем ошибку при отмене
         ),
       );
 
