@@ -75,6 +75,8 @@ class OauthProvidersService {
         return const Success(unit);
       }
 
+      await _tokenService.initialize();
+
       // Создаем OAuth2Account с TokenService как хранилищем
       _account = OAuth2Account(
         tokenStorage: _tokenService,
