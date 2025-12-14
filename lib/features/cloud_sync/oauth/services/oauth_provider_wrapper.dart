@@ -29,11 +29,17 @@ class OAuthProviderWrapper implements OAuth2Provider {
   String get authScheme => _delegate.authScheme;
 
   @override
-  Future<OAuth2Token?> login() => _delegate.login();
+  Future<OAuth2Token?> login({void Function(String error)? onError}) =>
+      _delegate.login(onError: onError);
 
   @override
   Future<OAuth2Token?> refreshToken(String? refreshToken) =>
       _delegate.refreshToken(refreshToken);
+
+  @override
+  void cancelLogin() {
+    _delegate.cancelLogin();
+  }
 
   @override
   Future<Map<String, dynamic>?> getUserInfo(String accessToken) =>
