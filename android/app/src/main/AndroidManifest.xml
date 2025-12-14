@@ -3,6 +3,7 @@
         android:label="hoplixi"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+				
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -12,7 +13,6 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-
 				<activity
 						android:name="com.yalantis.ucrop.UCropActivity"
 						android:screenOrientation="portrait"
@@ -35,6 +35,27 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+				<meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+								<!-- App Link sample -->
+				<intent-filter android:autoVerify="true">
+						<action android:name="android.intent.action.VIEW" />
+						<category android:name="android.intent.category.DEFAULT" />
+						<category android:name="android.intent.category.BROWSABLE" />
+						<data android:scheme="https" android:host="www.example.com" android:pathPrefix="/foo" />
+				</intent-filter>
+
+				<!-- Deep Link hoplixiauth -->
+				<intent-filter>
+						<action android:name="android.intent.action.VIEW" />
+						<category android:name="android.intent.category.DEFAULT" />
+						<category android:name="android.intent.category.BROWSABLE" />
+						<!-- Add optional android:host to distinguish your app
+									from others in case of conflicting scheme name -->
+						<data android:scheme="hoplixiauth" android:host="callback"/>
+						<!-- <data android:scheme="hoplixiauth" /> -->
+				</intent-filter>
+
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
