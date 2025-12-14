@@ -9,7 +9,7 @@ import 'package:cloud_storage_all/cloud_storage_all.dart'
         OAuth2RestClient,
         OAuth2Provider;
 import 'package:hoplixi/core/logger/app_logger.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/oauth_config.dart';
+import 'package:hoplixi/features/cloud_sync/models/oauth_config.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/services/oauth_provider_wrapper.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/models/provider_service_errors.dart';
 import 'package:hoplixi/features/cloud_sync/oauth/services/token_service.dart';

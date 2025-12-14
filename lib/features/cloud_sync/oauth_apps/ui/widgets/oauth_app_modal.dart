@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/cloud_sync/oauth/models/oauth_config.dart';
+import 'package:hoplixi/features/cloud_sync/models/oauth_config.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/models/oauth_apps.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/providers/oauth_apps_provider.dart';
 import 'package:hoplixi/shared/ui/modal_sheet_close_button.dart';
