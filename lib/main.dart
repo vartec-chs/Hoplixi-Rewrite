@@ -30,7 +30,7 @@ Future<void> main() async {
       await AppLogger.instance.initialize(
         config: const LoggerConfig(
           maxFileSize: 10 * 1024 * 1024, // 10MB
-          maxFileCount: 5,
+          maxFileCount: 10,
           bufferSize: 50,
           bufferFlushInterval: Duration(seconds: 15),
           enableDebug: true,
@@ -45,8 +45,8 @@ Future<void> main() async {
           enableFileOutput: true,
           enableCrashReports: true,
           // Crash report settings
-          maxCrashReportCount: 50,
-          maxCrashReportFileSize: 5 * 1024 * 1024, // 5MB
+          maxCrashReportCount: 10,
+          maxCrashReportFileSize: 10 * 1024 * 1024, // 10MB
           crashReportRetentionPeriod: Duration(days: 30),
         ),
       );
@@ -64,14 +64,12 @@ Future<void> main() async {
       runApp(app);
     },
     (error, stackTrace) {
-      // Записываем краш-репорт для неперехваченных ошибок
       logCrash(
         message: 'Uncaught error',
         error: error,
         stackTrace: stackTrace,
         errorType: 'UncaughtError',
       );
-
       Toaster.error(title: 'Глобальная ошибка', description: error.toString());
     },
   );
