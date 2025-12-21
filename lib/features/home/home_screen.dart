@@ -1,5 +1,4 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +7,7 @@ import 'package:universal_platform/universal_platform.dart';
 import 'widgets/action_button.dart';
 import 'widgets/recent_database_card.dart';
 import 'package:hoplixi/shared/widgets/titlebar.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -172,7 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 4),
 
                 ActionButton(
-                  icon: CupertinoIcons.folder_open,
+                  icon: LucideIcons.folderOpen,
                   label: 'Открыть',
                   description: 'Открыть существующий проект',
                   isPrimary: true,
@@ -180,14 +180,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 ActionButton(
-                  icon: CupertinoIcons.add_circled,
+                  icon: LucideIcons.plus,
                   label: 'Создать',
                   description: 'Создать новый проект',
                   onTap: () => context.push(AppRoutesPaths.createStore),
                 ),
                 const SizedBox(height: 12),
                 ActionButton(
-                  icon: CupertinoIcons.arrow_up_right_square,
+                  icon: LucideIcons.squareArrowUpRight,
                   label: 'Импорт/Экспорт',
                   description: 'Импортировать или экспортировать проект',
                   disabled: true,
@@ -198,7 +198,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 12),
 
                 ActionButton(
-                  icon: CupertinoIcons.eye,
+                  icon: LucideIcons.eye,
                   label: 'Component Showcase',
                   description: 'Демонстрация кастомных компонентов',
                   onTap: () {
@@ -212,7 +212,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // logs viewer
                 ActionButton(
-                  icon: CupertinoIcons.doc,
+                  icon: LucideIcons.fileText,
                   label: 'Просмотр логов',
                   description: 'Открыть просмотрщик логов',
                   onTap: () {
@@ -223,7 +223,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 12),
 
                 ActionButton(
-                  icon: CupertinoIcons.settings,
+                  icon: LucideIcons.settings,
                   label: 'Настройки',
                   description: 'Открыть настройки',
                   onTap: () {
@@ -234,7 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 12),
 
                 ActionButton(
-                  icon: CupertinoIcons.person_2,
+                  icon: LucideIcons.users,
                   label: 'OAuth Приложения',
                   description: 'Открыть настройки OAuth приложений',
                   onTap: () {
@@ -255,7 +255,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Expanded(
                     child: ActionButton(
-                      icon: CupertinoIcons.folder_open,
+                      icon: LucideIcons.folderOpen,
                       label: 'Открыть',
                       description: 'Открыть существующий проект',
                       isPrimary: true,
@@ -265,7 +265,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ActionButton(
-                      icon: CupertinoIcons.add_circled,
+                      icon: LucideIcons.plus,
                       label: 'Создать',
                       description: 'Создать новый проект',
                       onTap: () => context.push(AppRoutesPaths.createStore),
@@ -278,7 +278,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Expanded(
                     child: ActionButton(
-                      icon: CupertinoIcons.arrow_up_right_square,
+                      icon: LucideIcons.squareArrowUpRight,
                       label: 'Импорт/Экспорт',
                       description: 'Импортировать или экспортировать проект',
                       onTap: () => context.push(AppRoutesPaths.archiveStore),
@@ -287,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ActionButton(
-                      icon: CupertinoIcons.settings,
+                      icon: LucideIcons.settings,
                       label: 'Настройки',
                       description: 'Открыть настройки',
                       onTap: () {
@@ -299,7 +299,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: 12),
               ActionButton(
-                icon: CupertinoIcons.eye,
+                icon: LucideIcons.eye,
                 label: 'Component Showcase',
                 description: 'Демонстрация кастомных компонентов',
                 onTap: () {
@@ -311,7 +311,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: 12),
               ActionButton(
-                icon: CupertinoIcons.doc,
+                icon: LucideIcons.fileText,
                 label: 'Просмотр логов',
                 description: 'Открыть просмотрщик логов',
                 onTap: () {
@@ -322,7 +322,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 12),
 
               ActionButton(
-                icon: CupertinoIcons.person_2,
+                icon: LucideIcons.users,
                 label: 'OAuth Приложения',
                 description: 'Открыть настройки OAuth приложений',
                 onTap: () {

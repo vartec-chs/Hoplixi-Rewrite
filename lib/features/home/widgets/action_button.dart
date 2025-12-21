@@ -49,13 +49,13 @@ class ActionButton extends StatelessWidget {
     // Определяем цвета в зависимости от типа кнопки
     final backgroundColor = isPrimary
         ? colorScheme.primary
-        : colorScheme.surfaceContainerHighest;
+        : colorScheme.surfaceContainerLow;
     final foregroundColor = isPrimary
         ? colorScheme.onPrimary
         : colorScheme.onSurface;
     final disabledBackgroundColor = isPrimary
         ? colorScheme.primary.withOpacity(0.38)
-        : colorScheme.surfaceContainerHighest.withOpacity(0.38);
+        : colorScheme.surfaceContainerLow.withOpacity(0.38);
     final disabledForegroundColor = foregroundColor.withOpacity(0.38);
 
     // Адаптивная высота: если не указана, используем в зависимости от наличия описания
@@ -76,7 +76,6 @@ class ActionButton extends StatelessWidget {
             : [],
       ),
       child: Material(
-        
         elevation: 0,
         color: isDisabled ? disabledBackgroundColor : backgroundColor,
         borderRadius: BorderRadius.circular(16),
