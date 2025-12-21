@@ -11,7 +11,7 @@ UI компонент для OAuth авторизации с выбором пр
            │ watches
            ▼
 ┌──────────────────────┐
-│ oauthLoginProvider   │  ← AsyncNotifierProvider
+│ authLoginProvider   │  ← AsyncNotifierProvider
 └──────────┬───────────┘
            │
            ▼
@@ -133,7 +133,7 @@ class MyWidget extends StatelessWidget {
 class MyFeature extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loginState = ref.watch(oauthLoginProvider);
+    final loginState = ref.watch(authLoginProvider);
     
     return loginState.when(
       data: (state) {
@@ -167,14 +167,14 @@ class MyFeature extends ConsumerWidget {
 class CustomLoginFlow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(oauthLoginProvider.notifier);
+    final notifier = ref.read(authLoginProvider.notifier);
     
     return Column(
       children: [
         ElevatedButton(
           onPressed: () async {
             // Выбрать первый доступный провайдер
-            final state = ref.read(oauthLoginProvider).valueOrNull;
+            final state = ref.read(authLoginProvider).valueOrNull;
             if (state != null && state.availableApps.isNotEmpty) {
               await notifier.selectProvider(state.availableApps.first.id);
               await notifier.login();
@@ -280,7 +280,7 @@ Navigator.pop(token) - возврат токена вызывающему код
 ### AsyncValue состояния
 
 ```dart
-final loginState = ref.watch(oauthLoginProvider);
+final loginState = ref.watch(authLoginProvider);
 
 loginState.when(
   data: (state) {
@@ -313,7 +313,7 @@ loginState.when(
 ### Отслеживание изменений
 
 ```dart
-ref.listen(oauthLoginProvider, (previous, next) {
+ref.listen(authLoginProvider, (previous, next) {
   next.whenData((state) {
     if (state.loginStatus == LoginStatus.success) {
       // Успешная авторизация
@@ -390,7 +390,7 @@ void main() {
         ],
       );
       
-      final state = await container.read(oauthLoginProvider.future);
+      final state = await container.read(authLoginProvider.future);
       
       expect(state.availableApps, isNotEmpty);
       expect(state.loginStatus, LoginStatus.idle);
@@ -398,11 +398,11 @@ void main() {
     
     test('должен выбрать провайдера и загрузить сохраненные аккаунты', () async {
       final container = ProviderContainer();
-      final notifier = container.read(oauthLoginProvider.notifier);
+      final notifier = container.read(authLoginProvider.notifier);
       
       await notifier.selectProvider('test_app_id');
       
-      final state = container.read(oauthLoginProvider).valueOrNull;
+      final state = container.read(authLoginProvider).valueOrNull;
       expect(state?.selectedProviderId, 'test_app_id');
       expect(state?.selectedApp, isNotNull);
     });

@@ -12,7 +12,7 @@ class OAuthLoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loginState = ref.watch(oauthLoginProvider);
+    final loginState = ref.watch(authLoginProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,7 +20,7 @@ class OAuthLoginScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(oauthLoginProvider.notifier).reload(),
+            onPressed: () => ref.read(authLoginProvider.notifier).reload(),
             tooltip: 'Обновить список провайдеров',
           ),
         ],
@@ -38,7 +38,7 @@ class OAuthLoginScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               SmoothButton(
                 label: 'Повторить',
-                onPressed: () => ref.read(oauthLoginProvider.notifier).reload(),
+                onPressed: () => ref.read(authLoginProvider.notifier).reload(),
                 type: SmoothButtonType.filled,
                 variant: SmoothButtonVariant.normal,
               ),
@@ -113,9 +113,8 @@ class OAuthLoginScreen extends ConsumerWidget {
               final app = state.availableApps[index];
               return _ProviderCard(
                 app: app,
-                onTap: () => ref
-                    .read(oauthLoginProvider.notifier)
-                    .selectProvider(app.id),
+                onTap: () =>
+                    ref.read(authLoginProvider.notifier).selectProvider(app.id),
               );
             },
           ),
@@ -147,7 +146,7 @@ class OAuthLoginScreen extends ConsumerWidget {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: isLoading
                     ? null
-                    : () => ref.read(oauthLoginProvider.notifier).reset(),
+                    : () => ref.read(authLoginProvider.notifier).reset(),
               ),
               const SizedBox(width: 8),
               _ProviderIcon(type: state.selectedApp!.type),
@@ -268,7 +267,7 @@ class OAuthLoginScreen extends ConsumerWidget {
                       onTap: isLoading
                           ? null
                           : () => ref
-                                .read(oauthLoginProvider.notifier)
+                                .read(authLoginProvider.notifier)
                                 .tryAutoLogin(account.userName),
                     ),
                   ),
@@ -278,7 +277,7 @@ class OAuthLoginScreen extends ConsumerWidget {
                     SmoothButton(
                       label: 'Отменить',
                       onPressed: () =>
-                          ref.read(oauthLoginProvider.notifier).cancel(),
+                          ref.read(authLoginProvider.notifier).cancel(),
                       type: SmoothButtonType.outlined,
                       variant: SmoothButtonVariant.normal,
                     ),
@@ -307,7 +306,7 @@ class OAuthLoginScreen extends ConsumerWidget {
                   SmoothButton(
                     label: 'Отменить авторизацию',
                     onPressed: () =>
-                        ref.read(oauthLoginProvider.notifier).cancel(),
+                        ref.read(authLoginProvider.notifier).cancel(),
                     type: SmoothButtonType.outlined,
                     variant: SmoothButtonVariant.normal,
                   ),
@@ -330,7 +329,7 @@ class OAuthLoginScreen extends ConsumerWidget {
                     label: 'Войти через ${state.selectedApp!.type.name}',
                     onPressed: isLoading
                         ? null
-                        : () => ref.read(oauthLoginProvider.notifier).login(),
+                        : () => ref.read(authLoginProvider.notifier).login(),
                     type: SmoothButtonType.filled,
 
                     loading:
@@ -400,7 +399,7 @@ class OAuthLoginScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           SmoothButton(
             label: 'Подключить другой аккаунт',
-            onPressed: () => ref.read(oauthLoginProvider.notifier).reset(),
+            onPressed: () => ref.read(authLoginProvider.notifier).reset(),
             type: SmoothButtonType.text,
             variant: SmoothButtonVariant.normal,
           ),

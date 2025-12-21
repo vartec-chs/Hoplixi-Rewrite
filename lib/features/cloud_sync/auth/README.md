@@ -83,7 +83,7 @@ if (token != null) {
 **Архитектура:**
 - `OAuthLoginState` - Freezed модель состояния
 - `OAuthLoginNotifier` - AsyncNotifier с бизнес-логикой
-- `oauthLoginProvider` - AsyncNotifierProvider
+- `authLoginProvider` - AsyncNotifierProvider
 - `OAuthLoginScreen` - ConsumerWidget UI
 
 См. [ui/README.md](./ui/README.md) для подробной документации.
