@@ -321,7 +321,7 @@ packages:
     source: hosted
     version: "1.0.8"
   custom_lint:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: custom_lint
       sha256: "751ee9440920f808266c3ec2553420dea56d3c7837dd2d62af76b11be3fcece5"
@@ -1676,6 +1676,14 @@ packages:
     description:
       name: riverpod_generator
       sha256: "49894543a42cf7a9954fc4e7366b6d3cb2e6ec0fa07775f660afcdd92d097702"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.3"
+  riverpod_lint:
+    dependency: "direct dev"
+    description:
+      name: riverpod_lint
+      sha256: "7ef9c43469e9b5ac4e4c3b24d7c30642e47ce1b12cd7dcdd643534db0a72ed13"
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
