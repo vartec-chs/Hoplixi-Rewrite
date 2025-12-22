@@ -20,8 +20,8 @@ class DashboardHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
-  final GlobalKey<SliverAnimatedListState> _listKey = GlobalKey();
-  final GlobalKey<SliverAnimatedGridState> _gridKey = GlobalKey();
+  GlobalKey<SliverAnimatedListState> _listKey = GlobalKey();
+  GlobalKey<SliverAnimatedGridState> _gridKey = GlobalKey();
   late final ScrollController _scrollController;
 
   // Локальный список для отображения и вычисления разницы (Diff)
@@ -30,7 +30,10 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
 
   // Очередь обновлений
   List<BaseCardDto>? _pendingNewItems;
+  int? _pendingRevision;
   bool _isUpdating = false;
+
+  int _dataRevision = 0;
 
   static const _kScrollThreshold = 200.0;
   Timer? _debounceTimer;
@@ -87,6 +90,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   /// Основной метод обновления списка с анимациями
   void _updateList(List<BaseCardDto> newItems, {bool animate = true}) {
     _pendingNewItems = newItems;
+    _pendingRevision = _dataRevision;
     if (_isUpdating) return;
     _processUpdateQueue(animate: animate);
   }
@@ -95,7 +99,14 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     _isUpdating = true;
     while (_pendingNewItems != null) {
       final items = _pendingNewItems!;
+      final revision = _pendingRevision;
       _pendingNewItems = null;
+      _pendingRevision = null;
+
+      // Если за время ожидания сменился тип/ревизия — пропускаем устаревшее.
+      if (revision != null && revision != _dataRevision) {
+        continue;
+      }
 
       // Выполняем обновление
       _performDiffAndUpdate(items, animate: animate);
@@ -106,6 +117,24 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
       }
     }
     _isUpdating = false;
+  }
+
+  void _resetDisplayedItemsInstantly() {
+    _dataRevision++;
+    _pendingNewItems = null;
+    _pendingRevision = null;
+    _scrollController.jumpTo(0);
+
+    setState(() {
+      _displayedItems = <BaseCardDto>[];
+      _isClearing = false;
+
+      // Важно: SliverAnimatedList/Grid хранит внутреннее состояние количества
+      // элементов. Чтобы мгновенно убрать "старые" элементы без removeItem,
+      // пересоздаем ключи, тем самым пересоздавая sliver.
+      _listKey = GlobalKey<SliverAnimatedListState>();
+      _gridKey = GlobalKey<SliverAnimatedGridState>();
+    });
   }
 
   void _performDiffAndUpdate(
@@ -270,6 +299,15 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
       ref,
       _removeItemLocally,
     );
+
+    // При смене типа сущности мгновенно очищаем старые данные.
+    ref.listen(entityTypeProvider, (prev, next) {
+      final prevType = prev?.currentType;
+      final nextType = next.currentType;
+      if (prevType == null || prevType == nextType) return;
+
+      _resetDisplayedItemsInstantly();
+    });
 
     // Слушаем изменения провайдера списка
     ref.listen<

@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -249,8 +250,8 @@ class DashboardHomeBuilders {
     required EntityType entityType,
     required DashboardCardCallbacks callbacks,
   }) {
-    return FadeTransition(
-      opacity: animation,
+    return FadeScaleTransition(
+      animation: animation,
       child: SlideTransition(
         position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
             .animate(
@@ -258,7 +259,7 @@ class DashboardHomeBuilders {
             ),
         child: viewMode == ViewMode.list
             ? Padding(
-                padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
                 child: buildListCardFor(
                   context: context,
                   ref: ref,
@@ -268,7 +269,7 @@ class DashboardHomeBuilders {
                 ),
               )
             : Padding(
-                padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
                 child: buildGridCardFor(
                   context: context,
                   ref: ref,
@@ -413,10 +414,15 @@ class DashboardHomeBuilders {
     required DashboardCardCallbacks callbacks,
     bool isDismissible = true,
   }) {
+    final noCorrectType = Text(
+      'No correct type for $type',
+      style: const TextStyle(color: Colors.red),
+    );
+
     Widget card;
     switch (type) {
       case EntityType.password:
-        if (item is! PasswordCardDto) return const SizedBox.shrink();
+        if (item is! PasswordCardDto) return noCorrectType;
         card = PasswordListCard(
           password: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -427,7 +433,7 @@ class DashboardHomeBuilders {
         );
         break;
       case EntityType.note:
-        if (item is! NoteCardDto) return const SizedBox.shrink();
+        if (item is! NoteCardDto) return noCorrectType;
         card = NoteListCard(
           note: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -438,7 +444,7 @@ class DashboardHomeBuilders {
         );
         break;
       case EntityType.bankCard:
-        if (item is! BankCardCardDto) return const SizedBox.shrink();
+        if (item is! BankCardCardDto) return noCorrectType;
         card = BankCardListCard(
           bankCard: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -449,7 +455,7 @@ class DashboardHomeBuilders {
         );
         break;
       case EntityType.file:
-        if (item is! FileCardDto) return const SizedBox.shrink();
+        if (item is! FileCardDto) return noCorrectType;
         card = FileListCard(
           file: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -461,7 +467,7 @@ class DashboardHomeBuilders {
         );
         break;
       case EntityType.otp:
-        if (item is! OtpCardDto) return const SizedBox.shrink();
+        if (item is! OtpCardDto) return noCorrectType;
         card = TotpListCard(
           otp: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -546,7 +552,7 @@ class DashboardHomeBuilders {
           return false;
         } else {
           // Влево → удаление
-          String itemName = 'элемент';
+          String itemName = 'неизвестный элемент';
           if (item is PasswordCardDto) {
             itemName = item.name;
           } else if (item is BankCardCardDto) {
@@ -600,9 +606,14 @@ class DashboardHomeBuilders {
     required BaseCardDto item,
     required DashboardCardCallbacks callbacks,
   }) {
+    final noCorrectType = Text(
+      'No correct type for $type',
+      style: const TextStyle(color: Colors.red),
+    );
+
     switch (type) {
       case EntityType.password:
-        if (item is! PasswordCardDto) return const SizedBox.shrink();
+        if (item is! PasswordCardDto) return noCorrectType;
         return PasswordGridCard(
           password: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -612,7 +623,7 @@ class DashboardHomeBuilders {
           onRestore: () => callbacks.onRestore(item.id),
         );
       case EntityType.note:
-        if (item is! NoteCardDto) return const SizedBox.shrink();
+        if (item is! NoteCardDto) return noCorrectType;
         return NoteGridCard(
           note: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -622,7 +633,7 @@ class DashboardHomeBuilders {
           onRestore: () => callbacks.onRestore(item.id),
         );
       case EntityType.bankCard:
-        if (item is! BankCardCardDto) return const SizedBox.shrink();
+        if (item is! BankCardCardDto) return noCorrectType;
         return BankCardGridCard(
           bankCard: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -632,7 +643,7 @@ class DashboardHomeBuilders {
           onRestore: () => callbacks.onRestore(item.id),
         );
       case EntityType.file:
-        if (item is! FileCardDto) return const SizedBox.shrink();
+        if (item is! FileCardDto) return noCorrectType;
         return FileGridCard(
           file: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
@@ -643,7 +654,7 @@ class DashboardHomeBuilders {
           onDecrypt: () => showFileDecryptModal(context, item),
         );
       case EntityType.otp:
-        if (item is! OtpCardDto) return const SizedBox.shrink();
+        if (item is! OtpCardDto) return noCorrectType;
         return TotpGridCard(
           otp: item,
           onToggleFavorite: () => callbacks.onToggleFavorite(item.id),
