@@ -16,10 +16,10 @@ class DashboardHomeScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<DashboardHomeScreen> createState() =>
-      _DashboardHomeScreenV2State();
+      _DashboardHomeScreenState();
 }
 
-class _DashboardHomeScreenV2State extends ConsumerState<DashboardHomeScreen> {
+class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
   final GlobalKey<SliverAnimatedListState> _listKey = GlobalKey();
   final GlobalKey<SliverAnimatedGridState> _gridKey = GlobalKey();
   late final ScrollController _scrollController;
