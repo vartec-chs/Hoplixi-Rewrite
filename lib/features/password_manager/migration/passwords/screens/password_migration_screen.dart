@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
 import 'package:hoplixi/features/password_manager/migration/passwords/providers/password_migration_provider.dart';
 import 'package:hoplixi/main_store/models/dto/password_dto.dart';
 import 'package:hoplixi/shared/ui/button.dart';
@@ -181,7 +182,11 @@ class _PasswordMigrationScreenState
     final state = ref.watch(passwordMigrationProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Password Migration')),
+      appBar: AppBar(
+        title: const Text('Password Migration'),
+        leading: const FormCloseButton(),
+      ),
+
       body: state.maybeWhen(
         loading: () => const Center(child: CircularProgressIndicator()),
         orElse: () => SingleChildScrollView(

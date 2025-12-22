@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
 import 'package:hoplixi/features/password_manager/migration/otp/otp_extractor.dart';
 import 'package:hoplixi/features/password_manager/migration/otp/providers/import_otp_notifier.dart';
 import 'package:hoplixi/features/password_manager/migration/otp/widgets/otp_import_list_item.dart';
@@ -36,6 +37,7 @@ class ImportOtpScreen extends ConsumerWidget {
               tooltip: 'Deselect All',
             ),
         ],
+        leading: const FormCloseButton(),
       ),
       body: Column(
         children: [

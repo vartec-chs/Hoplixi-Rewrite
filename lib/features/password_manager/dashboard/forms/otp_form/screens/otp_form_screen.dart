@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/features/qr_scanner/widgets/qr_scanner_widget.dart';
@@ -200,21 +201,7 @@ class _OtpFormScreenState extends ConsumerState<OtpFormScreen>
               ),
             ),
         ],
-        leading: IconButton(
-          icon: context.canPop()
-              ? const Icon(Icons.arrow_back)
-              : const Icon(Icons.close),
-          onPressed: () {
-            final dashboardState =
-                dashboardSidebarKey.currentState?.asDashboardLayoutState;
-            if (context.canPop()) {
-              context.pop();
-            } else if (dashboardState != null &&
-                dashboardState.isSidebarOpen == true) {
-              dashboardState.closeSidebar();
-            }
-          },
-        ),
+        leading: FormCloseButton(),
         bottom: TabBar(
           tabAlignment: TabAlignment.center,
           controller: _tabController,

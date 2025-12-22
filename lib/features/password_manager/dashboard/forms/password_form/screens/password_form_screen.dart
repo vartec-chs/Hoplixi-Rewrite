@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/main_store/models/enums/entity_types.dart';
@@ -127,20 +128,7 @@ class _PasswordFormScreenState extends ConsumerState<PasswordFormScreen> {
               ),
             ),
         ],
-        leading: IconButton(
-          icon: context.canPop()
-              ? const Icon(Icons.arrow_back)
-              : const Icon(Icons.close),
-          onPressed: () {
-            final state =
-                dashboardSidebarKey.currentState?.asDashboardLayoutState;
-            if (context.canPop()) {
-              context.pop();
-            } else if (state != null && state.isSidebarOpen == true) {
-              state.closeSidebar();
-            }
-          },
-        ),
+        leading: FormCloseButton(),
       ),
 
       body: state.isLoading

@@ -300,9 +300,16 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
                       // Показываем контент если:
                       // 1. selectedIndex != 0 (категории, иконки, теги)
                       // 2. isSidebarRoute == true (формы и другие настроенные пути)
-                      child: (selectedIndex != 0 || isSidebarRoute)
-                          ? widget.child
-                          : const SizedBox.shrink(),
+                      child: AnimatedOpacity(
+                        opacity: _sidebarAnimation.value,
+                        duration: const Duration(milliseconds: 150),
+                        child: (selectedIndex != 0 || isSidebarRoute)
+                            ? widget.child
+                            : const SizedBox.shrink(),
+                      ),
+                      // child: (selectedIndex != 0 || isSidebarRoute)
+                      //     ? widget.child
+                      //     : const SizedBox.shrink(),
                     ),
                   ),
                 ),

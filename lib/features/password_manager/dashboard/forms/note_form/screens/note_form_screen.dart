@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/dashboard/forms/note_form/models/note_form_state.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import '../providers/note_form_provider.dart';
@@ -131,16 +132,6 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     }
   }
 
-  /// Обработка нажатия кнопки "Назад"
-  void _handleBack() {
-    final state = dashboardSidebarKey.currentState?.asDashboardLayoutState;
-    if (context.canPop()) {
-      context.pop();
-    } else if (state != null && state.isSidebarOpen == true) {
-      state.closeSidebar();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -154,12 +145,7 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditMode ? 'Редактировать заметку' : 'Новая заметка'),
-        leading: IconButton(
-          icon: context.canPop()
-              ? const Icon(Icons.arrow_back)
-              : const Icon(Icons.close),
-          onPressed: _handleBack,
-        ),
+        leading: FormCloseButton(),
         actions: [
           if (state.isSaving)
             const Padding(
