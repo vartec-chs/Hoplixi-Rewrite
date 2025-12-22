@@ -112,6 +112,8 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     List<BaseCardDto> newItems, {
     bool animate = true,
   }) {
+    if (_displayedItems.isEmpty && newItems.isEmpty) return;
+
     final viewMode = ref.read(currentViewModeProvider);
     final listState = _listKey.currentState;
     final gridState = _gridKey.currentState;
@@ -167,31 +169,52 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     }
 
     // Оптимизация: Set для проверки существования элементов O(1)
-    // Используем snapshot оставшихся элементов, чтобы знать, что искать
-    final displayedIds = _displayedItems.map((e) => e.id).toSet();
+    // Используем карту индексов: она может "устаревать" из-за сдвигов,
+    // но мы валидируем кандидата перед использованием.
+    final indexById = <String, int>{
+      for (int i = 0; i < _displayedItems.length; i++) _displayedItems[i].id: i,
+    };
+
+    int findIndexAfter(int startIndex, String id) {
+      final candidate = indexById[id];
+      if (candidate != null) {
+        // Не трогаем элементы до startIndex (они уже обработаны).
+        if (candidate >= startIndex &&
+            candidate < _displayedItems.length &&
+            _displayedItems[candidate].id == id) {
+          return candidate;
+        }
+      }
+
+      final idx = _displayedItems.indexWhere((e) => e.id == id, startIndex);
+      if (idx != -1) indexById[id] = idx;
+      return idx;
+    }
 
     // 2. Вставка новых элементов
+    bool didMutate = itemsRemoved;
     for (int i = 0; i < newItems.length; i++) {
       final newItem = newItems[i];
+      final newId = newItem.id;
 
       // Проверяем, совпадает ли элемент на текущей позиции
-      if (i < _displayedItems.length && _displayedItems[i].id == newItem.id) {
+      if (i < _displayedItems.length && _displayedItems[i].id == newId) {
         // Элемент на своем месте - просто обновляем данные
         _displayedItems[i] = newItem;
+        indexById[newId] = i;
         continue;
       }
 
       // Если элемента нет на текущей позиции, проверяем, есть ли он вообще в списке
-      if (displayedIds.contains(newItem.id)) {
+      if (indexById.containsKey(newId)) {
         // Элемент есть, но смещен (reordering). Ищем его реальную позицию.
         // Поиск начинается с i, так как все до i уже обработаны и совпадают
-        final currentIndex = _displayedItems.indexWhere(
-          (e) => e.id == newItem.id,
-          i,
-        );
+        final currentIndex = findIndexAfter(i, newId);
 
         if (currentIndex != -1) {
           final item = _displayedItems.removeAt(currentIndex);
+          didMutate = true;
+          indexById.remove(newId);
 
           // Симулируем перемещение: удаляем со старой позиции с анимацией
           if (viewMode == ViewMode.list) {
@@ -213,6 +236,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
           _displayedItems.insert(i, item);
           // Обновляем данные
           _displayedItems[i] = newItem;
+          indexById[newId] = i;
 
           // Симулируем перемещение: вставляем на новую позицию с анимацией
           if (viewMode == ViewMode.list) {
@@ -224,6 +248,8 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
       } else {
         // Элемента нет в списке - вставляем
         _displayedItems.insert(i, newItem);
+        didMutate = true;
+        indexById[newId] = i;
         if (viewMode == ViewMode.list) {
           listState?.insertItem(i, duration: kStatusSwitchDuration);
         } else {
@@ -233,11 +259,18 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     }
 
     // Обновляем UI для отображения изменений внутри элементов
-    setState(() {});
+    if (didMutate) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final callbacks = DashboardCardCallbacks.fromRefWithLocalRemove(
+      ref,
+      _removeItemLocally,
+    );
+
     // Слушаем изменения провайдера списка
     ref.listen<
       AsyncValue<DashboardListState<BaseCardDto>>
@@ -297,10 +330,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
               isClearing: _isClearing,
               listKey: _listKey,
               gridKey: _gridKey,
-              callbacks: DashboardCardCallbacks.fromRefWithLocalRemove(
-                ref,
-                _removeItemLocally,
-              ),
+              callbacks: callbacks,
               onInvalidate: () => ref.invalidate(paginatedListProvider),
             ),
           ],
