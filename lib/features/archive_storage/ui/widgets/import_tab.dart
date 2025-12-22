@@ -44,7 +44,7 @@ class _ImportTabState extends ConsumerState<ImportTab> {
     });
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -35,7 +35,7 @@ abstract final class AppTheme {
 
   // LIGHT THEME
   static ThemeData light(BuildContext context) {
-    final base =
+    final bs =
         FlexThemeData.light(
           colors: AppColors.lightColors,
           useMaterial3ErrorColors: true,
@@ -67,8 +67,11 @@ abstract final class AppTheme {
               mainContentScrollPhysics: ClampingScrollPhysics(),
             ),
           ],
-         
         );
+
+    final base = bs.copyWith(
+      cardTheme: bs.cardTheme.copyWith(margin: EdgeInsets.zero),
+    );
 
     return _withNunito(
       base.copyWith(
@@ -92,7 +95,7 @@ abstract final class AppTheme {
 
   // DARK THEME
   static ThemeData dark(BuildContext context) {
-    final base =
+    final bs =
         FlexThemeData.dark(
           colors: AppColors.darkColors,
           useMaterial3ErrorColors: true,
@@ -124,6 +127,10 @@ abstract final class AppTheme {
             ),
           ],
         );
+
+    final base = bs.copyWith(
+      cardTheme: bs.cardTheme.copyWith(margin: EdgeInsets.zero),
+    );
 
     return _withNunito(
       base.copyWith(

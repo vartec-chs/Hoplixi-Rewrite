@@ -105,7 +105,7 @@ class PasswordMigrationNotifier extends AsyncNotifier<PasswordMigrationState> {
     await result.fold(
       (_) async {
         // Delete file on success
-        final deleteResult = await _service.deleteImportFile(filePath);
+        final _ = await _service.deleteImportFile(filePath);
         state = AsyncData(
           state.value!.copyWith(
             isLoading: false,

@@ -195,9 +195,6 @@ class _QrScannerWithCameraScreenState extends State<QrScannerWithCameraScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Сканер QR-кода'),

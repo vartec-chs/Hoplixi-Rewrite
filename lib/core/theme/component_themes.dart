@@ -75,6 +75,7 @@ abstract final class ComponentThemes {
     navigationRailLabelType: NavigationRailLabelType.selected,
     
     
+    
   );
 
   /// Базовые подтемы для тёмной темы
