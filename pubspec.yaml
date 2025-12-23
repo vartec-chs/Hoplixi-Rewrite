@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.10.3 <4.0.0"
+  sdk: ">=3.10.4 <4.0.0"
 
 
 # Dependencies specify other packages that your package needs in order to work.
@@ -83,10 +83,10 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
   pinput: ^6.0.1
   flutter_colorpicker: ^1.1.0
-  image: ^4.7.1
+  image: ^4.7.2
   flutter_expandable_fab: ^2.5.2
   sliver_tools: ^0.2.12
-  screen_protector: ^1.4.10
+  screen_protector: ^1.4.12
   flutter_resizable_container: ^4.2.0
   flutter_credit_card: ^4.1.0
   flutter_quill: ^11.5.0

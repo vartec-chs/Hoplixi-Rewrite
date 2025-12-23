@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:typed_data';
 
-import 'package:ffi/ffi.dart';
 import 'package:crypto/crypto.dart';
+import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
 Never _win32Error(String operation) {
