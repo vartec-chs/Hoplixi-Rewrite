@@ -21,6 +21,9 @@ sealed class NoteFormState with _$NoteFormState {
     String? categoryName,
     @Default([]) List<String> tagIds,
     @Default([]) List<String> tagNames,
+    
+    // Связи с другими заметками (отслеживание для синхронизации)
+    @Default([]) List<String> linkedNoteIds,
 
     // Ошибки валидации
     String? titleError,

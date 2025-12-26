@@ -101,6 +101,7 @@ dependencies:
   watcher: ^1.2.0
   protobuf: ^6.0.0
   lucide_icons_flutter: ^3.1.9
+  flutter_graph_view: ^2.1.0
 
   file_crypto:
     path: ./packages/file_crypto

@@ -74,6 +74,10 @@ class NoteDao extends DatabaseAccessor<MainStore>
       );
       await into(notes).insert(companion);
       await _insertNoteTags(uuid, dto.tagsIds);
+
+      // Синхронизируем связи на основе deltaJson
+      await db.noteLinkDao.syncLinksFromContent(uuid, dto.deltaJson);
+
       return uuid;
     });
   }
@@ -155,6 +159,11 @@ class NoteDao extends DatabaseAccessor<MainStore>
         await syncNoteTags(id, dto.tagsIds!);
       }
 
+      // Синхронизируем связи если deltaJson был обновлен
+      if (dto.deltaJson != null) {
+        await db.noteLinkDao.syncLinksFromContent(id, dto.deltaJson!);
+      }
+
       return rowsAffected > 0;
     });
   }
@@ -178,9 +187,16 @@ class NoteDao extends DatabaseAccessor<MainStore>
   /// Полное удаление заметки
   @override
   Future<bool> permanentDelete(String id) async {
-    final rowsAffected = await (delete(
-      notes,
-    )..where((n) => n.id.equals(id))).go();
-    return rowsAffected > 0;
+    return await db.transaction(() async {
+      // Удаляем все связи заметки
+      await db.noteLinkDao.deleteAllLinksForNote(id);
+
+      // Удаляем саму заметку
+      final rowsAffected = await (delete(
+        notes,
+      )..where((n) => n.id.equals(id))).go();
+
+      return rowsAffected > 0;
+    });
   }
 }

@@ -1,11 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hoplixi/main_store/dao/note_link_dao.dart';
 import 'package:hoplixi/main_store/main_store.dart';
-
-import 'main_store_provider.dart';
-import '../dao/index.dart';
+import 'package:hoplixi/main_store/models/db_errors.dart';
 import 'package:riverpod/riverpod.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hoplixi/main_store/models/db_errors.dart';
+import '../dao/index.dart';
+import 'main_store_provider.dart';
 
 typedef _DaoFactory<TDao> = TDao Function(MainStore store);
 
@@ -88,6 +88,10 @@ final bankCardFilterDaoProvider = FutureProvider<BankCardFilterDao>(
 
 final fileFilterDaoProvider = FutureProvider<FileFilterDao>(
   (ref) => _ensureDao(ref, (store) => FileFilterDao(store)),
+);
+
+final noteLinkDaoProvider = FutureProvider<NoteLinkDao>(
+  (ref) => _ensureDao(ref, (store) => NoteLinkDao(store)),
 );
 // final passwordDaoProvider = FutureProvider<PasswordDao?>((ref) async {
 //   final mainStore = await ref.watch(mainStoreManagerProvider.future);

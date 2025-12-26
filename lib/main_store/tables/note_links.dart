@@ -1,0 +1,36 @@
+import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
+
+import 'notes.dart';
+
+/// Таблица связей между заметками (many-to-many)
+/// Каждая заметка может ссылаться на множество других заметок
+@DataClassName('NoteLinkData')
+class NoteLinks extends Table {
+  /// Уникальный идентификатор связи
+  TextColumn get id => text().clientDefault(() => const Uuid().v4())();
+
+  /// ID исходной заметки (откуда ссылка)
+  TextColumn get sourceNoteId =>
+      text().references(Notes, #id, onDelete: KeyAction.cascade)();
+
+  /// ID целевой заметки (куда ссылка)
+  TextColumn get targetNoteId =>
+      text().references(Notes, #id, onDelete: KeyAction.cascade)();
+
+  /// Дата создания связи
+  DateTimeColumn get createdAt =>
+      dateTime().clientDefault(() => DateTime.now())();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'note_links';
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    // Предотвращаем дублирование одной и той же связи
+    {sourceNoteId, targetNoteId},
+  ];
+}

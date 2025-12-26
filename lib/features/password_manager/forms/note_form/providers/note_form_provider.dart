@@ -7,6 +7,7 @@ import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.d
 import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
 import 'package:hoplixi/main_store/models/dto/note_dto.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
+
 import '../models/note_form_state.dart';
 
 const _logTag = 'NoteFormProvider';
@@ -100,12 +101,24 @@ class NoteFormNotifier extends Notifier<NoteFormState> {
     final plainText = controller.document.toPlainText();
     final deltaJson = jsonEncode(controller.document.toDelta().toJson());
 
+    // Извлекаем ID связанных заметок из deltaJson
+    final linkedNoteIds = _extractLinkedNoteIds(deltaJson);
+
     state = state.copyWith(
       content: plainText,
       deltaJson: deltaJson,
+      linkedNoteIds: linkedNoteIds,
       contentError: _validateContent(plainText),
       hasUnsavedChanges: true,
     );
+  }
+
+  /// Извлечь ID связанных заметок из deltaJson
+  List<String> _extractLinkedNoteIds(String deltaJson) {
+    final noteIdPattern = RegExp(r'note://([a-f0-9-]+)');
+
+    final matches = noteIdPattern.allMatches(deltaJson);
+    return matches.map((m) => m.group(1)!).toSet().toList();
   }
 
   /// Обновить описание

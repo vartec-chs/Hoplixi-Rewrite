@@ -1,22 +1,24 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/constants/main_constants.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
-import 'package:hoplixi/main_store/dao/password_dao.dart';
-import 'package:hoplixi/main_store/dao/password_history_dao.dart';
-import 'package:hoplixi/main_store/dao/otp_dao.dart';
-import 'package:hoplixi/main_store/dao/otp_history_dao.dart';
-import 'package:hoplixi/main_store/dao/note_dao.dart';
-import 'package:hoplixi/main_store/dao/note_history_dao.dart';
 import 'package:hoplixi/main_store/dao/bank_card_dao.dart';
 import 'package:hoplixi/main_store/dao/bank_card_history_dao.dart';
+import 'package:hoplixi/main_store/dao/category_dao.dart';
 import 'package:hoplixi/main_store/dao/file_dao.dart';
 import 'package:hoplixi/main_store/dao/file_history_dao.dart';
-import 'package:hoplixi/main_store/dao/category_dao.dart';
 import 'package:hoplixi/main_store/dao/icon_dao.dart';
+import 'package:hoplixi/main_store/dao/note_dao.dart';
+import 'package:hoplixi/main_store/dao/note_history_dao.dart';
+import 'package:hoplixi/main_store/dao/note_link_dao.dart';
+import 'package:hoplixi/main_store/dao/otp_dao.dart';
+import 'package:hoplixi/main_store/dao/otp_history_dao.dart';
+import 'package:hoplixi/main_store/dao/password_dao.dart';
+import 'package:hoplixi/main_store/dao/password_history_dao.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
-import './dao/filters_dao/filters_dao.dart';
 import 'package:uuid/uuid.dart';
+
+import './dao/filters_dao/filters_dao.dart';
 
 part 'main_store.g.dart';
 
@@ -29,6 +31,7 @@ part 'main_store.g.dart';
     OtpsHistory,
     Notes,
     NotesHistory,
+    NoteLinks,
     BankCards,
     BankCardsHistory,
     Files,
@@ -49,6 +52,7 @@ part 'main_store.g.dart';
     OtpHistoryDao,
     NoteDao,
     NoteHistoryDao,
+    NoteLinkDao,
     BankCardDao,
     BankCardHistoryDao,
     FileDao,
@@ -81,6 +85,12 @@ class MainStore extends _$MainStore {
           'Migrating database from version $from to $to',
           tag: '${_logTag}Migration',
         );
+
+        // Миграция с версии 3 на 4: добавление таблицы связей между заметками
+        if (from < 4) {
+          await m.createTable(noteLinks);
+          logInfo('Created note_links table', tag: '${_logTag}Migration');
+        }
 
         logInfo('Migration completed', tag: '${_logTag}Migration');
       },

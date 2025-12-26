@@ -12,6 +12,7 @@ import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 
 import '../providers/note_form_provider.dart';
+import '../widgets/note_links_section.dart';
 import '../widgets/note_metadata_modal.dart';
 import '../widgets/note_picker_modal.dart';
 
@@ -47,6 +48,9 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
       ),
     );
 
+    // Слушаем изменения документа для отслеживания связей
+    _quillController.addListener(_onDocumentChanged);
+
     // Инициализация формы
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final notifier = ref.read(noteFormProvider.notifier);
@@ -69,8 +73,15 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     });
   }
 
+  /// Обработка изменений документа для отслеживания связей
+  void _onDocumentChanged() {
+    // Обновляем стейт при каждом изменении
+    _updateStateFromController();
+  }
+
   @override
   void dispose() {
+    _quillController.removeListener(_onDocumentChanged);
     _quillController.dispose();
     _editorFocusNode.dispose();
     _editorScrollController.dispose();
@@ -138,8 +149,13 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
       );
     }
 
+    // Обновляем стейт с новыми связями
+    _updateStateFromController();
+
     // Возвращаем фокус в редактор
     _editorFocusNode.requestFocus();
+
+    logInfo('Добавлена ссылка на заметку: ${result.id}');
   }
 
   /// Показать модальное окно и сохранить заметку
@@ -288,30 +304,43 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
 
                 // Редактор Quill
                 Expanded(
-                  child: QuillEditor(
-                    focusNode: _editorFocusNode,
-                    scrollController: _editorScrollController,
-                    controller: _quillController,
-                    config: QuillEditorConfig(
-                      placeholder: 'Начните писать заметку...',
-                      padding: const EdgeInsets.all(16),
-                      expands: true,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Секция связей (если это режим редактирования)
+                        if (isEditMode && widget.noteId != null)
+                          NoteLinksSection(noteId: widget.noteId!),
 
-                      onLaunchUrl: (url) async {
-                        logInfo('QuillEditor onLaunchUrl: $url');
-                        // Перехватываем ссылки на заметки, чтобы не открывать в браузере
-                        // Quill может добавить https:// перед note://
+                        // Редактор
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: QuillEditor(
+                            focusNode: _editorFocusNode,
+                            scrollController: _editorScrollController,
+                            controller: _quillController,
+                            config: QuillEditorConfig(
+                              placeholder: 'Начните писать заметку...',
+                              padding: const EdgeInsets.all(16),
+                              expands: true,
+                              onLaunchUrl: (url) async {
+                                logInfo('QuillEditor onLaunchUrl: $url');
+                                // Перехватываем ссылки на заметки, чтобы не открывать в браузере
+                                // Quill может добавить https:// перед note://
 
-                        if (url.contains('note://')) {
-                          final noteId = url.split('//').last;
-                          _handleNoteLinkClick(noteId);
-                        }
-                        // Для обычных URL можно добавить url_launcher
-                      },
-                      onTapDown: (details, p1) {
-                        // Обработка тапов
-                        return false;
-                      },
+                                if (url.contains('note://')) {
+                                  final noteId = url.split('//').last;
+                                  _handleNoteLinkClick(noteId);
+                                }
+                                // Для обычных URL можно добавить url_launcher
+                              },
+                              onTapDown: (details, p1) {
+                                // Обработка тапов
+                                return false;
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
