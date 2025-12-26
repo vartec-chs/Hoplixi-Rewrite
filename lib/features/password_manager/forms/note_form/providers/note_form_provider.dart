@@ -61,6 +61,13 @@ class NoteFormNotifier extends Notifier<NoteFormState> {
         tagIds: tagIds,
         tagNames: tagRecords.map((tag) => tag.name).toList(),
         isLoading: false,
+        // Сохраняем исходные данные для отслеживания изменений
+        originalTitle: note.title,
+        originalDeltaJson: note.deltaJson,
+        originalDescription: note.description ?? '',
+        originalCategoryId: note.categoryId,
+        originalTagIds: tagIds,
+        edited: false,
       );
     } catch (e, stack) {
       logError(
@@ -104,13 +111,55 @@ class NoteFormNotifier extends Notifier<NoteFormState> {
     // Извлекаем ID связанных заметок из deltaJson
     final linkedNoteIds = _extractLinkedNoteIds(deltaJson);
 
+    // Проверяем, изменилось ли что-то относительно исходных данных
+    final hasRealChanges = _checkIfDataChanged(
+      deltaJson: deltaJson,
+      title: state.title,
+      description: state.description,
+      categoryId: state.categoryId,
+      tagIds: state.tagIds,
+    );
+
     state = state.copyWith(
       content: plainText,
       deltaJson: deltaJson,
       linkedNoteIds: linkedNoteIds,
       contentError: _validateContent(plainText),
       hasUnsavedChanges: true,
+      // Устанавливаем флаг edited только если есть реальные изменения
+      edited: state.isEditMode ? hasRealChanges : state.edited,
     );
+  }
+
+  /// Проверить, изменились ли данные относительно исходного состояния
+  bool _checkIfDataChanged({
+    required String deltaJson,
+    required String title,
+    required String description,
+    required String? categoryId,
+    required List<String> tagIds,
+  }) {
+    if (!state.isEditMode) return false;
+
+    // Сравниваем с исходными данными
+    if (deltaJson != state.originalDeltaJson) return true;
+    if (title != state.originalTitle) return true;
+    if (description != state.originalDescription) return true;
+    if (categoryId != state.originalCategoryId) return true;
+
+    // Сравниваем списки тегов
+    if (tagIds.length != state.originalTagIds.length) return true;
+    if (!tagIds.toSet().containsAll(state.originalTagIds)) return true;
+    if (!state.originalTagIds.toSet().containsAll(tagIds)) return true;
+
+    return false;
+  }
+
+  /// Установить флаг edited
+  void markAsEdited() {
+    if (state.isEditMode) {
+      state = state.copyWith(edited: true);
+    }
   }
 
   /// Извлечь ID связанных заметок из deltaJson

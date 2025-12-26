@@ -10,6 +10,15 @@ sealed class NoteFormState with _$NoteFormState {
     @Default(false) bool isEditMode,
     String? editingNoteId,
 
+    bool? edited,
+
+    // Исходные данные для отслеживания изменений (только в режиме редактирования)
+    String? originalDeltaJson,
+    String? originalTitle,
+    String? originalDescription,
+    String? originalCategoryId,
+    @Default([]) List<String> originalTagIds,
+
     // Основные поля формы
     @Default('') String title,
     @Default('') String content,
@@ -21,7 +30,7 @@ sealed class NoteFormState with _$NoteFormState {
     String? categoryName,
     @Default([]) List<String> tagIds,
     @Default([]) List<String> tagNames,
-    
+
     // Связи с другими заметками (отслеживание для синхронизации)
     @Default([]) List<String> linkedNoteIds,
 

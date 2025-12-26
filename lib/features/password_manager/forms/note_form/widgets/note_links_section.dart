@@ -46,7 +46,7 @@ class NoteLinksSection extends ConsumerWidget {
             }
 
             return Card(
-              margin: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(8),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(

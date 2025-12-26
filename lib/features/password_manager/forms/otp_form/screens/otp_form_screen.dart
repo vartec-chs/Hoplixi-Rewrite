@@ -4,16 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/features/qr_scanner/widgets/qr_scanner_widget.dart';
 import 'package:hoplixi/main_store/models/enums/entity_types.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
-import '../providers/otp_form_provider.dart';
+
 import '../models/otp_form_state.dart';
+import '../providers/otp_form_provider.dart';
 
 /// Форма для создания и редактирования OTP/2FA
 class OtpFormScreen extends ConsumerStatefulWidget {
@@ -203,7 +202,7 @@ class _OtpFormScreenState extends ConsumerState<OtpFormScreen>
         ],
         leading: FormCloseButton(),
         bottom: TabBar(
-          tabAlignment: TabAlignment.center,
+          tabAlignment: TabAlignment.fill,
           controller: _tabController,
           tabs: const [
             Tab(text: 'TOTP', icon: Icon(Icons.timer)),

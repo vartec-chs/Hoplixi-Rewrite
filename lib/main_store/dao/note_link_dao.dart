@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/main_store/main_store.dart';
-import 'package:hoplixi/main_store/models/dto/category_dto.dart';
-import 'package:hoplixi/main_store/models/dto/note_dto.dart';
+import 'package:hoplixi/main_store/models/dto/index.dart';
 import 'package:hoplixi/main_store/models/dto/tag_dto.dart';
+import 'package:hoplixi/main_store/models/graph_data.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
 
 part 'note_link_dao.g.dart';
@@ -17,11 +17,8 @@ class NoteLinkDao extends DatabaseAccessor<MainStore> with _$NoteLinkDaoMixin {
 
   /// Подготовить данные для графа (flutter_graph_view).
   ///
-  /// Возвращает map вида `{ 'vertexes': Set<Map>, 'edges': Set<Map> }`.
-  ///
-  /// Вершины: `id`, `tag`, `tags`, `title`.
-  /// Рёбра: `srcId`, `dstId`, `edgeName`, `ranking`.
-  Future<Map<String, dynamic>> getGraphData() async {
+  /// Возвращает структуру GraphData с вершинами и рёбрами графа.
+  Future<GraphData> getGraphData() async {
     // 1) Загружаем заметки (без удалённых)
     final notesRows =
         await (select(notes)
@@ -34,20 +31,15 @@ class NoteLinkDao extends DatabaseAccessor<MainStore> with _$NoteLinkDaoMixin {
     // 2) Загружаем связи и фильтруем по существующим заметкам
     final linksRows = await select(noteLinks).get();
 
-    final vertexes = <Map>{};
-    final edges = <Map>{};
+    final vertexes = <VertexData>{};
+    final edges = <EdgeData>{};
 
     for (final n in notesRows) {
       // Tag для раскраски: используем стабильное распределение по 4 цветам.
       final bucket = (n.categoryId?.hashCode ?? n.id.hashCode).abs() % 4;
       final tag = 'tag$bucket';
 
-      vertexes.add({
-        'id': n.id,
-        'tag': tag,
-        'tags': [tag],
-        'title': n.title,
-      });
+      vertexes.add(VertexData(id: n.id, tag: tag, tags: [tag], title: n.title));
     }
 
     for (final l in linksRows) {
@@ -56,15 +48,17 @@ class NoteLinkDao extends DatabaseAccessor<MainStore> with _$NoteLinkDaoMixin {
         continue;
       }
 
-      edges.add({
-        'srcId': l.sourceNoteId,
-        'dstId': l.targetNoteId,
-        'edgeName': 'link',
-        'ranking': l.createdAt.millisecondsSinceEpoch,
-      });
+      edges.add(
+        EdgeData(
+          srcId: l.sourceNoteId,
+          dstId: l.targetNoteId,
+          edgeName: 'link',
+          ranking: l.createdAt.millisecondsSinceEpoch,
+        ),
+      );
     }
 
-    return {'vertexes': vertexes, 'edges': edges};
+    return GraphData(vertexes: vertexes.toList(), edges: edges.toList());
   }
 
   /// Создать связь между заметками

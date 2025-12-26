@@ -3,20 +3,15 @@ import 'package:flutter_graph_view/flutter_graph_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/logger/index.dart';
+import 'package:hoplixi/main_store/models/graph_data.dart';
 import 'package:hoplixi/main_store/provider/dao_providers.dart';
 import 'package:hoplixi/routing/paths.dart';
 
-final _notesGraphDataProvider = FutureProvider<Map<String, dynamic>>((
+final _notesGraphDataProvider = FutureProvider.autoDispose<GraphData>((
   ref,
 ) async {
   final dao = await ref.watch(noteLinkDaoProvider.future);
-  final rawData = await dao.getGraphData();
-
-  // Конвертируем Set в List для стабильности данных
-  return {
-    'vertexes': (rawData['vertexes'] as Set).toList(),
-    'edges': (rawData['edges'] as Set).toList(),
-  };
+  return dao.getGraphData();
 });
 
 /// Экран графа связей заметок (в стиле Obsidian).
@@ -53,8 +48,8 @@ class NotesGraphScreen extends ConsumerWidget {
           );
         },
         data: (data) {
-          final vertexCount = (data['vertexes'] as List).length;
-          final edgeCount = (data['edges'] as List).length;
+          final vertexCount = data.vertexes.length;
+          final edgeCount = data.edges.length;
 
           if (vertexCount == 0) {
             return Center(
@@ -105,7 +100,7 @@ class NotesGraphScreen extends ConsumerWidget {
 class _NotesGraphView extends StatefulWidget {
   const _NotesGraphView({super.key, required this.data, required this.theme});
 
-  final Map<String, dynamic> data;
+  final GraphData data;
   final ThemeData theme;
 
   @override
@@ -185,7 +180,10 @@ class _NotesGraphViewState extends State<_NotesGraphView> {
   @override
   Widget build(BuildContext context) {
     return FlutterGraphWidget(
-      data: widget.data,
+      data: {
+        'vertexes': widget.data.vertexes.map((v) => v.toJson()).toList(),
+        'edges': widget.data.edges.map((e) => e.toJson()).toList(),
+      },
       algorithm: _algorithm,
       convertor: MapConvertor(),
       options: _options,
