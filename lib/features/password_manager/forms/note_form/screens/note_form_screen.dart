@@ -388,6 +388,12 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
                                   // Обработка тапов
                                   return false;
                                 },
+                                customStyles: DefaultStyles(
+                                  link: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
