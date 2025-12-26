@@ -17,6 +17,7 @@ import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 void showFileDecryptModal(BuildContext context, FileCardDto file) {
   WoltModalSheet.show(
     context: context,
+    useRootNavigator: true,
 
     pageListBuilder: (context) {
       return [

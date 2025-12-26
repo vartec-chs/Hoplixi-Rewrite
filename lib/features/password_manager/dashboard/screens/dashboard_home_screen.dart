@@ -123,7 +123,17 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     _dataRevision++;
     _pendingNewItems = null;
     _pendingRevision = null;
-    _scrollController.jumpTo(0);
+    // Важно: в момент смены сущности скролл может быть уже "подключен",
+    // но ещё без рассчитанных размеров (min/maxScrollExtent == null).
+    // В этом случае jumpTo вызывает ballistic simulation и падает.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final position = _scrollController.position;
+      if (!position.hasContentDimensions) return;
+      if (position.pixels != 0.0) {
+        _scrollController.jumpTo(0.0);
+      }
+    });
 
     setState(() {
       _displayedItems = <BaseCardDto>[];

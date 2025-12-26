@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/theme/constants.dart';
 import 'package:hoplixi/features/password_manager/open_store/models/open_store_state.dart';
 import 'package:hoplixi/features/password_manager/open_store/widgets/storage_card.dart';
+import 'package:hoplixi/routing/paths.dart';
+import 'package:hoplixi/shared/ui/button.dart';
 
 /// Список доступных хранилищ
 class StorageList extends StatelessWidget {
@@ -43,6 +46,8 @@ class StorageList extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
+            const SizedBox(height: 24),
+            _buildAddStorageButton(context),
           ],
         ),
       );
@@ -56,12 +61,38 @@ class StorageList extends StatelessWidget {
         final storage = storages[index];
         final isSelected = selectedStorage?.path == storage.path;
 
+        final isLastItem = index == storages.length - 1;
+        if (isLastItem) {
+          return Column(
+            children: [
+              StorageCard(
+                storage: storage,
+                isSelected: isSelected,
+                onTap: () => onStorageSelected(storage),
+              ),
+              const SizedBox(height: 24),
+              _buildAddStorageButton(context),
+            ],
+          );
+        }
+
         return StorageCard(
           storage: storage,
           isSelected: isSelected,
           onTap: () => onStorageSelected(storage),
         );
       },
+    );
+  }
+
+  // build button to add new storage
+  Widget _buildAddStorageButton(BuildContext context) {
+    return SmoothButton(
+      isFullWidth: true,
+      size: .large,
+      label: 'Создать',
+      onPressed: () => context.push(AppRoutesPaths.createStore),
+      type: .dashed,
     );
   }
 }

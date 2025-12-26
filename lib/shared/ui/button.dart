@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/material.dart';
 import 'package:hoplixi/core/theme/colors.dart';
 
 enum SmoothButtonType { text, filled, tonal, outlined, dashed }
@@ -259,6 +259,24 @@ class SmoothButton extends StatelessWidget {
             ? Theme.of(context).colorScheme.onSurface.withOpacity(0.12)
             : variantColor;
 
+        final button = TextButton(
+          onPressed: loading ? null : onPressed,
+          onLongPress: onLongPress,
+          focusNode: focusNode,
+          autofocus: autofocus,
+          clipBehavior: clipBehavior,
+          style: styledWithVariant.copyWith(
+            padding: WidgetStateProperty.all(_padding),
+            backgroundColor: WidgetStateProperty.all(Colors.transparent),
+            // keep side unset here, DottedBorder handles border
+          ),
+          child: buttonChild,
+          onHover: (isHovered) {
+            onHover?.call(isHovered);
+          },
+          onFocusChange: (value) => {onFocusChange?.call(value)},
+        );
+
         return Material(
           color: Colors.transparent,
           child: DottedBorder(
@@ -269,23 +287,9 @@ class SmoothButton extends StatelessWidget {
               radius: const Radius.circular(16),
               padding: EdgeInsets.zero,
             ),
-            child: TextButton(
-              onPressed: loading ? null : onPressed,
-              onLongPress: onLongPress,
-              focusNode: focusNode,
-              autofocus: autofocus,
-              clipBehavior: clipBehavior,
-              style: styledWithVariant.copyWith(
-                padding: WidgetStateProperty.all(_padding),
-                backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                // keep side unset here, DottedBorder handles border
-              ),
-              child: buttonChild,
-              onHover: (isHovered) {
-                onHover?.call(isHovered);
-              },
-              onFocusChange: (value) => {onFocusChange?.call(value)},
-            ),
+            child: isFullWidth
+                ? SizedBox(width: double.infinity, child: button)
+                : button,
           ),
         );
     }

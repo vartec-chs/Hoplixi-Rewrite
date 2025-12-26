@@ -5,13 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/category_manager/features/category_picker/category_picker.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
 import 'package:hoplixi/features/password_manager/tags_manager/features/tags_picker/tags_picker.dart';
 import 'package:hoplixi/main_store/models/enums/entity_types.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
+
 import '../providers/bank_card_form_provider.dart';
 
 /// Экран формы создания/редактирования банковской карты
@@ -232,7 +231,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                           backCardBorder: Border.all(
                             color: colorScheme.outline.withOpacity(0.3),
                           ),
-                          padding: 16,
+                          padding: 8,
                         ),
 
                         const SizedBox(height: 24),
@@ -253,7 +252,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setName(value);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Имя владельца *
                         TextField(
@@ -272,7 +271,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setCardholderName(value);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Номер карты *
                         TextField(
@@ -296,7 +295,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setCardNumber(value);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Срок действия
                         Row(
@@ -322,7 +321,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 },
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
                                 controller: _expiryYearController,
@@ -344,7 +343,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 },
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
                                 controller: _cvvController,
@@ -370,35 +369,27 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
-                        // Тип карты и Сеть
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _CardTypeDropdown(
-                                value: state.cardType,
-                                onChanged: (value) {
-                                  ref
-                                      .read(bankCardFormProvider.notifier)
-                                      .setCardType(value);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _CardNetworkDropdown(
-                                value: state.cardNetwork,
-                                onChanged: (value) {
-                                  ref
-                                      .read(bankCardFormProvider.notifier)
-                                      .setCardNetwork(value);
-                                },
-                              ),
-                            ),
-                          ],
+                        _CardTypeDropdown(
+                          value: state.cardType,
+                          onChanged: (value) {
+                            ref
+                                .read(bankCardFormProvider.notifier)
+                                .setCardType(value);
+                          },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
+                        _CardNetworkDropdown(
+                          value: state.cardNetwork,
+                          onChanged: (value) {
+                            ref
+                                .read(bankCardFormProvider.notifier)
+                                .setCardNetwork(value);
+                          },
+                        ),
+
+                        const SizedBox(height: 8),
 
                         // Название банка
                         TextField(
@@ -417,7 +408,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setBankName(value);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const Divider(height: 32),
 
                         // Номер счета и Routing number
                         Row(
@@ -438,7 +429,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 },
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
                                 controller: _routingNumberController,
@@ -457,7 +448,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const Divider(height: 32),
 
                         // Категория
                         CategoryPickerField(
@@ -472,7 +463,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setCategory(categoryId, categoryName);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Теги
                         TagPickerField(
@@ -487,7 +478,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setTags(tagIds, tagNames);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Описание
                         TextField(
@@ -504,7 +495,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                                 .setDescription(value);
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Заметки
                         TextField(
@@ -549,7 +540,7 @@ class _BankCardFormScreenState extends ConsumerState<BankCardFormScreen> {
                             variant: SmoothButtonVariant.normal,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: SmoothButton(
                             label: widget.bankCardId != null

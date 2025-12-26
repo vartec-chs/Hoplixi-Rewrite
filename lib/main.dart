@@ -11,8 +11,9 @@ import 'package:hoplixi/setup_error_handling.dart';
 import 'package:hoplixi/setup_tray.dart';
 import 'package:toastification/toastification.dart';
 import 'package:universal_platform/universal_platform.dart';
-import 'di_init.dart';
+
 import 'app.dart';
+import 'di_init.dart';
 
 Future<void> main() async {
   if (UniversalPlatform.isWeb) {

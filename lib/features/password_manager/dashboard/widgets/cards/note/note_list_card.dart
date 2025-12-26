@@ -134,10 +134,11 @@ class _NoteListCardState extends ConsumerState<NoteListCard>
         Card(
           clipBehavior: Clip.hardEdge,
           margin: EdgeInsets.zero,
+
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-       
+
           child: Column(
             children: [
               // Основная часть карточки
@@ -171,9 +172,10 @@ class _NoteListCardState extends ConsumerState<NoteListCard>
             children: [
               // Иконка
               Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.note, color: theme.colorScheme.onSurface),
