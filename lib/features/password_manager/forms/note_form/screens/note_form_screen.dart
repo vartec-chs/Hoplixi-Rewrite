@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
 import 'package:hoplixi/features/password_manager/forms/note_form/models/note_form_state.dart';
-import 'package:hoplixi/features/password_manager/forms/note_form/widgets/note_link_button.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 
 import '../providers/note_form_provider.dart';
 import '../widgets/note_metadata_modal.dart';
+import '../widgets/note_picker_modal.dart';
 
 /// Экран формы создания/редактирования заметки
 /// Основной интерфейс - QuillEditor для редактирования контента
@@ -54,6 +55,17 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
       } else {
         notifier.initForCreate();
       }
+
+      // Слушаем изменения состояния для синхронизации контроллера
+      ref.listenManual(noteFormProvider, (previous, next) {
+        if (!_isInitialized &&
+            next.isEditMode &&
+            !next.isLoading &&
+            next.deltaJson.isNotEmpty &&
+            next.deltaJson != '[]') {
+          _syncControllerWithState(next);
+        }
+      }, fireImmediately: true);
     });
   }
 
@@ -67,23 +79,67 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
 
   /// Синхронизировать контроллер с состоянием провайдера
   void _syncControllerWithState(NoteFormState state) {
-    if (!_isInitialized &&
-        state.deltaJson.isNotEmpty &&
-        state.deltaJson != '[]') {
-      try {
-        final deltaJson = jsonDecode(state.deltaJson) as List<dynamic>;
-        _quillController.document = Document.fromJson(deltaJson);
-        _isInitialized = true;
-      } catch (e) {
-        // Если не удалось распарсить, оставляем пустой документ
-        _isInitialized = true;
-      }
+    if (_isInitialized) return;
+
+    try {
+      final deltaJson = jsonDecode(state.deltaJson) as List<dynamic>;
+      _quillController.document = Document.fromJson(deltaJson);
+      _isInitialized = true;
+    } catch (e) {
+      // Если не удалось распарсить, оставляем пустой документ
+      _isInitialized = true;
     }
   }
 
   /// Обновить состояние провайдера из контроллера
   void _updateStateFromController() {
     ref.read(noteFormProvider.notifier).updateFromController(_quillController);
+  }
+
+  /// Вставить ссылку на заметку
+  Future<void> _insertNoteLink() async {
+    // Импортируем функцию из note_link_button
+    final result = await showNotePickerModal(
+      context,
+      ref,
+      excludeNoteId: widget.noteId, // Исключаем текущую заметку
+    );
+
+    if (result == null) return;
+
+    // Получаем текущую позицию курсора
+    final selection = _quillController.selection;
+    final index = selection.baseOffset;
+    final length = selection.extentOffset - index;
+
+    // Создаем текст ссылки
+    final linkText = result.name;
+
+    // Формируем URL ссылки (внутренний формат для заметок)
+    final linkUrl = 'note://${result.id}';
+
+    // Вставляем ссылку
+    if (length > 0) {
+      // Если есть выделенный текст - преобразуем его в ссылку
+      _quillController.formatText(index, length, LinkAttribute(linkUrl));
+    } else {
+      // Если нет выделения - вставляем новый текст со ссылкой
+      _quillController.document.insert(index, linkText);
+      _quillController.formatText(
+        index,
+        linkText.length,
+        LinkAttribute(linkUrl),
+      );
+
+      // Перемещаем курсор в конец вставленного текста
+      _quillController.updateSelection(
+        TextSelection.collapsed(offset: (index + linkText.length).toInt()),
+        ChangeSource.local,
+      );
+    }
+
+    // Возвращаем фокус в редактор
+    _editorFocusNode.requestFocus();
   }
 
   /// Показать модальное окно и сохранить заметку
@@ -169,11 +225,6 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     final theme = Theme.of(context);
     final state = ref.watch(noteFormProvider);
 
-    // Синхронизируем контроллер с состоянием при загрузке данных редактирования
-    if (state.isEditMode && !state.isLoading) {
-      _syncControllerWithState(state);
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditMode ? 'Редактировать заметку' : 'Новая заметка'),
@@ -208,31 +259,29 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
                       bottom: BorderSide(color: theme.dividerColor, width: 1),
                     ),
                   ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        QuillSimpleToolbar(
-                          controller: _quillController,
-                          config: QuillSimpleToolbarConfig(
-                            showClipboardPaste: true,
-                            multiRowsDisplay: false,
-                            buttonOptions: QuillSimpleToolbarButtonOptions(
-                              base: QuillToolbarBaseButtonOptions(
-                                afterButtonPressed: () {
-                                  // Возвращаем фокус в редактор после нажатия кнопки
-                                  _editorFocusNode.requestFocus();
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
+                  child: QuillSimpleToolbar(
+                    controller: _quillController,
+                    config: QuillSimpleToolbarConfig(
+                      showClipboardPaste: true,
+                      multiRowsDisplay: false,
+                      customButtons: [
                         // Кастомная кнопка для ссылки на заметку
-                        NoteLinkButton(
-                          controller: _quillController,
-                          iconSize: 18,
+                        QuillToolbarCustomButtonOptions(
+                          icon: const Icon(Icons.link),
+                          tooltip: 'Ссылка на заметку',
+                          onPressed: () async {
+                            await _insertNoteLink();
+                          },
                         ),
                       ],
+                      buttonOptions: QuillSimpleToolbarButtonOptions(
+                        base: QuillToolbarBaseButtonOptions(
+                          afterButtonPressed: () {
+                            // Возвращаем фокус в редактор после нажатия кнопки
+                            _editorFocusNode.requestFocus();
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -247,15 +296,21 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
                       placeholder: 'Начните писать заметку...',
                       padding: const EdgeInsets.all(16),
                       expands: true,
+
                       onLaunchUrl: (url) async {
-                        // Обработка кликов по ссылкам на заметки
-                        if (url.startsWith('note://')) {
-                          final noteId = url.replaceFirst('note://', '');
+                        logInfo('QuillEditor onLaunchUrl: $url');
+                        // Перехватываем ссылки на заметки, чтобы не открывать в браузере
+                        // Quill может добавить https:// перед note://
+
+                        if (url.contains('note://')) {
+                          final noteId = url.split('//').last;
                           _handleNoteLinkClick(noteId);
-                          return;
                         }
-                        // Для обычных URL можно добавить обработку
-                        return;
+                        // Для обычных URL можно добавить url_launcher
+                      },
+                      onTapDown: (details, p1) {
+                        // Обработка тапов
+                        return false;
                       },
                     ),
                   ),

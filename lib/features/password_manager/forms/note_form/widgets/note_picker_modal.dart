@@ -21,22 +21,26 @@ class NotePickerData {
   final List<NoteCardDto> notes;
   final bool hasMore;
   final bool isLoadingMore;
+  final String? excludeNoteId;
 
   const NotePickerData({
     this.notes = const [],
     this.hasMore = false,
     this.isLoadingMore = false,
+    this.excludeNoteId,
   });
 
   NotePickerData copyWith({
     List<NoteCardDto>? notes,
     bool? hasMore,
     bool? isLoadingMore,
+    String? excludeNoteId,
   }) {
     return NotePickerData(
       notes: notes ?? this.notes,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      excludeNoteId: excludeNoteId ?? this.excludeNoteId,
     );
   }
 }
@@ -106,7 +110,7 @@ class NotePickerDataNotifier extends Notifier<NotePickerData> {
   }
 
   /// Загрузить первую страницу заметок
-  Future<void> loadInitial() async {
+  Future<void> loadInitial(String? excludeNoteId) async {
     final filter = ref.read(notePickerFilterProvider);
     final mainStoreAsync = ref.read(mainStoreProvider);
 
@@ -127,10 +131,16 @@ class NotePickerDataNotifier extends Notifier<NotePickerData> {
       final notes = await dao.getFiltered(filter);
       final total = await dao.countFiltered(filter);
 
+      // Исключаем текущую заметку из списка
+      final filteredNotes = excludeNoteId != null
+          ? notes.where((note) => note.id != excludeNoteId).toList()
+          : notes;
+
       state = NotePickerData(
-        notes: notes,
-        hasMore: notes.length < total,
+        notes: filteredNotes,
+        hasMore: filteredNotes.length < total,
         isLoadingMore: false,
+        excludeNoteId: excludeNoteId,
       );
     } catch (e) {
       Toaster.error(title: 'Ошибка загрузки', description: e.toString());
@@ -166,12 +176,18 @@ class NotePickerDataNotifier extends Notifier<NotePickerData> {
       final newNotes = await dao.getFiltered(updatedFilter);
       final total = await dao.countFiltered(updatedFilter);
 
-      final allNotes = [...state.notes, ...newNotes];
+      // Исключаем текущую заметку из новых данных
+      final filteredNewNotes = state.excludeNoteId != null
+          ? newNotes.where((note) => note.id != state.excludeNoteId).toList()
+          : newNotes;
+
+      final allNotes = [...state.notes, ...filteredNewNotes];
 
       state = NotePickerData(
         notes: allNotes,
         hasMore: allNotes.length < total,
         isLoadingMore: false,
+        excludeNoteId: state.excludeNoteId,
       );
     } catch (e) {
       state = state.copyWith(isLoadingMore: false);
@@ -185,23 +201,23 @@ class NotePickerDataNotifier extends Notifier<NotePickerData> {
 /// Показать модальное окно выбора заметки
 Future<NotePickerResult?> showNotePickerModal(
   BuildContext context,
-  WidgetRef ref,
-) async {
+  WidgetRef ref, {
+  String? excludeNoteId,
+}) async {
   // Сбрасываем состояние перед показом
   ref.read(notePickerFilterProvider.notifier).reset();
   ref.invalidate(notePickerDataProvider);
 
-  // Загружаем начальные данные
-  await ref.read(notePickerDataProvider.notifier).loadInitial();
+  // Загружаем начальные данные с исключением заметки
+  await ref.read(notePickerDataProvider.notifier).loadInitial(excludeNoteId);
 
   if (!context.mounted) return null;
 
   return await WoltModalSheet.show<NotePickerResult>(
+    useRootNavigator: true,
     context: context,
     pageListBuilder: (context) => [_buildNotePickerPage(context, ref)],
-    modalTypeBuilder: (context) {
-      return WoltModalType.dialog();
-    },
+
     onModalDismissedWithBarrierTap: () {
       Navigator.of(context).pop();
     },
@@ -211,7 +227,6 @@ Future<NotePickerResult?> showNotePickerModal(
 /// Построить страницу модального окна
 WoltModalSheetPage _buildNotePickerPage(BuildContext context, WidgetRef ref) {
   return WoltModalSheetPage(
-    backgroundColor: Theme.of(context).colorScheme.surface,
     hasSabGradient: false,
     topBarTitle: Text(
       'Выбрать заметку',
@@ -260,7 +275,10 @@ class _NotePickerContentState extends ConsumerState<_NotePickerContent> {
 
   void _onSearchChanged(String value) {
     ref.read(notePickerFilterProvider.notifier).updateQuery(value);
-    ref.read(notePickerDataProvider.notifier).loadInitial();
+    final currentData = ref.read(notePickerDataProvider);
+    ref
+        .read(notePickerDataProvider.notifier)
+        .loadInitial(currentData.excludeNoteId);
   }
 
   void _onNoteSelected(NoteCardDto note) {
