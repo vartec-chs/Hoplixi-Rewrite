@@ -10,17 +10,16 @@ import 'package:universal_platform/universal_platform.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 
 // Модели и провайдеры
-import '../../../models/entity_type.dart';
-import '../../../providers/entity_type_provider.dart';
-import '../../../providers/filter_providers/base_filter_provider.dart';
-import '../../../providers/filter_providers/password_filter_provider.dart';
-import '../../../providers/filter_providers/notes_filter_provider.dart';
-import '../../../providers/filter_providers/otp_filter_provider.dart';
-import '../../../providers/filter_providers/bank_cards_filter_provider.dart';
-import '../../../providers/filter_providers/files_filter_provider.dart';
-
+import '../../models/entity_type.dart';
+import '../../providers/entity_type_provider.dart';
+import '../../providers/filter_providers/bank_cards_filter_provider.dart';
+import '../../providers/filter_providers/base_filter_provider.dart';
+import '../../providers/filter_providers/files_filter_provider.dart';
+import '../../providers/filter_providers/notes_filter_provider.dart';
+import '../../providers/filter_providers/otp_filter_provider.dart';
+import '../../providers/filter_providers/password_filter_provider.dart';
 // Секции фильтров
-import '../filter_sections/filter_sections.dart';
+import '../dashboard_home/filter_sections/filter_sections.dart';
 
 /// Типобезопасное хранилище начальных значений фильтров
 class _InitialFilterValues {
@@ -55,6 +54,7 @@ class FilterModal {
 
     await WoltModalSheet.show<void>(
       context: context,
+      useRootNavigator: true,
 
       pageListBuilder: (modalSheetContext) {
         return [_buildMainFilterPage(modalSheetContext, onFilterApplied)];

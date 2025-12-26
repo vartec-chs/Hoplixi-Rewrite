@@ -8,14 +8,11 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Настройки'),
         elevation: 0,
         scrolledUnderElevation: 2,
-        backgroundColor: theme.colorScheme.surface,
       ),
       body: SingleChildScrollView(
         child: Column(

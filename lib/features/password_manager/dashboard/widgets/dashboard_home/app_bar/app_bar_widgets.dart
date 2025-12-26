@@ -2,5 +2,5 @@
 library;
 
 export 'filter_tabs.dart';
-export 'filter_modal.dart';
+export '../../modals/filter_modal.dart';
 export 'app_bar.dart';

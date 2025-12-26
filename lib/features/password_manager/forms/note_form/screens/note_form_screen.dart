@@ -333,6 +333,11 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
                       config: QuillSimpleToolbarConfig(
                         showClipboardPaste: true,
                         multiRowsDisplay: false,
+                        dialogTheme: QuillDialogTheme(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
                         customButtons: [
                           // Кастомная кнопка для ссылки на заметку
                           QuillToolbarCustomButtonOptions(
