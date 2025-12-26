@@ -49,6 +49,12 @@ enum DashboardFabAction {
   createEntity(
     icon: Icons.add, // Переопределяется в getIcon()
     colorType: FabActionColorType.primary,
+  ),
+
+  /// Открыть граф связей заметок
+  openNotesGraph(
+    icon: Icons.graphic_eq,
+    colorType: FabActionColorType.secondary,
   );
 
   const DashboardFabAction({required this.icon, required this.colorType});
@@ -89,6 +95,8 @@ enum DashboardFabAction {
           return 'Создать ${entityType.label}';
         }
         return 'Создать запись';
+      case DashboardFabAction.openNotesGraph:
+        return 'Граф заметок';
     }
   }
 
@@ -107,8 +115,11 @@ enum DashboardFabAction {
         return AppRoutesPaths.dashboardMigrateOtp;
       case DashboardFabAction.migratePasswords:
         return AppRoutesPaths.dashboardMigratePasswords;
+
       case DashboardFabAction.createEntity:
         return entityType?.createPath;
+      case DashboardFabAction.openNotesGraph:
+        return AppRoutesPaths.dashboardNotesGraph;
     }
   }
 
@@ -117,6 +128,7 @@ enum DashboardFabAction {
   /// Скрывает определённые действия в зависимости от текущего EntityType:
   /// - `importOtp` — видим только когда выбран EntityType.otp
   /// - `migratePasswords` — видим только для EntityType.password
+  /// - `openNotesGraph` — видим только для EntityType.note
   /// - `createEntity` — всегда видим
   /// - остальные — всегда видимы
   bool isVisible(BuildContext context, EntityType? entityType) {
@@ -128,6 +140,10 @@ enum DashboardFabAction {
       case DashboardFabAction.migratePasswords:
         // Показывать миграцию только для паролей
         return entityType == EntityType.password;
+
+      case DashboardFabAction.openNotesGraph:
+        // Показывать граф заметок только для заметок
+        return entityType == EntityType.note;
 
       case DashboardFabAction.createTag:
       case DashboardFabAction.createCategory:

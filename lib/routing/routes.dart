@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hoplixi/features/archive_storage/ui/archive_screen.dart';
 import 'package:hoplixi/features/cloud_sync/auth/ui/auth_login_screen.dart';
 import 'package:hoplixi/features/cloud_sync/auth/ui/tokens_screen.dart';
 import 'package:hoplixi/features/cloud_sync/oauth_apps/ui/oauth_apps_screen.dart';
-import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
-import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
-import 'package:hoplixi/features/password_manager/forms/password_form/screens/password_form_screen.dart';
-import 'package:hoplixi/features/password_manager/forms/note_form/screens/note_form_screen.dart';
-import 'package:hoplixi/features/password_manager/forms/bank_card_form/screens/bank_card_form_screen.dart';
-import 'package:hoplixi/features/password_manager/forms/file_form/screens/file_form_screen.dart';
-import 'package:hoplixi/features/password_manager/forms/otp_form/screens/otp_form_screen.dart';
-import 'package:hoplixi/features/password_manager/migration/otp/screens/import_otp_screen.dart';
-import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
-import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
+import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
 import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
-import 'package:hoplixi/features/component_showcase/component_showcase_screen.dart';
-import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
+import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
+import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/notes_graph_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
+import 'package:hoplixi/features/password_manager/forms/bank_card_form/screens/bank_card_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/file_form/screens/file_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/note_form/screens/note_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/otp_form/screens/otp_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/password_form/screens/password_form_screen.dart';
+import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/lock_store/lock_store_screen.dart';
-import 'package:hoplixi/features/archive_storage/ui/archive_screen.dart';
+import 'package:hoplixi/features/password_manager/migration/otp/screens/import_otp_screen.dart';
 import 'package:hoplixi/features/password_manager/migration/passwords/screens/password_migration_screen.dart';
+import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
+import 'package:hoplixi/features/password_manager/tags_manager/tags_manager_screen.dart';
 import 'package:hoplixi/features/settings/screens/settings_screen.dart';
 import 'package:hoplixi/routing/paths.dart';
 
@@ -141,6 +142,12 @@ final List<RouteBase> appRoutes = [
         path: AppRoutesPaths.dashboardMigration,
         builder: (context, state) {
           return const PasswordMigrationScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutesPaths.dashboardNotesGraph,
+        builder: (context, state) {
+          return const NotesGraphScreen();
         },
       ),
 

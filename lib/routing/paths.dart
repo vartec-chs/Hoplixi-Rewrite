@@ -25,6 +25,7 @@ class AppRoutesPaths {
   static const String dashboardCategoryManager = '/dashboard/category-manager';
   static const String dashboardTagManager = '/dashboard/tag-manager';
   static const String dashboardMigration = '/dashboard/migration';
+  static const String dashboardNotesGraph = '/dashboard/notes-graph';
 
   // Password forms
   static const String dashboardPasswordCreate = '/dashboard/password/create';

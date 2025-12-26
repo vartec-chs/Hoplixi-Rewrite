@@ -15,6 +15,58 @@ class NoteLinkDao extends DatabaseAccessor<MainStore> with _$NoteLinkDaoMixin {
 
   static const String _logTag = 'NoteLinkDao';
 
+  /// Подготовить данные для графа (flutter_graph_view).
+  ///
+  /// Возвращает map вида `{ 'vertexes': Set<Map>, 'edges': Set<Map> }`.
+  ///
+  /// Вершины: `id`, `tag`, `tags`, `title`.
+  /// Рёбра: `srcId`, `dstId`, `edgeName`, `ranking`.
+  Future<Map<String, dynamic>> getGraphData() async {
+    // 1) Загружаем заметки (без удалённых)
+    final notesRows =
+        await (select(notes)
+              ..where((n) => n.isDeleted.equals(false))
+              ..orderBy([(n) => OrderingTerm.desc(n.modifiedAt)]))
+            .get();
+
+    final noteIds = notesRows.map((n) => n.id).toSet();
+
+    // 2) Загружаем связи и фильтруем по существующим заметкам
+    final linksRows = await select(noteLinks).get();
+
+    final vertexes = <Map>{};
+    final edges = <Map>{};
+
+    for (final n in notesRows) {
+      // Tag для раскраски: используем стабильное распределение по 4 цветам.
+      final bucket = (n.categoryId?.hashCode ?? n.id.hashCode).abs() % 4;
+      final tag = 'tag$bucket';
+
+      vertexes.add({
+        'id': n.id,
+        'tag': tag,
+        'tags': [tag],
+        'title': n.title,
+      });
+    }
+
+    for (final l in linksRows) {
+      if (!noteIds.contains(l.sourceNoteId) ||
+          !noteIds.contains(l.targetNoteId)) {
+        continue;
+      }
+
+      edges.add({
+        'srcId': l.sourceNoteId,
+        'dstId': l.targetNoteId,
+        'edgeName': 'link',
+        'ranking': l.createdAt.millisecondsSinceEpoch,
+      });
+    }
+
+    return {'vertexes': vertexes, 'edges': edges};
+  }
+
   /// Создать связь между заметками
   ///
   /// [sourceNoteId] - ID заметки, откуда идет ссылка
@@ -343,6 +395,10 @@ class NoteLinkDao extends DatabaseAccessor<MainStore> with _$NoteLinkDaoMixin {
       // Удаляем связи, которых больше нет в контенте
       final toDelete = existingTargetIds.difference(newTargetIds);
       if (toDelete.isNotEmpty) {
+        // Для корректного usedCount: уменьшаем счетчик на количество удаляемых связей
+        for (final targetId in toDelete) {
+          await _decrementNoteUsage(targetId);
+        }
         await (delete(noteLinks)..where(
               (link) =>
                   link.sourceNoteId.equals(sourceNoteId) &

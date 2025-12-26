@@ -8,8 +8,10 @@ import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.d
 import 'package:hoplixi/features/password_manager/dashboard/providers/entity_type_provider.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/expandable_fab.dart';
+import 'package:hoplixi/routing/paths.dart';
 import 'package:screen_protector/screen_protector.dart';
 import 'package:universal_platform/universal_platform.dart';
+
 import 'smooth_rounded_notched_rectangle.dart';
 
 // dashboard sidebar key - позволяет управлять sidebar из любого места приложения
@@ -266,14 +268,22 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
     int selectedIndex,
     bool isSidebarRoute,
   ) {
+    final location = GoRouterState.of(context).uri.toString();
+    final isFullScreenRoute = location == AppRoutesPaths.dashboardNotesGraph;
+
     return Scaffold(
       body: Row(
         children: [
           // NavigationRail слева
           _buildNavigationRail(context, selectedIndex),
 
-          // Home контент (всегда присутствует)
-          const Expanded(flex: 1, child: DashboardHomeScreen()),
+          // Main content: DashboardHomeScreen или full screen route
+          Expanded(
+            flex: 1,
+            child: isFullScreenRoute
+                ? widget.child
+                : const DashboardHomeScreen(),
+          ),
 
           // Анимированный Sidebar справа
           AnimatedBuilder(
@@ -307,9 +317,6 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
                             ? widget.child
                             : const SizedBox.shrink(),
                       ),
-                      // child: (selectedIndex != 0 || isSidebarRoute)
-                      //     ? widget.child
-                      //     : const SizedBox.shrink(),
                     ),
                   ),
                 ),

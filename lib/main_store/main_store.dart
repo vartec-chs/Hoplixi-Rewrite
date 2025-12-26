@@ -86,11 +86,11 @@ class MainStore extends _$MainStore {
           tag: '${_logTag}Migration',
         );
 
-        // Миграция с версии 3 на 4: добавление таблицы связей между заметками
-        if (from < 4) {
-          await m.createTable(noteLinks);
-          logInfo('Created note_links table', tag: '${_logTag}Migration');
-        }
+        // // Миграция до версии 5: добавление таблицы связей между заметками
+        // if (from < 5) {
+        //   await m.createTable(noteLinks);
+        //   logInfo('Created note_links table', tag: '${_logTag}Migration');
+        // }
 
         logInfo('Migration completed', tag: '${_logTag}Migration');
       },
@@ -113,6 +113,7 @@ class MainStore extends _$MainStore {
         otpsHistory,
         notes,
         notesHistory,
+        noteLinks,
         bankCards,
         bankCardsHistory,
         files,
