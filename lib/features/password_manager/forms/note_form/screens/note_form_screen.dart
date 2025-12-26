@@ -5,11 +5,12 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/note_form/models/note_form_state.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_layout.dart';
 import 'package:hoplixi/features/password_manager/dashboard/widgets/form_close_button.dart';
-import 'package:hoplixi/features/password_manager/dashboard/widgets/sidebar_controller.dart';
+import 'package:hoplixi/features/password_manager/forms/note_form/models/note_form_state.dart';
+import 'package:hoplixi/features/password_manager/forms/note_form/widgets/note_link_button.dart';
+import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/shared/ui/button.dart';
+
 import '../providers/note_form_provider.dart';
 import '../widgets/note_metadata_modal.dart';
 
@@ -132,6 +133,37 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     }
   }
 
+  /// Обработка клика по ссылке на заметку
+  void _handleNoteLinkClick(String noteId) {
+    // Сначала сохраняем текущую заметку (если есть изменения)
+    _updateStateFromController();
+
+    // Показываем диалог с опциями
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Открыть заметку'),
+        content: const Text(
+          'Хотите открыть связанную заметку? Текущие несохраненные изменения останутся.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Открываем заметку в новом окне (через навигацию)
+              context.push(AppRoutesPaths.dashboardNoteEditWithId(noteId));
+            },
+            child: const Text('Открыть'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -176,19 +208,31 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
                       bottom: BorderSide(color: theme.dividerColor, width: 1),
                     ),
                   ),
-                  child: QuillSimpleToolbar(
-                    controller: _quillController,
-                    config: QuillSimpleToolbarConfig(
-                      showClipboardPaste: true,
-                      multiRowsDisplay: false,
-                      buttonOptions: QuillSimpleToolbarButtonOptions(
-                        base: QuillToolbarBaseButtonOptions(
-                          afterButtonPressed: () {
-                            // Возвращаем фокус в редактор после нажатия кнопки
-                            _editorFocusNode.requestFocus();
-                          },
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        QuillSimpleToolbar(
+                          controller: _quillController,
+                          config: QuillSimpleToolbarConfig(
+                            showClipboardPaste: true,
+                            multiRowsDisplay: false,
+                            buttonOptions: QuillSimpleToolbarButtonOptions(
+                              base: QuillToolbarBaseButtonOptions(
+                                afterButtonPressed: () {
+                                  // Возвращаем фокус в редактор после нажатия кнопки
+                                  _editorFocusNode.requestFocus();
+                                },
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        // Кастомная кнопка для ссылки на заметку
+                        NoteLinkButton(
+                          controller: _quillController,
+                          iconSize: 18,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -203,6 +247,16 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
                       placeholder: 'Начните писать заметку...',
                       padding: const EdgeInsets.all(16),
                       expands: true,
+                      onLaunchUrl: (url) async {
+                        // Обработка кликов по ссылкам на заметки
+                        if (url.startsWith('note://')) {
+                          final noteId = url.replaceFirst('note://', '');
+                          _handleNoteLinkClick(noteId);
+                          return;
+                        }
+                        // Для обычных URL можно добавить обработку
+                        return;
+                      },
                     ),
                   ),
                 ),

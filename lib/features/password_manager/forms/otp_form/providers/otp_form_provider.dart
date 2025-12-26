@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hoplixi/core/logger/app_logger.dart';
 import 'package:hoplixi/core/utils/smart_converter_base.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/otp_form/utils/otp_uri_parser.dart';
+import 'package:hoplixi/features/password_manager/forms/otp_form/utils/otp_uri_parser.dart';
 import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
 import 'package:hoplixi/main_store/models/dto/otp_dto.dart';

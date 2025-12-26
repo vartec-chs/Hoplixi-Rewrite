@@ -10,11 +10,11 @@ import 'package:hoplixi/features/password_manager/dashboard/widgets/dashboard_la
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/search_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/password_form/screens/password_form_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/note_form/screens/note_form_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/bank_card_form/screens/bank_card_form_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/file_form/screens/file_form_screen.dart';
-import 'package:hoplixi/features/password_manager/dashboard/forms/otp_form/screens/otp_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/password_form/screens/password_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/note_form/screens/note_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/bank_card_form/screens/bank_card_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/file_form/screens/file_form_screen.dart';
+import 'package:hoplixi/features/password_manager/forms/otp_form/screens/otp_form_screen.dart';
 import 'package:hoplixi/features/password_manager/migration/otp/screens/import_otp_screen.dart';
 import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/open_store/open_store_screen.dart';
