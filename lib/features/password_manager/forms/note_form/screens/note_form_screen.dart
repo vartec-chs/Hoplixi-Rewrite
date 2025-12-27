@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hoplixi/core/logger/index.dart';
 import 'package:hoplixi/core/utils/toastification.dart';
+import 'package:hoplixi/features/password_manager/dashboard/providers/data_refresh_trigger_provider.dart';
 import 'package:hoplixi/features/password_manager/forms/note_form/models/note_form_state.dart';
 import 'package:hoplixi/routing/paths.dart';
 import 'package:hoplixi/shared/ui/button.dart';
@@ -176,7 +177,6 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     // Показываем модальное окно для редактирования метаданных
     final result = await showNoteMetadataModal(
       context,
-      ref: ref,
       isEditMode: isEditMode,
       onSave: () async {
         final success = await ref.read(noteFormProvider.notifier).save();
@@ -199,8 +199,14 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
     );
 
     // Если пользователь отменил модальное окно
-    if (result == false) {
-      // Ничего не делаем, остаемся на экране редактирования
+    if (result == true) {
+      if (isEditMode) {
+        logInfo('Заметка отредактирована: ${widget.noteId}');
+        DataRefreshHelper.refreshNotes(ref);
+      } else {
+        logInfo('Создана новая заметка');
+        DataRefreshHelper.refreshNotes(ref);
+      }
     }
   }
 
@@ -218,17 +224,20 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
           'Хотите открыть связанную заметку? Текущие несохраненные изменения останутся.',
         ),
         actions: [
-          TextButton(
+          SmoothButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            label: 'Отмена',
+            type: .outlined,
+            variant: .error,
           ),
-          TextButton(
+          SmoothButton(
             onPressed: () {
               Navigator.pop(context);
               // Открываем заметку в новом окне (через навигацию)
               context.push(AppRoutesPaths.dashboardNoteEditWithId(noteId));
             },
-            child: const Text('Открыть'),
+            label: 'Открыть',
+            type: .filled,
           ),
         ],
       ),
@@ -253,16 +262,17 @@ class _NoteFormScreenState extends ConsumerState<NoteFormScreen> {
           'У вас есть несохраненные изменения. Вы уверены, что хотите закрыть без сохранения?',
         ),
         actions: [
-          TextButton(
+          SmoothButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
+            label: 'Отмена',
+            type: .outlined,
+            variant: .error,
           ),
-          TextButton(
+          SmoothButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Закрыть без сохранения'),
+            type: .filled,
+            variant: .error,
+            label: 'Закрыть без сохранения',
           ),
         ],
       ),

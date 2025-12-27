@@ -6,13 +6,13 @@ import 'package:hoplixi/main_store/models/enums/entity_types.dart';
 import 'package:hoplixi/shared/ui/button.dart';
 import 'package:hoplixi/shared/ui/text_field.dart';
 import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
+
 import '../providers/note_form_provider.dart';
 
 /// Показать модальное окно для редактирования метаданных заметки
 /// Вызывается при сохранении заметки для заполнения заголовка, категории и тегов
 Future<bool?> showNoteMetadataModal(
   BuildContext context, {
-  required WidgetRef ref,
   required bool isEditMode,
   required VoidCallback onSave,
 }) {
@@ -47,7 +47,6 @@ Future<bool?> showNoteMetadataModal(
             builder: (context) => Padding(
               padding: const EdgeInsets.all(24),
               child: _NoteMetadataForm(
-                ref: ref,
                 isEditMode: isEditMode,
                 onSave: () {
                   Navigator.of(modalContext).pop(true);
@@ -64,24 +63,22 @@ Future<bool?> showNoteMetadataModal(
 }
 
 /// Форма редактирования метаданных заметки
-class _NoteMetadataForm extends StatefulWidget {
-  final WidgetRef ref;
+class _NoteMetadataForm extends ConsumerStatefulWidget {
   final bool isEditMode;
   final VoidCallback onSave;
   final VoidCallback onCancel;
 
   const _NoteMetadataForm({
-    required this.ref,
     required this.isEditMode,
     required this.onSave,
     required this.onCancel,
   });
 
   @override
-  State<_NoteMetadataForm> createState() => _NoteMetadataFormState();
+  ConsumerState<_NoteMetadataForm> createState() => _NoteMetadataFormState();
 }
 
-class _NoteMetadataFormState extends State<_NoteMetadataForm> {
+class _NoteMetadataFormState extends ConsumerState<_NoteMetadataForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
@@ -90,7 +87,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
   @override
   void initState() {
     super.initState();
-    final state = widget.ref.read(noteFormProvider);
+    final state = ref.read(noteFormProvider);
     _titleController = TextEditingController(text: state.title);
     _descriptionController = TextEditingController(text: state.description);
   }
@@ -108,7 +105,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
     setState(() => _isLoading = true);
 
     // Обновляем состояние формы
-    final notifier = widget.ref.read(noteFormProvider.notifier);
+    final notifier = ref.read(noteFormProvider.notifier);
     notifier.setTitle(_titleController.text);
     notifier.setDescription(_descriptionController.text);
 
@@ -117,7 +114,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
 
   @override
   Widget build(BuildContext context) {
-    final state = widget.ref.watch(noteFormProvider);
+    final state = ref.watch(noteFormProvider);
     final theme = Theme.of(context);
 
     return Form(
@@ -145,7 +142,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
               return null;
             },
             onChanged: (value) {
-              widget.ref.read(noteFormProvider.notifier).setTitle(value);
+              ref.read(noteFormProvider.notifier).setTitle(value);
             },
           ),
           const SizedBox(height: 16),
@@ -160,7 +157,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
             ),
             maxLines: 2,
             onChanged: (value) {
-              widget.ref.read(noteFormProvider.notifier).setDescription(value);
+              ref.read(noteFormProvider.notifier).setDescription(value);
             },
           ),
           const SizedBox(height: 16),
@@ -173,7 +170,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
             hintText: 'Выберите категорию',
             filterByType: CategoryType.notes,
             onCategorySelected: (categoryId, categoryName) {
-              widget.ref
+              ref
                   .read(noteFormProvider.notifier)
                   .setCategory(categoryId, categoryName);
             },
@@ -188,9 +185,7 @@ class _NoteMetadataFormState extends State<_NoteMetadataForm> {
             hintText: 'Выберите теги',
             filterByType: TagType.notes,
             onTagsSelected: (tagIds, tagNames) {
-              widget.ref
-                  .read(noteFormProvider.notifier)
-                  .setTags(tagIds, tagNames);
+              ref.read(noteFormProvider.notifier).setTags(tagIds, tagNames);
             },
           ),
           const SizedBox(height: 8),
