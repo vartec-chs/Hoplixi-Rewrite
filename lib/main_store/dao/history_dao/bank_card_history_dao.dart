@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/bank_card_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/bank_cards_history.dart';
 
-part 'bank_card_history_dao.g.dart';
+part '../bank_card_history_dao.g.dart';
 
 @DriftAccessor(tables: [BankCardsHistory])
 class BankCardHistoryDao extends DatabaseAccessor<MainStore>

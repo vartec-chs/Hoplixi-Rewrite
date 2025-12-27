@@ -5,7 +5,7 @@ import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/files_history.dart';
 import 'package:uuid/uuid.dart';
 
-part 'file_history_dao.g.dart';
+part '../file_history_dao.g.dart';
 
 @DriftAccessor(tables: [FilesHistory])
 class FileHistoryDao extends DatabaseAccessor<MainStore>

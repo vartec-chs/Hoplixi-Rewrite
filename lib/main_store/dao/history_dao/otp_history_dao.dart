@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/otp_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/otps_history.dart';
 
-part 'otp_history_dao.g.dart';
+part '../otp_history_dao.g.dart';
 
 @DriftAccessor(tables: [OtpsHistory])
 class OtpHistoryDao extends DatabaseAccessor<MainStore>

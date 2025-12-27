@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/password_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/passwords_history.dart';
 
-part 'password_history_dao.g.dart';
+part '../password_history_dao.g.dart';
 
 @DriftAccessor(tables: [PasswordsHistory])
 class PasswordHistoryDao extends DatabaseAccessor<MainStore>
