@@ -2,12 +2,13 @@ import 'package:drift/drift.dart';
 import 'package:hoplixi/main_store/main_store.dart';
 import 'package:hoplixi/main_store/models/base_main_entity_dao.dart';
 import 'package:hoplixi/main_store/models/dto/file_dto.dart';
+import 'package:hoplixi/main_store/tables/file_tags.dart';
 import 'package:hoplixi/main_store/tables/files.dart';
 import 'package:uuid/uuid.dart';
 
 part 'file_dao.g.dart';
 
-@DriftAccessor(tables: [Files])
+@DriftAccessor(tables: [Files, FilesTags])
 class FileDao extends DatabaseAccessor<MainStore>
     with _$FileDaoMixin
     implements BaseMainEntityDao {
@@ -22,6 +23,15 @@ class FileDao extends DatabaseAccessor<MainStore>
   Future<FilesData?> getFileById(String id) {
     return (select(files)..where((f) => f.id.equals(id))).getSingleOrNull();
   }
+
+    /// Получить теги файла по ID
+  Future<List<String>> getFileTagIds(String fileId) async {
+    final rows = await (select(
+      db.filesTags,
+    )..where((t) => t.fileId.equals(fileId))).get();
+    return rows.map((row) => row.tagId).toList();
+  }
+
 
   /// Переключить избранное
   @override
@@ -61,47 +71,94 @@ class FileDao extends DatabaseAccessor<MainStore>
   }
 
   /// Создать новый файл
-  Future<String> createFile(CreateFileDto dto) {
+  Future<String> createFile(CreateFileDto dto) async {
     final uuid = const Uuid().v4();
-    final companion = FilesCompanion.insert(
-      id: Value(uuid),
-      name: dto.name,
-      fileName: dto.fileName,
-      fileExtension: dto.fileExtension,
-      filePath: Value(dto.filePath),
-      mimeType: dto.mimeType,
-      fileSize: dto.fileSize,
-      fileHash: Value(dto.fileHash),
-      description: Value(dto.description),
-      categoryId: Value(dto.categoryId),
-    );
-    return into(files).insert(companion).then((_) => uuid);
+    return await db.transaction(() async {
+      final companion = FilesCompanion.insert(
+        id: Value(uuid),
+        name: dto.name,
+        fileName: dto.fileName,
+        fileExtension: dto.fileExtension,
+        filePath: Value(dto.filePath),
+        mimeType: dto.mimeType,
+        fileSize: dto.fileSize,
+        fileHash: Value(dto.fileHash),
+        description: Value(dto.description),
+        categoryId: Value(dto.categoryId),
+      );
+      await into(files).insert(companion);
+      await _insertFileTags(uuid, dto.tagsIds);
+      return uuid;
+    });
+  }
+
+  Future<void> _insertFileTags(String fileId, List<String>? tagIds) async {
+    if (tagIds == null || tagIds.isEmpty) return;
+    for (final tagId in tagIds) {
+      await db
+          .into(db.filesTags)
+          .insert(FilesTagsCompanion.insert(fileId: fileId, tagId: tagId));
+    }
+  }
+
+  /// Синхронизировать теги файла
+  Future<void> syncFileTags(String fileId, List<String> tagIds) async {
+    await db.transaction(() async {
+      final existing = await (select(
+        db.filesTags,
+      )..where((t) => t.fileId.equals(fileId))).get();
+      final existingIds = existing.map((row) => row.tagId).toSet();
+      final newIds = tagIds.toSet();
+
+      final toDelete = existingIds.difference(newIds);
+      if (toDelete.isNotEmpty) {
+        await (delete(
+          db.filesTags,
+        )..where((t) => t.fileId.equals(fileId) & t.tagId.isIn(toDelete))).go();
+      }
+
+      final toInsert = newIds.difference(existingIds);
+      for (final tagId in toInsert) {
+        await db
+            .into(db.filesTags)
+            .insert(FilesTagsCompanion.insert(fileId: fileId, tagId: tagId));
+      }
+    });
   }
 
   /// Обновить файл
   Future<bool> updateFile(String id, UpdateFileDto dto) async {
-    final companion = FilesCompanion(
-      name: dto.name != null ? Value(dto.name!) : const Value.absent(),
-      description: dto.description != null
-          ? Value(dto.description)
-          : const Value.absent(),
-      categoryId: dto.categoryId != null
-          ? Value(dto.categoryId)
-          : const Value.absent(),
-      isFavorite: dto.isFavorite != null
-          ? Value(dto.isFavorite!)
-          : const Value.absent(),
-      isArchived: dto.isArchived != null
-          ? Value(dto.isArchived!)
-          : const Value.absent(),
-      isPinned: dto.isPinned != null
-          ? Value(dto.isPinned!)
-          : const Value.absent(),
-      modifiedAt: Value(DateTime.now()),
-    );
+    return await db.transaction(() async {
+      final companion = FilesCompanion(
+        name: dto.name != null ? Value(dto.name!) : const Value.absent(),
+        description: dto.description != null
+            ? Value(dto.description)
+            : const Value.absent(),
+        categoryId: dto.categoryId != null
+            ? Value(dto.categoryId)
+            : const Value.absent(),
+        isFavorite: dto.isFavorite != null
+            ? Value(dto.isFavorite!)
+            : const Value.absent(),
+        isArchived: dto.isArchived != null
+            ? Value(dto.isArchived!)
+            : const Value.absent(),
+        isPinned: dto.isPinned != null
+            ? Value(dto.isPinned!)
+            : const Value.absent(),
+        modifiedAt: Value(DateTime.now()),
+      );
 
-    final query = (update(files)..where((f) => f.id.equals(id)));
-    return query.write(companion).then((rowsAffected) => rowsAffected > 0);
+      final rowsAffected = await (update(
+        files,
+      )..where((f) => f.id.equals(id))).write(companion);
+
+      if (dto.tagsIds != null) {
+        await syncFileTags(id, dto.tagsIds!);
+      }
+
+      return rowsAffected > 0;
+    });
   }
 
   /// Мягкое удаление файла

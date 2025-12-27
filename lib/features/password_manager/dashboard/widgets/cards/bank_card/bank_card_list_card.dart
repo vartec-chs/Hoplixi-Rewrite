@@ -247,7 +247,7 @@ class _BankCardListCardState extends ConsumerState<BankCardListCard>
                 ? const BorderSide(color: Colors.orange, width: 1.5)
                 : BorderSide.none,
           ),
-          
+
           child: Column(
             children: [
               // Основная часть карточки

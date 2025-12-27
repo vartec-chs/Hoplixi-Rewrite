@@ -272,7 +272,7 @@ class _TagChip extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.5),
       decoration: BoxDecoration(
         color: enabled
             ? colorScheme.primaryContainer.withOpacity(0.15)
@@ -288,6 +288,7 @@ class _TagChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const Icon(Icons.tag, size: 14, color: Colors.grey),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -304,7 +305,7 @@ class _TagChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: Icon(
                 Icons.close,
-                size: 16,
+                size: 14,
                 color: enabled
                     ? colorScheme.onPrimaryContainer
                     : colorScheme.onSurface.withOpacity(0.6),

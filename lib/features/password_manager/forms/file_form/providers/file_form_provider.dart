@@ -49,7 +49,7 @@ class FileFormNotifier extends Notifier<FileFormState> {
 
       // Получаем теги файла
       final tagDao = await ref.read(tagDaoProvider.future);
-      final tagIds = <String>[];
+      final tagIds = await dao.getFileTagIds(fileId);
       final tagRecords = await tagDao.getTagsByIds(tagIds);
 
       state = FileFormState(
