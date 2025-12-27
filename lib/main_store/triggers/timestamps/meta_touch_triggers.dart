@@ -331,7 +331,7 @@ const List<String> otpTagsMetaTouchTriggers = [
 const List<String> noteTagsMetaTouchTriggers = [
   '''
     CREATE TRIGGER IF NOT EXISTS touch_meta_on_note_tags_insert
-    AFTER INSERT ON note_tags
+    AFTER INSERT ON notes_tags
     BEGIN
       UPDATE store_meta
       SET modified_at = strftime('%s','now') * 1000
@@ -340,7 +340,7 @@ const List<String> noteTagsMetaTouchTriggers = [
   ''',
   '''
     CREATE TRIGGER IF NOT EXISTS touch_meta_on_note_tags_delete
-    AFTER DELETE ON note_tags
+    AFTER DELETE ON notes_tags
     BEGIN
       UPDATE store_meta
       SET modified_at = strftime('%s','now') * 1000
@@ -353,7 +353,7 @@ const List<String> noteTagsMetaTouchTriggers = [
 const List<String> fileTagsMetaTouchTriggers = [
   '''
     CREATE TRIGGER IF NOT EXISTS touch_meta_on_file_tags_insert
-    AFTER INSERT ON file_tags
+    AFTER INSERT ON files_tags
     BEGIN
       UPDATE store_meta
       SET modified_at = strftime('%s','now') * 1000
@@ -362,7 +362,7 @@ const List<String> fileTagsMetaTouchTriggers = [
   ''',
   '''
     CREATE TRIGGER IF NOT EXISTS touch_meta_on_file_tags_delete
-    AFTER DELETE ON file_tags
+    AFTER DELETE ON files_tags
     BEGIN
       UPDATE store_meta
       SET modified_at = strftime('%s','now') * 1000
