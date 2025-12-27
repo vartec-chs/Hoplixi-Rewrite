@@ -162,6 +162,11 @@ class MainStore extends _$MainStore {
         await customStatement(drop);
       }
 
+      // Удаляем старые триггеры обновления store_meta (если есть)
+      for (final drop in allMetaTouchDropTriggers) {
+        await customStatement(drop);
+      }
+
       // Создаём триггеры истории изменений
       for (final trigger in [
         ...passwordsHistoryCreateTriggers,
@@ -180,6 +185,11 @@ class MainStore extends _$MainStore {
 
       // Создаём триггеры для автоматического обновления modified_at
       for (final trigger in allModifiedAtTriggers) {
+        await customStatement(trigger);
+      }
+
+      // Создаём триггеры для обновления store_meta при изменениях в таблицах
+      for (final trigger in allMetaTouchCreateTriggers) {
         await customStatement(trigger);
       }
 

@@ -15,6 +15,7 @@ export 'bank_cards_timestamps.dart';
 export 'categories_timestamps.dart';
 export 'files_timestamps.dart';
 export 'icons_timestamps.dart';
+export 'meta_touch_triggers.dart';
 export 'notes_timestamps.dart';
 export 'otps_timestamps.dart';
 export 'passwords_timestamps.dart';
