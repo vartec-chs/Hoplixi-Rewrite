@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/password_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/passwords_history.dart';
 
-part '../password_history_dao.g.dart';
+part 'password_history_dao.g.dart';
 
 @DriftAccessor(tables: [PasswordsHistory])
 class PasswordHistoryDao extends DatabaseAccessor<MainStore>
@@ -155,5 +155,82 @@ class PasswordHistoryDao extends DatabaseAccessor<MainStore>
     return (delete(
       passwordsHistory,
     )..where((ph) => ph.actionAt.isSmallerThanValue(cutoffDate))).go();
+  }
+
+  // ============================================
+  // Методы для пагинации и поиска
+  // ============================================
+
+  /// Получить историю по ID оригинального пароля с пагинацией и поиском
+  Future<List<PasswordHistoryCardDto>> getPasswordHistoryCardsByOriginalId(
+    String passwordId,
+    int offset,
+    int limit,
+    String? searchQuery,
+  ) async {
+    var query = select(passwordsHistory)
+      ..where((ph) => ph.originalPasswordId.equals(passwordId))
+      ..orderBy([(ph) => OrderingTerm.desc(ph.actionAt)])
+      ..limit(limit, offset: offset);
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          (ph) =>
+              ph.name.like(search) |
+              ph.login.like(search) |
+              ph.email.like(search) |
+              ph.url.like(search),
+        );
+    }
+
+    final results = await query.get();
+    return results
+        .map(
+          (ph) => PasswordHistoryCardDto(
+            id: ph.id,
+            originalPasswordId: ph.originalPasswordId,
+            action: ph.action.value,
+            name: ph.name,
+            login: ph.login,
+            email: ph.email,
+            actionAt: ph.actionAt,
+          ),
+        )
+        .toList();
+  }
+
+  /// Подсчитать количество записей истории для пароля
+  Future<int> countPasswordHistoryByOriginalId(
+    String passwordId,
+    String? searchQuery,
+  ) async {
+    var query = selectOnly(passwordsHistory)
+      ..addColumns([passwordsHistory.id.count()])
+      ..where(passwordsHistory.originalPasswordId.equals(passwordId));
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          passwordsHistory.name.like(search) |
+              passwordsHistory.login.like(search) |
+              passwordsHistory.email.like(search) |
+              passwordsHistory.url.like(search),
+        );
+    }
+
+    final result = await query
+        .map((row) => row.read(passwordsHistory.id.count()))
+        .getSingle();
+    return result ?? 0;
+  }
+
+  /// Удалить запись истории по ID
+  Future<int> deletePasswordHistoryById(String historyId) {
+    return (delete(
+      passwordsHistory,
+    )..where((ph) => ph.id.equals(historyId))).go();
   }
 }

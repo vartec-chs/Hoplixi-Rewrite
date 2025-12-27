@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/otp_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/otps_history.dart';
 
-part '../otp_history_dao.g.dart';
+part 'otp_history_dao.g.dart';
 
 @DriftAccessor(tables: [OtpsHistory])
 class OtpHistoryDao extends DatabaseAccessor<MainStore>
@@ -157,5 +157,78 @@ class OtpHistoryDao extends DatabaseAccessor<MainStore>
     return (delete(
       otpsHistory,
     )..where((oh) => oh.actionAt.isSmallerThanValue(cutoffDate))).go();
+  }
+
+  // ============================================
+  // Методы для пагинации и поиска
+  // ============================================
+
+  /// Получить историю по ID оригинального OTP с пагинацией и поиском
+  Future<List<OtpHistoryCardDto>> getOtpHistoryCardsByOriginalId(
+    String otpId,
+    int offset,
+    int limit,
+    String? searchQuery,
+  ) async {
+    var query = select(otpsHistory)
+      ..where((oh) => oh.originalOtpId.equals(otpId))
+      ..orderBy([(oh) => OrderingTerm.desc(oh.actionAt)])
+      ..limit(limit, offset: offset);
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          (oh) =>
+              oh.issuer.like(search) |
+              oh.accountName.like(search) |
+              oh.notes.like(search),
+        );
+    }
+
+    final results = await query.get();
+    return results
+        .map(
+          (oh) => OtpHistoryCardDto(
+            id: oh.id,
+            originalOtpId: oh.originalOtpId,
+            action: oh.action.value,
+            issuer: oh.issuer,
+            accountName: oh.accountName,
+            type: oh.type.value,
+            actionAt: oh.actionAt,
+          ),
+        )
+        .toList();
+  }
+
+  /// Подсчитать количество записей истории для OTP
+  Future<int> countOtpHistoryByOriginalId(
+    String otpId,
+    String? searchQuery,
+  ) async {
+    var query = selectOnly(otpsHistory)
+      ..addColumns([otpsHistory.id.count()])
+      ..where(otpsHistory.originalOtpId.equals(otpId));
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          otpsHistory.issuer.like(search) |
+              otpsHistory.accountName.like(search) |
+              otpsHistory.notes.like(search),
+        );
+    }
+
+    final result = await query
+        .map((row) => row.read(otpsHistory.id.count()))
+        .getSingle();
+    return result ?? 0;
+  }
+
+  /// Удалить запись истории по ID
+  Future<int> deleteOtpHistoryById(String historyId) {
+    return (delete(otpsHistory)..where((oh) => oh.id.equals(historyId))).go();
   }
 }

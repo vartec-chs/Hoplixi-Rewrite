@@ -9,6 +9,7 @@ import 'package:hoplixi/features/home/home_screen.dart';
 import 'package:hoplixi/features/logs_viewer/screens/logs_tabs_screen.dart';
 import 'package:hoplixi/features/password_manager/category_manager/category_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/create_store/create_store_screen.dart';
+import 'package:hoplixi/features/password_manager/dashboard/models/entity_type.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/categories_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_home_screen.dart';
 import 'package:hoplixi/features/password_manager/dashboard/screens/dashboard_settings_screen.dart';
@@ -20,6 +21,7 @@ import 'package:hoplixi/features/password_manager/forms/file_form/screens/file_f
 import 'package:hoplixi/features/password_manager/forms/note_form/screens/note_form_screen.dart';
 import 'package:hoplixi/features/password_manager/forms/otp_form/screens/otp_form_screen.dart';
 import 'package:hoplixi/features/password_manager/forms/password_form/screens/password_form_screen.dart';
+import 'package:hoplixi/features/password_manager/history/ui/screens/history_screen.dart';
 import 'package:hoplixi/features/password_manager/icon_manager/icon_manager_screen.dart';
 import 'package:hoplixi/features/password_manager/lock_store/lock_store_screen.dart';
 import 'package:hoplixi/features/password_manager/migration/otp/screens/import_otp_screen.dart';
@@ -244,6 +246,25 @@ final List<RouteBase> appRoutes = [
         path: AppRoutesPaths.dashboardMigratePasswords,
         builder: (context, state) {
           return const PasswordMigrationScreen();
+        },
+      ),
+
+      // History screen
+      GoRoute(
+        path: AppRoutesPaths.dashboardHistory,
+        builder: (context, state) {
+          final entityTypeStr = state.pathParameters['entityType'];
+          final entityId = state.pathParameters['id'];
+
+          // Парсим тип сущности
+          final entityType = EntityType.fromId(entityTypeStr ?? '');
+
+          if (entityType == null || entityId == null) {
+            // Если параметры некорректны, возвращаем на главную
+            return const DashboardHomeScreen();
+          }
+
+          return HistoryScreen(entityType: entityType, entityId: entityId);
         },
       ),
     ],

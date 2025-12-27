@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/note_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/notes_history.dart';
 
-part '../note_history_dao.g.dart';
+part 'note_history_dao.g.dart';
 
 @DriftAccessor(tables: [NotesHistory])
 class NoteHistoryDao extends DatabaseAccessor<MainStore>
@@ -146,5 +146,77 @@ class NoteHistoryDao extends DatabaseAccessor<MainStore>
     return (delete(
       notesHistory,
     )..where((nh) => nh.actionAt.isSmallerThanValue(cutoffDate))).go();
+  }
+
+  // ============================================
+  // Методы для пагинации и поиска
+  // ============================================
+
+  /// Получить историю по ID оригинальной заметки с пагинацией и поиском
+  Future<List<NoteHistoryCardDto>> getNoteHistoryCardsByOriginalId(
+    String noteId,
+    int offset,
+    int limit,
+    String? searchQuery,
+  ) async {
+    var query = select(notesHistory)
+      ..where((nh) => nh.originalNoteId.equals(noteId))
+      ..orderBy([(nh) => OrderingTerm.desc(nh.actionAt)])
+      ..limit(limit, offset: offset);
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          (nh) =>
+              nh.title.like(search) |
+              nh.description.like(search) |
+              nh.content.like(search),
+        );
+    }
+
+    final results = await query.get();
+    return results
+        .map(
+          (nh) => NoteHistoryCardDto(
+            id: nh.id,
+            originalNoteId: nh.originalNoteId,
+            action: nh.action.value,
+            title: nh.title,
+            description: nh.description,
+            actionAt: nh.actionAt,
+          ),
+        )
+        .toList();
+  }
+
+  /// Подсчитать количество записей истории для заметки
+  Future<int> countNoteHistoryByOriginalId(
+    String noteId,
+    String? searchQuery,
+  ) async {
+    var query = selectOnly(notesHistory)
+      ..addColumns([notesHistory.id.count()])
+      ..where(notesHistory.originalNoteId.equals(noteId));
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          notesHistory.title.like(search) |
+              notesHistory.description.like(search) |
+              notesHistory.content.like(search),
+        );
+    }
+
+    final result = await query
+        .map((row) => row.read(notesHistory.id.count()))
+        .getSingle();
+    return result ?? 0;
+  }
+
+  /// Удалить запись истории по ID
+  Future<int> deleteNoteHistoryById(String historyId) {
+    return (delete(notesHistory)..where((nh) => nh.id.equals(historyId))).go();
   }
 }

@@ -4,7 +4,7 @@ import 'package:hoplixi/main_store/models/dto/bank_card_history_dto.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/bank_cards_history.dart';
 
-part '../bank_card_history_dao.g.dart';
+part 'bank_card_history_dao.g.dart';
 
 @DriftAccessor(tables: [BankCardsHistory])
 class BankCardHistoryDao extends DatabaseAccessor<MainStore>
@@ -177,5 +177,81 @@ class BankCardHistoryDao extends DatabaseAccessor<MainStore>
     return (delete(
       bankCardsHistory,
     )..where((bch) => bch.actionAt.isSmallerThanValue(cutoffDate))).go();
+  }
+
+  // ============================================
+  // Методы для пагинации и поиска
+  // ============================================
+
+  /// Получить историю по ID оригинальной карты с пагинацией и поиском
+  Future<List<BankCardHistoryCardDto>> getBankCardHistoryCardsByOriginalId(
+    String originalCardId,
+    int offset,
+    int limit,
+    String? searchQuery,
+  ) async {
+    var query = select(bankCardsHistory)
+      ..where((bch) => bch.originalCardId.equals(originalCardId))
+      ..orderBy([(bch) => OrderingTerm.desc(bch.actionAt)])
+      ..limit(limit, offset: offset);
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          (bch) =>
+              bch.name.like(search) |
+              bch.cardholderName.like(search) |
+              bch.bankName.like(search),
+        );
+    }
+
+    final results = await query.get();
+    return results
+        .map(
+          (bch) => BankCardHistoryCardDto(
+            id: bch.id,
+            originalCardId: bch.originalCardId,
+            action: bch.action.value,
+            name: bch.name,
+            cardholderName: bch.cardholderName,
+            cardType: bch.cardType?.value,
+            cardNetwork: bch.cardNetwork?.value,
+            actionAt: bch.actionAt,
+          ),
+        )
+        .toList();
+  }
+
+  /// Подсчитать количество записей истории для карты
+  Future<int> countBankCardHistoryByOriginalId(
+    String originalCardId,
+    String? searchQuery,
+  ) async {
+    var query = selectOnly(bankCardsHistory)
+      ..addColumns([bankCardsHistory.id.count()])
+      ..where(bankCardsHistory.originalCardId.equals(originalCardId));
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          bankCardsHistory.name.like(search) |
+              bankCardsHistory.cardholderName.like(search) |
+              bankCardsHistory.bankName.like(search),
+        );
+    }
+
+    final result = await query
+        .map((row) => row.read(bankCardsHistory.id.count()))
+        .getSingle();
+    return result ?? 0;
+  }
+
+  /// Удалить запись истории по ID
+  Future<int> deleteBankCardHistoryById(String historyId) {
+    return (delete(
+      bankCardsHistory,
+    )..where((bch) => bch.id.equals(historyId))).go();
   }
 }

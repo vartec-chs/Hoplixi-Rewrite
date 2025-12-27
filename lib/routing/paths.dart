@@ -68,4 +68,11 @@ class AppRoutesPaths {
 
   /// Генерирует путь для редактирования OTP с конкретным ID
   static String dashboardOtpEditWithId(String id) => '/dashboard/otp/edit/$id';
+
+  // History screen
+  static const String dashboardHistory = '/dashboard/history/:entityType/:id';
+
+  /// Генерирует путь для просмотра истории с конкретным типом сущности и ID
+  static String dashboardHistoryWithParams(String entityType, String id) =>
+      '/dashboard/history/$entityType/$id';
 }

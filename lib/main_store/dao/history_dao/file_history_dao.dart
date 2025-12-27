@@ -5,7 +5,7 @@ import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/files_history.dart';
 import 'package:uuid/uuid.dart';
 
-part '../file_history_dao.g.dart';
+part 'file_history_dao.g.dart';
 
 @DriftAccessor(tables: [FilesHistory])
 class FileHistoryDao extends DatabaseAccessor<MainStore>
@@ -158,5 +158,78 @@ class FileHistoryDao extends DatabaseAccessor<MainStore>
     return (delete(
       filesHistory,
     )..where((fh) => fh.actionAt.isSmallerThanValue(cutoffDate))).go();
+  }
+
+  // ============================================
+  // Методы для пагинации и поиска
+  // ============================================
+
+  /// Получить историю по ID оригинального файла с пагинацией и поиском
+  Future<List<FileHistoryCardDto>> getFileHistoryCardsByOriginalId(
+    String fileId,
+    int offset,
+    int limit,
+    String? searchQuery,
+  ) async {
+    var query = select(filesHistory)
+      ..where((fh) => fh.originalFileId.equals(fileId))
+      ..orderBy([(fh) => OrderingTerm.desc(fh.actionAt)])
+      ..limit(limit, offset: offset);
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          (fh) =>
+              fh.name.like(search) |
+              fh.fileName.like(search) |
+              fh.description.like(search),
+        );
+    }
+
+    final results = await query.get();
+    return results
+        .map(
+          (fh) => FileHistoryCardDto(
+            id: fh.id,
+            originalFileId: fh.originalFileId,
+            action: fh.action.value,
+            name: fh.name,
+            fileName: fh.fileName,
+            fileExtension: fh.fileExtension,
+            actionAt: fh.actionAt,
+          ),
+        )
+        .toList();
+  }
+
+  /// Подсчитать количество записей истории для файла
+  Future<int> countFileHistoryByOriginalId(
+    String fileId,
+    String? searchQuery,
+  ) async {
+    var query = selectOnly(filesHistory)
+      ..addColumns([filesHistory.id.count()])
+      ..where(filesHistory.originalFileId.equals(fileId));
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final search = '%$searchQuery%';
+      query = query
+        ..where(
+          filesHistory.name.like(search) |
+              filesHistory.fileName.like(search) |
+              filesHistory.description.like(search),
+        );
+    }
+
+    final result = await query
+        .map((row) => row.read(filesHistory.id.count()))
+        .getSingle();
+    return result ?? 0;
+  }
+
+  /// Удалить запись истории по ID
+  Future<int> deleteFileHistoryById(String historyId) {
+    return (delete(filesHistory)..where((fh) => fh.id.equals(historyId))).go();
   }
 }
