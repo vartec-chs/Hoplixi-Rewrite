@@ -16,6 +16,7 @@ import 'package:hoplixi/main_store/dao/password_dao.dart';
 import 'package:hoplixi/main_store/dao/password_history_dao.dart';
 import 'package:hoplixi/main_store/models/enums/index.dart';
 import 'package:hoplixi/main_store/tables/index.dart';
+import 'package:hoplixi/main_store/triggers/index.dart';
 import 'package:uuid/uuid.dart';
 
 import './dao/filters_dao/filters_dao.dart';
@@ -76,9 +77,16 @@ class MainStore extends _$MainStore {
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
+
+        // Установка триггеров для записи истории изменений
+        await _installHistoryTriggers();
       },
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
+
+        // Переустановка триггеров при каждом открытии БД
+        // (на случай если они были удалены или изменены)
+        await _installHistoryTriggers();
       },
       onUpgrade: (Migrator m, int from, int to) async {
         logInfo(
@@ -130,5 +138,44 @@ class MainStore extends _$MainStore {
     ).watch().map((_) {
       return;
     }); // превращаем в Stream<void>
+  }
+
+  /// Установка триггеров для автоматической записи истории изменений
+  Future<void> _installHistoryTriggers() async {
+    logInfo('Installing history triggers...', tag: _logTag);
+
+    try {
+      // Удаляем старые триггеры (если есть)
+      for (final drop in [
+        ...passwordsHistoryDropTriggers,
+        ...otpsHistoryDropTriggers,
+        ...notesHistoryDropTriggers,
+        ...filesHistoryDropTriggers,
+        ...bankCardsHistoryDropTriggers,
+      ]) {
+        await customStatement(drop);
+      }
+
+      // Создаём новые триггеры
+      for (final trigger in [
+        ...passwordsHistoryCreateTriggers,
+        ...otpsHistoryCreateTriggers,
+        ...notesHistoryCreateTriggers,
+        ...filesHistoryCreateTriggers,
+        ...bankCardsHistoryCreateTriggers,
+      ]) {
+        await customStatement(trigger);
+      }
+
+      logInfo('History triggers installed successfully', tag: _logTag);
+    } catch (e, stackTrace) {
+      logError(
+        'Failed to install history triggers',
+        error: e,
+        stackTrace: stackTrace,
+        tag: _logTag,
+      );
+      rethrow;
+    }
   }
 }
