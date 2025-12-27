@@ -238,8 +238,13 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
 
       // Проверяем, совпадает ли элемент на текущей позиции
       if (i < _displayedItems.length && _displayedItems[i].id == newId) {
-        // Элемент на своем месте - просто обновляем данные
-        _displayedItems[i] = newItem;
+        // Элемент на своем месте - проверяем, изменились ли данные
+        final oldItem = _displayedItems[i];
+        if (oldItem != newItem) {
+          // Данные изменились - обновляем и помечаем для перерисовки
+          _displayedItems[i] = newItem;
+          didMutate = true;
+        }
         indexById[newId] = i;
         continue;
       }
