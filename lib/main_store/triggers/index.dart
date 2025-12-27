@@ -1,8 +1,12 @@
 /// Экспорт всех SQL триггеров для записи истории изменений.
 ///
 /// Этот файл экспортирует все триггеры для удобного импорта.
+
+// Триггеры истории изменений
 export 'bank_cards_triggers.dart';
 export 'files_triggers.dart';
 export 'notes_triggers.dart';
 export 'otps_triggers.dart';
 export 'passwords_triggers.dart';
+// Триггеры временных меток
+export 'timestamps/index.dart';

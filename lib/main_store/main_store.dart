@@ -141,11 +141,12 @@ class MainStore extends _$MainStore {
   }
 
   /// Установка триггеров для автоматической записи истории изменений
+  /// и управления временными метками
   Future<void> _installHistoryTriggers() async {
-    logInfo('Installing history triggers...', tag: _logTag);
+    logInfo('Installing triggers...', tag: _logTag);
 
     try {
-      // Удаляем старые триггеры (если есть)
+      // Удаляем старые триггеры истории (если есть)
       for (final drop in [
         ...passwordsHistoryDropTriggers,
         ...otpsHistoryDropTriggers,
@@ -156,7 +157,12 @@ class MainStore extends _$MainStore {
         await customStatement(drop);
       }
 
-      // Создаём новые триггеры
+      // Удаляем старые триггеры временных меток (если есть)
+      for (final drop in allTimestampDropTriggers) {
+        await customStatement(drop);
+      }
+
+      // Создаём триггеры истории изменений
       for (final trigger in [
         ...passwordsHistoryCreateTriggers,
         ...otpsHistoryCreateTriggers,
@@ -167,10 +173,20 @@ class MainStore extends _$MainStore {
         await customStatement(trigger);
       }
 
-      logInfo('History triggers installed successfully', tag: _logTag);
+      // Создаём триггеры для автоматической установки created_at
+      for (final trigger in allInsertTimestampTriggers) {
+        await customStatement(trigger);
+      }
+
+      // Создаём триггеры для автоматического обновления modified_at
+      for (final trigger in allModifiedAtTriggers) {
+        await customStatement(trigger);
+      }
+
+      logInfo('All triggers installed successfully', tag: _logTag);
     } catch (e, stackTrace) {
       logError(
-        'Failed to install history triggers',
+        'Failed to install triggers',
         error: e,
         stackTrace: stackTrace,
         tag: _logTag,
