@@ -430,6 +430,9 @@ class DashboardHomeBuilders {
           onToggleArchive: () => callbacks.onToggleArchive(item.id),
           onDelete: () => callbacks.onDelete(item.id, item.isDeleted),
           onRestore: () => callbacks.onRestore(item.id),
+          onOpenHistory: () => context.push(
+            AppRoutesPaths.dashboardHistoryWithParams(type.id, item.id),
+          ),
         );
         break;
       case EntityType.note:
@@ -441,6 +444,9 @@ class DashboardHomeBuilders {
           onToggleArchive: () => callbacks.onToggleArchive(item.id),
           onDelete: () => callbacks.onDelete(item.id, item.isDeleted),
           onRestore: () => callbacks.onRestore(item.id),
+          onOpenHistory: () => context.push(
+            AppRoutesPaths.dashboardHistoryWithParams(type.id, item.id),
+          ),
         );
         break;
       case EntityType.bankCard:
@@ -452,6 +458,9 @@ class DashboardHomeBuilders {
           onToggleArchive: () => callbacks.onToggleArchive(item.id),
           onDelete: () => callbacks.onDelete(item.id, item.isDeleted),
           onRestore: () => callbacks.onRestore(item.id),
+          onOpenHistory: () => context.push(
+            AppRoutesPaths.dashboardHistoryWithParams(type.id, item.id),
+          ),
         );
         break;
       case EntityType.file:
@@ -464,6 +473,9 @@ class DashboardHomeBuilders {
           onDelete: () => callbacks.onDelete(item.id, item.isDeleted),
           onRestore: () => callbacks.onRestore(item.id),
           onDecrypt: () => showFileDecryptModal(context, item),
+          onOpenHistory: () => context.push(
+            AppRoutesPaths.dashboardHistoryWithParams(type.id, item.id),
+          ),
         );
         break;
       case EntityType.otp:
@@ -475,6 +487,9 @@ class DashboardHomeBuilders {
           onToggleArchive: () => callbacks.onToggleArchive(item.id),
           onDelete: () => callbacks.onDelete(item.id, item.isDeleted),
           onRestore: () => callbacks.onRestore(item.id),
+          onOpenHistory: () => context.push(
+            AppRoutesPaths.dashboardHistoryWithParams(type.id, item.id),
+          ),
         );
         break;
     }

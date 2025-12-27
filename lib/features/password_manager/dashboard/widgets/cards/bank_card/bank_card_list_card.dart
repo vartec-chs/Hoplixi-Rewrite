@@ -17,6 +17,7 @@ class BankCardListCard extends ConsumerStatefulWidget {
   final VoidCallback? onToggleArchive;
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
+  final VoidCallback? onOpenHistory;
 
   const BankCardListCard({
     super.key,
@@ -27,6 +28,7 @@ class BankCardListCard extends ConsumerStatefulWidget {
     this.onToggleArchive,
     this.onDelete,
     this.onRestore,
+    this.onOpenHistory,
   });
 
   @override
@@ -480,6 +482,12 @@ class _BankCardListCardState extends ConsumerState<BankCardListCard>
                   },
                   tooltip: 'Редактировать',
                 ),
+                if (widget.onOpenHistory != null)
+                  IconButton(
+                    icon: const Icon(Icons.history, size: 18),
+                    onPressed: widget.onOpenHistory,
+                    tooltip: 'История',
+                  ),
               ],
             ),
           ),

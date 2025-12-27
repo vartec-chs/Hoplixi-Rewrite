@@ -269,7 +269,9 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
     bool isSidebarRoute,
   ) {
     final location = GoRouterState.of(context).uri.toString();
-    final isFullScreenRoute = location == AppRoutesPaths.dashboardNotesGraph;
+    final isFullScreenRoute =
+        location == AppRoutesPaths.dashboardNotesGraph ||
+        location.startsWith('/dashboard/history/');
 
     return Scaffold(
       body: Row(
@@ -333,14 +335,20 @@ class DashboardLayoutState extends ConsumerState<DashboardLayout>
     int selectedIndex,
     bool isSidebarRoute,
   ) {
+    final location = GoRouterState.of(context).uri.toString();
+    final isFullScreenRoute =
+        location == AppRoutesPaths.dashboardNotesGraph ||
+        location.startsWith('/dashboard/history/');
+
     return Scaffold(
       body: widget.child,
-      // Скрываем BottomNavigationBar когда открыт sidebar route
-      bottomNavigationBar: isSidebarRoute
+      // Скрываем BottomNavigationBar когда открыт sidebar route или full screen route
+      bottomNavigationBar: isSidebarRoute || isFullScreenRoute
           ? null
           : _buildBottomNavigationBar(context, selectedIndex),
-      // Скрываем FAB когда открыт sidebar route
-      floatingActionButton: (selectedIndex == 0 && !isSidebarRoute)
+      // Скрываем FAB когда открыт sidebar route или full screen route
+      floatingActionButton:
+          (selectedIndex == 0 && !isSidebarRoute && !isFullScreenRoute)
           ? ExpandableFAB(
               key: _mobileFabKey,
               direction: FABExpandDirection.up,

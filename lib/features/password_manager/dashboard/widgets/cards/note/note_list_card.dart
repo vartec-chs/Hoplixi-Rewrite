@@ -17,6 +17,7 @@ class NoteListCard extends ConsumerStatefulWidget {
   final VoidCallback? onToggleArchive;
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
+  final VoidCallback? onOpenHistory;
 
   const NoteListCard({
     super.key,
@@ -27,6 +28,7 @@ class NoteListCard extends ConsumerStatefulWidget {
     this.onToggleArchive,
     this.onDelete,
     this.onRestore,
+    this.onOpenHistory,
   });
 
   @override
@@ -307,6 +309,12 @@ class _NoteListCardState extends ConsumerState<NoteListCard>
                   },
                   tooltip: 'Редактировать',
                 ),
+                if (widget.onOpenHistory != null)
+                  IconButton(
+                    icon: const Icon(Icons.history, size: 18),
+                    onPressed: widget.onOpenHistory,
+                    tooltip: 'История',
+                  ),
               ],
             ),
           ),

@@ -22,6 +22,7 @@ class TotpListCard extends ConsumerStatefulWidget {
   final VoidCallback? onToggleArchive;
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
+  final VoidCallback? onOpenHistory;
 
   const TotpListCard({
     super.key,
@@ -32,6 +33,7 @@ class TotpListCard extends ConsumerStatefulWidget {
     this.onToggleArchive,
     this.onDelete,
     this.onRestore,
+    this.onOpenHistory,
   });
 
   @override
@@ -430,6 +432,12 @@ class _TotpListCardState extends ConsumerState<TotpListCard>
                   onPressed: widget.onToggleFavorite,
                   tooltip: 'Избранное',
                 ),
+                if (widget.onOpenHistory != null)
+                  IconButton(
+                    icon: const Icon(Icons.history, size: 18),
+                    onPressed: widget.onOpenHistory,
+                    tooltip: 'История',
+                  ),
               ],
             ),
           ),

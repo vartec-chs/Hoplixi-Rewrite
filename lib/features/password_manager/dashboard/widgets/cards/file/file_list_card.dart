@@ -15,6 +15,7 @@ class FileListCard extends ConsumerStatefulWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
   final VoidCallback? onDecrypt;
+  final VoidCallback? onOpenHistory;
 
   const FileListCard({
     super.key,
@@ -26,6 +27,7 @@ class FileListCard extends ConsumerStatefulWidget {
     this.onDelete,
     this.onRestore,
     this.onDecrypt,
+    this.onOpenHistory,
   });
 
   @override
@@ -244,6 +246,12 @@ class _FileListCardState extends ConsumerState<FileListCard>
                   onPressed: widget.onToggleArchive,
                   tooltip: file.isArchived ? 'Разархивировать' : 'Архивировать',
                 ),
+                if (widget.onOpenHistory != null)
+                  IconButton(
+                    icon: const Icon(Icons.history, size: 18),
+                    onPressed: widget.onOpenHistory,
+                    tooltip: 'История',
+                  ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
                   onPressed: widget.onDelete,

@@ -18,6 +18,7 @@ class PasswordListCard extends ConsumerStatefulWidget {
   final VoidCallback? onToggleArchive;
   final VoidCallback? onDelete;
   final VoidCallback? onRestore;
+  final VoidCallback? onOpenHistory;
 
   const PasswordListCard({
     super.key,
@@ -28,6 +29,7 @@ class PasswordListCard extends ConsumerStatefulWidget {
     this.onToggleArchive,
     this.onDelete,
     this.onRestore,
+    this.onOpenHistory,
   });
 
   @override
@@ -385,6 +387,12 @@ class _PasswordListCardState extends ConsumerState<PasswordListCard>
                   },
                   tooltip: 'Редактировать',
                 ),
+                if (widget.onOpenHistory != null)
+                  IconButton(
+                    icon: const Icon(Icons.history, size: 18),
+                    onPressed: widget.onOpenHistory,
+                    tooltip: 'История',
+                  ),
               ],
             ),
           ),
